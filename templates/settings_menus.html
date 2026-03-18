@@ -1,0 +1,64 @@
+{% extends "base.html" %}
+{% block title %}Menu Master{% endblock %}
+{% block content %}
+<div class="container-fluid mt-4">
+    <h2><i class="bi bi-menu-button-wide"></i> Menu Master</h2>
+    <button class="btn btn-primary mb-3" data-bs-toggle="modal" data-bs-target="#addModal">Add Menu</button>
+    <a href="{{ url_for('settings_bp.settings') }}" class="btn btn-secondary mb-3">Back</a>
+    
+    <table class="table table-striped">
+        <thead class="table-primary">
+            <tr><th>#</th><th>Menu Name</th><th>URL</th><th>Icon</th><th>Parent</th><th>Order</th><th>Status</th></tr>
+        </thead>
+        <tbody>
+            {% for m in menus %}
+            <tr>
+                <td>{{ loop.index }}</td>
+                <td><strong>{{ m[1] }}</strong></td>
+                <td><code>{{ m[2] }}</code></td>
+                <td><i class="{{ m[3] }}"></i></td>
+                <td>{{ m[4] or '-' }}</td>
+                <td>{{ m[5] }}</td>
+                <td><span class="badge bg-{{ 'success' if m[6] else 'secondary' }}">{{ 'Active' if m[6] else 'Inactive' }}</span></td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+</div>
+
+<div class="modal fade" id="addModal">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <form method="POST">
+                <div class="modal-header"><h5>Add Menu</h5></div>
+                <div class="modal-body">
+                    <input type="hidden" name="action" value="add">
+                    <div class="mb-3">
+                        <label>Menu Name</label>
+                        <input type="text" class="form-control" name="menu_name" required>
+                    </div>
+                    <div class="mb-3">
+                        <label>URL</label>
+                        <input type="text" class="form-control" name="menu_url">
+                    </div>
+                    <div class="mb-3">
+                        <label>Icon (Bootstrap Icon class)</label>
+                        <input type="text" class="form-control" name="menu_icon" placeholder="bi bi-house">
+                    </div>
+                    <div class="mb-3">
+                        <label>Parent Menu ID</label>
+                        <input type="number" class="form-control" name="parent_id">
+                    </div>
+                    <div class="mb-3">
+                        <label>Display Order</label>
+                        <input type="number" class="form-control" name="display_order" value="0">
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="submit" class="btn btn-primary">Add</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+{% endblock %}

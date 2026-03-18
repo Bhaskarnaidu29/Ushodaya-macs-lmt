@@ -1,0 +1,217 @@
+{% extends "base.html" %}
+{% block title %}FD Details{% endblock %}
+
+{% block extra_css %}
+<style>
+  .fd-detail-card {
+    background: linear-gradient(135deg, #1e3a8a 0%, #0d9488 100%);
+    color: #fff;
+    border-radius: 12px;
+    padding: 25px;
+    margin-bottom: 20px;
+  }
+  .info-row { display: flex; justify-content: space-between; padding: 8px 0; border-bottom: 1px solid rgba(255,255,255,.15); }
+  .info-row:last-child { border-bottom: none; }
+  .info-label { opacity: .75; font-size: .85rem; }
+  .info-value { font-weight: 600; }
+  .schedule-table { width: 100%; font-size: .88rem; }
+  .schedule-table thead th {
+    background: #1e40af;
+    color: #fff;
+    padding: 10px;
+  }
+  .schedule-table tbody td {
+    padding: 8px 10px;
+    border-bottom: 1px solid #e2e8f0;
+  }
+  .schedule-table tbody tr:hover { background: #eff6ff; }
+  .row-paid { background: #f0fdf4; }
+  .row-pending { background: #fef9c3; }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="container-fluid mt-4">
+
+  {# FD Master Details #}
+  {% if fd %}
+  {# Columns: Id, FDNumber, MemberCode, MemberName, JointName, DepositDate, WithdrawDate,
+              DepositAmount, ROI, InterestAmount, DepositTenure, Remarks, AadharNumber, NomineeName, PaymentFrequency #}
+  
+  <div class="fd-detail-card">
+    <div class="d-flex justify-content-between align-items-start mb-3">
+      <div>
+        <h4 class="mb-1 fw-bold">{{ fd[1] }}</h4>
+        <small style="opacity:.8;">Fixed Deposit Details</small>
+      </div>
+      <div class="d-flex gap-2">
+        <a href="{{ url_for('fixeddeposit_bp.fd_list') }}" class="btn btn-light btn-sm">
+          <i class="bi bi-arrow-left"></i> Back to List
+        </a>
+        <form method="POST" action="{{ url_for('fixeddeposit_bp.fd_delete', fd_id=fd[0]) }}" style="display:inline;" onsubmit="return confirm('Are you sure you want to delete this FD? This action cannot be undone.');">
+          <button type="submit" class="btn btn-danger btn-sm">
+            <i class="bi bi-trash"></i> Delete
+          </button>
+        </form>
+      </div>
+    </div>
+
+    <div class="row g-3">
+      <div class="col-md-6">
+        <div style="background:rgba(255,255,255,.1);border-radius:8px;padding:15px;">
+          <div class="info-row">
+            <span class="info-label">Member Code:</span>
+            <span class="info-value">{{ fd[2] }}</span>
+          </div>
+          <div class="info-row">
+            <span class="info-label">Member Name:</span>
+            <span class="info-value">{{ fd[3] }}</span>
+          </div>
+          {% if fd[4] %}
+          <div class="info-row">
+            <span class="info-label">Joint Name:</span>
+            <span class="info-value">{{ fd[4] }}</span>
+          </div>
+          {% endif %}
+          {% if fd[12] %}
+          <div class="info-row">
+            <span class="info-label">Aadhaar:</span>
+            <span class="info-value">{{ fd[12] }}</span>
+          </div>
+          {% endif %}
+          {% if fd[13] %}
+          <div class="info-row">
+            <span class="info-label">Nominee:</span>
+            <span class="info-value">{{ fd[13] }}</span>
+          </div>
+          {% endif %}
+        </div>
+      </div>
+
+      <div class="col-md-6">
+        <div style="background:rgba(255,255,255,.1);border-radius:8px;padding:15px;">
+          <div class="info-row">
+            <span class="info-label">Deposit Amount:</span>
+            <span class="info-value">₹{{ "{:,.0f}".format(fd[7] or 0) }}</span>
+          </div>
+          <div class="info-row">
+            <span class="info-label">ROI (% p.a.):</span>
+            <span class="info-value">{{ fd[8] }}%</span>
+          </div>
+          <div class="info-row">
+            <span class="info-label">Total Interest:</span>
+            <span class="info-value">₹{{ "{:,.2f}".format(fd[9] or 0) }}</span>
+          </div>
+          <div class="info-row">
+            <span class="info-label">Tenure:</span>
+            <span class="info-value">{{ fd[10] }} months</span>
+          </div>
+          <div class="info-row">
+            <span class="info-label">Payment Frequency:</span>
+            <span class="info-value">
+              {% set freq = fd[14] if fd[14] else 1 %}
+              {% if freq == 1 %}Monthly
+              {% elif freq == 3 %}Quarterly
+              {% elif freq == 6 %}Half-Yearly
+              {% elif freq == 12 %}Yearly
+              {% elif freq == 24 %}2-Yearly
+              {% else %}Monthly
+              {% endif %}
+            </span>
+          </div>
+          <div class="info-row">
+            <span class="info-label">Deposit Date:</span>
+            <span class="info-value">{{ fd[5].strftime('%d-%b-%Y') if fd[5] else '' }}</span>
+          </div>
+          <div class="info-row">
+            <span class="info-label">Maturity Date:</span>
+            <span class="info-value">{{ fd[6].strftime('%d-%b-%Y') if fd[6] else '' }}</span>
+          </div>
+        </div>
+      </div>
+
+      {% if fd[11] %}
+      <div class="col-12">
+        <div style="background:rgba(255,255,255,.1);border-radius:8px;padding:15px;">
+          <div class="info-label">Remarks:</div>
+          <div class="info-value mt-1">{{ fd[11] }}</div>
+        </div>
+      </div>
+      {% endif %}
+    </div>
+  </div>
+
+  {# Payment Schedule #}
+  <div class="card border-0 shadow-sm">
+    <div class="card-header bg-primary text-white d-flex justify-content-between align-items-center">
+      <h5 class="mb-0"><i class="bi bi-calendar3"></i> Payment Schedule</h5>
+      <small>{{ collections|length if collections else 0 }} payment(s)</small>
+    </div>
+    <div class="card-body p-0">
+      {% if collections %}
+      <div class="table-responsive">
+        <table class="schedule-table">
+          <thead>
+            <tr>
+              <th>#</th>
+              <th>Due Date</th>
+              <th>Interest Due</th>
+              <th>Interest Paid</th>
+              <th>Principal Due</th>
+              <th>Principal Paid</th>
+              <th>Paid Date</th>
+              <th>Status</th>
+            </tr>
+          </thead>
+          <tbody>
+            {% for col in collections %}
+            {# Columns: Id, MaturityDate, InterestDue, InterestPaid, DepositPaid, PaidDate #}
+            {% set is_paid = col[5] is not none %}
+            <tr class="{{ 'row-paid' if is_paid else 'row-pending' }}">
+              <td>{{ loop.index }}</td>
+              <td>{{ col[1].strftime('%d-%b-%Y') if col[1] else '' }}</td>
+              <td class="text-end">₹{{ "{:,.2f}".format(col[2] or 0) }}</td>
+              <td class="text-end">₹{{ "{:,.2f}".format(col[3] or 0) }}</td>
+              <td class="text-end">₹{{ "{:,.0f}".format(col[4] or 0) }}</td>
+              <td class="text-end">₹{{ "{:,.0f}".format(col[4] or 0) if is_paid else '₹0' }}</td>
+              <td>{{ col[5].strftime('%d-%b-%Y') if col[5] else '—' }}</td>
+              <td>
+                {% if is_paid %}
+                <span class="badge bg-success"><i class="bi bi-check2"></i> Paid</span>
+                {% else %}
+                <span class="badge bg-warning text-dark"><i class="bi bi-clock"></i> Pending</span>
+                {% endif %}
+              </td>
+            </tr>
+            {% endfor %}
+          </tbody>
+          <tfoot>
+            <tr style="background:#f8fafc;font-weight:600;">
+              <td colspan="2" class="text-end">TOTALS:</td>
+              <td class="text-end">₹{{ "{:,.2f}".format(total_int_due or 0) }}</td>
+              <td class="text-end">₹{{ "{:,.2f}".format(total_int_paid or 0) }}</td>
+              <td class="text-end">₹{{ "{:,.0f}".format(total_dep_paid or 0) }}</td>
+              <td class="text-end">₹{{ "{:,.0f}".format(total_dep_paid or 0) }}</td>
+              <td colspan="2"></td>
+            </tr>
+          </tfoot>
+        </table>
+      </div>
+      {% else %}
+      <div class="alert alert-info m-3">
+        <i class="bi bi-info-circle me-2"></i>
+        No payment schedule found. The FD may have been created without collection records.
+      </div>
+      {% endif %}
+    </div>
+  </div>
+
+  {% else %}
+  <div class="alert alert-warning">
+    <i class="bi bi-exclamation-triangle me-2"></i>
+    FD record not found.
+  </div>
+  {% endif %}
+
+</div>
+{% endblock %}

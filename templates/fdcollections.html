@@ -1,0 +1,483 @@
+{% extends "base.html" %}
+{% block title %}FD Collections{% endblock %}
+
+{% block extra_css %}
+<style>
+  .fd-header {
+    background: linear-gradient(135deg, #1e3a8a 0%, #0d9488 100%);
+    color: #fff;
+    border-radius: 12px;
+    padding: 22px 28px;
+    margin-bottom: 20px;
+  }
+
+  .stat-card {
+    border: none;
+    border-radius: 10px;
+    padding: 16px 20px;
+    background: #fff;
+    box-shadow: 0 2px 8px rgba(0,0,0,.08);
+  }
+  .stat-card .stat-icon { font-size: 1.8rem; opacity: .75; }
+  .stat-card .stat-val { font-size: 1.4rem; font-weight: 700; }
+  .stat-card .stat-lbl { font-size: .75rem; opacity: .75; text-transform: uppercase; }
+
+  .fd-table { width: 100%; font-size: .88rem; }
+  .fd-table thead th {
+    background: #1e40af;
+    color: #fff;
+    padding: 12px 10px;
+    white-space: nowrap;
+    position: sticky;
+    top: 0;
+  }
+  .fd-table tbody td {
+    padding: 10px;
+    border-bottom: 1px solid #e2e8f0;
+    vertical-align: middle;
+  }
+  .fd-table tbody tr:hover { background: #eff6ff; }
+  .fd-table tbody tr.row-paid { background: #f0fdf4; opacity: .8; }
+  .fd-table tbody tr.row-overdue { background: #fef2f2; }
+  .fd-table tbody tr.row-preclosed { background: #f5f5f5; opacity: .6; text-decoration: line-through; }
+  .fd-table tbody tr.row-selected { background: #dbeafe; }
+
+  .badge-paid { background: #dcfce7; color: #15803d; padding: 4px 10px; border-radius: 12px; font-size: .78rem; }
+  .badge-due { background: #fef3c7; color: #92400e; padding: 4px 10px; border-radius: 12px; font-size: .78rem; }
+  .badge-overdue { background: #fee2e2; color: #b91c1c; padding: 4px 10px; border-radius: 12px; font-size: .78rem; }
+  .badge-preclosed { background: #e5e7eb; color: #6b7280; padding: 4px 10px; border-radius: 12px; font-size: .78rem; }
+  
+  .table-wrap { max-height: 65vh; overflow-y: auto; border-radius: 10px; border: 1px solid #e2e8f0; }
+  
+  .filter-bar { background: #fff; border-radius: 10px; padding: 16px 20px; box-shadow: 0 1px 4px rgba(0,0,0,.06); margin-bottom: 20px; }
+  
+  .payment-input {
+    width: 120px;
+    padding: 6px 8px;
+    border: 2px solid #cbd5e1;
+    border-radius: 6px;
+    text-align: right;
+    font-weight: 600;
+  }
+  .payment-input:focus {
+    border-color: #1e40af;
+    outline: none;
+    box-shadow: 0 0 0 3px rgba(30, 64, 175, 0.1);
+  }
+  
+  .interest-info {
+    font-size: 0.75rem;
+    color: #64748b;
+    margin-top: 2px;
+  }
+  
+  .select-checkbox {
+    width: 18px;
+    height: 18px;
+    cursor: pointer;
+    accent-color: #1e40af;
+  }
+  
+  .post-bar {
+    background: linear-gradient(90deg, #1e40af, #0d9488);
+    color: #fff;
+    border-radius: 10px;
+    padding: 14px 20px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-bottom: 15px;
+    position: sticky;
+    top: 0;
+    z-index: 100;
+  }
+  
+  .preclosed-notice {
+    background: #fef3c7;
+    border: 2px solid #f59e0b;
+    border-radius: 8px;
+    padding: 12px 16px;
+    margin-bottom: 15px;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+  }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="container-fluid mt-3 px-3">
+
+  {# Flash Messages #}
+  {% with msgs = get_flashed_messages(with_categories=true) %}
+    {% if msgs %}
+      {% for cat, msg in msgs %}
+      <div class="alert alert-{{ cat }} alert-dismissible fade show" role="alert">
+        {{ msg }}
+        <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+      </div>
+      {% endfor %}
+    {% endif %}
+  {% endwith %}
+
+  {# Header #}
+  <div class="fd-header">
+    <h4 class="mb-0 fw-bold"><i class="bi bi-calendar-check me-2"></i>FD Collections - By Due Date</h4>
+    <small style="opacity:.85;">One record per period • Duplicate-proof • Pay only due/overdue periods</small>
+  </div>
+
+  {# PreClosed Notice #}
+  {% if include_preclosed == "1" and count_preclosed > 0 %}
+  <div class="preclosed-notice">
+    <i class="bi bi-exclamation-triangle fs-4 text-warning"></i>
+    <div>
+      <strong>Showing Pre-Closed FDs</strong> - {{ count_preclosed }} pre-closed period(s) included. 
+      <a href="{{ url_for('fdcollections_bp.fdcollections', BranchId=branch_filter, FDNumber=fdnumber_filter, MemberName=member_filter, Status=status_filter, IncludePreClosed='0') }}" class="text-primary fw-bold">Hide Pre-Closed</a>
+    </div>
+  </div>
+  {% endif %}
+
+  {# Summary Cards #}
+  <div class="row g-3 mb-3">
+    <div class="col-6 col-md-3">
+      <div class="stat-card bg-warning text-dark">
+        <div class="d-flex justify-content-between">
+          <div>
+            <div class="stat-lbl">Unpaid Periods</div>
+            <div class="stat-val">{{ count_unpaid }}</div>
+          </div>
+          <i class="bi bi-hourglass-split stat-icon"></i>
+        </div>
+      </div>
+    </div>
+
+    <div class="col-6 col-md-3">
+      <div class="stat-card bg-danger text-white">
+        <div class="d-flex justify-content-between">
+          <div>
+            <div class="stat-lbl">Total Due</div>
+            <div class="stat-val">₹{{ "{:,.0f}".format(total_interest_due - total_interest_paid) }}</div>
+          </div>
+          <i class="bi bi-exclamation-triangle stat-icon"></i>
+        </div>
+      </div>
+    </div>
+
+    <div class="col-6 col-md-2">
+      <div class="stat-card bg-success text-white">
+        <div class="d-flex justify-content-between">
+          <div>
+            <div class="stat-lbl">Paid</div>
+            <div class="stat-val">{{ count_paid }}</div>
+          </div>
+          <i class="bi bi-check-circle stat-icon"></i>
+        </div>
+      </div>
+    </div>
+
+    <div class="col-6 col-md-2">
+      <div class="stat-card bg-secondary text-white">
+        <div class="d-flex justify-content-between">
+          <div>
+            <div class="stat-lbl">PreClosed</div>
+            <div class="stat-val">{{ count_preclosed }}</div>
+          </div>
+          <i class="bi bi-x-circle stat-icon"></i>
+        </div>
+      </div>
+    </div>
+
+    <div class="col-6 col-md-2">
+      <div class="stat-card bg-info text-white">
+        <div class="d-flex justify-content-between">
+          <div>
+            <div class="stat-lbl">Total Paid</div>
+            <div class="stat-val">₹{{ "{:,.0f}".format(total_interest_paid) }}</div>
+          </div>
+          <i class="bi bi-cash-coin stat-icon"></i>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  {# Filter Bar - WITH PRECLOSED OPTION #}
+  <div class="filter-bar">
+    <form method="GET" class="row g-2 align-items-end">
+      <div class="col-6 col-md-2">
+        <label class="form-label small fw-semibold mb-1">Branch ID</label>
+        <input type="text" name="BranchId" class="form-control form-control-sm"
+               value="{{ branch_filter }}" placeholder="Branch">
+      </div>
+      <div class="col-6 col-md-2">
+        <label class="form-label small fw-semibold mb-1">FD Number</label>
+        <input type="text" name="FDNumber" class="form-control form-control-sm"
+               value="{{ fdnumber_filter }}" placeholder="FD001">
+      </div>
+      <div class="col-6 col-md-2">
+        <label class="form-label small fw-semibold mb-1">Member Name</label>
+        <input type="text" name="MemberName" class="form-control form-control-sm"
+               value="{{ member_filter }}" placeholder="Search...">
+      </div>
+      <div class="col-6 col-md-2">
+        <label class="form-label small fw-semibold mb-1">Status</label>
+        <select name="Status" class="form-select form-select-sm">
+          <option value="Unpaid" {% if status_filter == 'Unpaid' %}selected{% endif %}>Unpaid</option>
+          <option value="Paid" {% if status_filter == 'Paid' %}selected{% endif %}>Paid</option>
+          <option value="All" {% if status_filter == 'All' %}selected{% endif %}>All</option>
+        </select>
+      </div>
+      <div class="col-6 col-md-2">
+        <label class="form-label small fw-semibold mb-1">PreClosed FDs</label>
+        <select name="IncludePreClosed" class="form-select form-select-sm">
+          <option value="0" {% if include_preclosed == '0' %}selected{% endif %}>Hide</option>
+          <option value="1" {% if include_preclosed == '1' %}selected{% endif %}>Show</option>
+        </select>
+      </div>
+      <div class="col-6 col-md-2">
+        <button type="submit" class="btn btn-primary btn-sm w-100">
+          <i class="bi bi-funnel"></i> Apply
+        </button>
+      </div>
+    </form>
+  </div>
+
+  {# Payment Form #}
+  {% if collections %}
+  <form method="POST" id="paymentForm">
+    <input type="hidden" name="form_row_count" value="{{ collections|length }}">
+    
+    {# POST Bar #}
+    <div class="post-bar">
+      <div>
+        <strong id="selectedCount">0</strong> period(s) selected
+        • Total: ₹<strong id="totalAmount">0.00</strong>
+      </div>
+      <button type="submit" class="btn btn-light fw-bold px-4" onclick="return confirmPost()">
+        <i class="bi bi-check2-all text-success"></i> POST PAYMENTS
+      </button>
+    </div>
+    
+    {# Collections Table #}
+    <div class="table-wrap">
+      <table class="fd-table">
+        <thead>
+          <tr>
+            <th style="width: 40px;">
+              <input type="checkbox" class="select-checkbox" onclick="toggleAll(this)">
+            </th>
+            <th>#</th>
+            <th>FD Number</th>
+            <th>Member</th>
+            <th>Frequency</th>
+            <th>Due Date</th>
+            <th>Interest Due</th>
+            <th>Interest Paid</th>
+            <th>Remaining</th>
+            <th>Enter Amount</th>
+            <th>Status</th>
+          </tr>
+        </thead>
+        <tbody>
+          {% for i, coll in enumerate(collections) %}
+          <tr class="{{ 'row-preclosed' if coll.fd_status == 'PreClosed' else ('row-paid' if coll.is_paid else ('row-overdue' if coll.status == 'Overdue' else '')) }}" id="row_{{ i }}">
+            
+            {# Hidden fields #}
+            <input type="hidden" name="collection_id_{{ i }}" value="{{ coll.collection_id }}">
+            <input type="hidden" name="interest_due_{{ i }}" value="{{ coll.interest_due }}">
+            
+            {# Checkbox #}
+            <td class="text-center">
+              {% if coll.can_pay %}
+              <input type="checkbox" class="select-checkbox row-checkbox" 
+                     name="select_{{ i }}" value="1"
+                     data-row="{{ i }}"
+                     onchange="updateSummary()">
+              {% else %}
+              {% if coll.fd_status == 'PreClosed' %}
+              <i class="bi bi-x-circle text-muted"></i>
+              {% else %}
+              ✓
+              {% endif %}
+              {% endif %}
+            </td>
+            
+            <td>{{ i + 1 }}</td>
+            <td>
+              <strong>{{ coll.fd_number }}</strong>
+              {% if coll.fd_status == 'PreClosed' %}
+              <br><span class="badge bg-secondary"><i class="bi bi-x-circle"></i> PreClosed</span>
+              {% endif %}
+            </td>
+            <td>
+              {{ coll.member_name }}<br>
+              <small class="text-muted">{{ coll.member_code }}</small>
+            </td>
+            <td class="text-center">
+              <span class="badge bg-secondary">{{ coll.frequency_name }}</span>
+            </td>
+            
+            {# Due Date #}
+            <td>
+              <strong>{{ coll.due_date.strftime('%d-%b-%Y') if coll.due_date else '' }}</strong>
+              {% if coll.status == 'Overdue' %}
+              <br><small class="text-danger">⚠ Overdue</small>
+              {% endif %}
+            </td>
+            
+            <td class="text-end">₹{{ "{:,.2f}".format(coll.interest_due) }}</td>
+            <td class="text-end">₹{{ "{:,.2f}".format(coll.interest_paid) }}</td>
+            <td class="text-end">
+              <strong class="text-warning">₹{{ "{:,.2f}".format(coll.remaining) }}</strong>
+            </td>
+            
+            {# Payment Amount Input #}
+            <td>
+              {% if coll.can_pay %}
+              <input type="number" 
+                     step="0.01" 
+                     min="0" 
+                     max="{{ coll.remaining }}"
+                     class="payment-input"
+                     name="payment_amount_{{ i }}"
+                     id="payment_{{ i }}"
+                     placeholder="0.00"
+                     onchange="updateSummary()"
+                     oninput="validateAmount({{ i }}, {{ coll.remaining }})">
+              <div class="interest-info text-danger" id="error_{{ i }}" style="display: none;">
+                ⚠ Max: ₹{{ "{:,.2f}".format(coll.remaining) }}
+              </div>
+              {% else %}
+              {% if coll.fd_status == 'PreClosed' %}
+              <span class="text-muted">—</span>
+              {% else %}
+              <span class="text-success">✓ Paid</span>
+              {% endif %}
+              {% endif %}
+            </td>
+            
+            {# Status #}
+            <td>
+              {% if coll.fd_status == 'PreClosed' %}
+              <span class="badge-preclosed"><i class="bi bi-x-circle"></i> PreClosed</span>
+              {% elif coll.status == 'Paid' %}
+              <span class="badge-paid"><i class="bi bi-check-circle"></i> Paid</span>
+              {% elif coll.status == 'Overdue' %}
+              <span class="badge-overdue"><i class="bi bi-exclamation-triangle"></i> Overdue</span>
+              {% else %}
+              <span class="badge-due"><i class="bi bi-clock"></i> Due</span>
+              {% endif %}
+            </td>
+          </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+  </form>
+  
+  {% else %}
+  <div class="alert alert-info text-center py-5">
+    <i class="bi bi-inbox fs-1 d-block mb-2 opacity-50"></i>
+    <strong>No collections found</strong> for the selected filters.
+    {% if include_preclosed == '0' %}
+    <br><small>Pre-closed FDs are hidden. <a href="{{ url_for('fdcollections_bp.fdcollections', BranchId=branch_filter, FDNumber=fdnumber_filter, MemberName=member_filter, Status=status_filter, IncludePreClosed='1') }}" class="fw-bold">Show Pre-Closed FDs</a></small>
+    {% endif %}
+  </div>
+  {% endif %}
+
+</div>
+
+<script>
+// Toggle all checkboxes
+function toggleAll(masterCheckbox) {
+  document.querySelectorAll('.row-checkbox').forEach(cb => {
+    cb.checked = masterCheckbox.checked;
+  });
+  updateSummary();
+}
+
+// Validate amount does not exceed remaining
+function validateAmount(rowIndex, maxAmount) {
+  const input = document.getElementById('payment_' + rowIndex);
+  const error = document.getElementById('error_' + rowIndex);
+  const value = parseFloat(input.value || 0);
+  
+  if (value > maxAmount) {
+    error.style.display = 'block';
+    input.style.borderColor = '#dc2626';
+    input.style.background = '#fee2e2';
+  } else {
+    error.style.display = 'none';
+    input.style.borderColor = '#cbd5e1';
+    input.style.background = '#fff';
+  }
+  
+  updateSummary();
+}
+
+// Update summary bar
+function updateSummary() {
+  let count = 0;
+  let total = 0;
+  
+  document.querySelectorAll('.row-checkbox:checked').forEach(cb => {
+    count++;
+    const rowIndex = cb.dataset.row;
+    const input = document.getElementById('payment_' + rowIndex);
+    const amount = parseFloat(input.value || 0);
+    total += amount;
+    
+    // Highlight selected row
+    document.getElementById('row_' + rowIndex).classList.add('row-selected');
+  });
+  
+  // Remove highlight from unselected rows
+  document.querySelectorAll('.row-checkbox:not(:checked)').forEach(cb => {
+    const rowIndex = cb.dataset.row;
+    document.getElementById('row_' + rowIndex).classList.remove('row-selected');
+  });
+  
+  document.getElementById('selectedCount').textContent = count;
+  document.getElementById('totalAmount').textContent = total.toLocaleString('en-IN', {minimumFractionDigits: 2, maximumFractionDigits: 2});
+}
+
+// Confirm before posting
+function confirmPost() {
+  const count = parseInt(document.getElementById('selectedCount').textContent);
+  
+  if (count === 0) {
+    alert('Please select at least one period to post payment.');
+    return false;
+  }
+  
+  // Check for validation errors
+  let hasErrors = false;
+  document.querySelectorAll('.row-checkbox:checked').forEach(cb => {
+    const rowIndex = cb.dataset.row;
+    const input = document.getElementById('payment_' + rowIndex);
+    const error = document.getElementById('error_' + rowIndex);
+    
+    if (error.style.display !== 'none') {
+      hasErrors = true;
+    }
+    
+    if (!input.value || parseFloat(input.value) <= 0) {
+      alert('Please enter payment amount for all selected periods.');
+      hasErrors = true;
+    }
+  });
+  
+  if (hasErrors) {
+    return false;
+  }
+  
+  const total = document.getElementById('totalAmount').textContent;
+  return confirm(`Post payments for ${count} period(s)?\nTotal Amount: ₹${total}`);
+}
+
+// Initialize
+document.addEventListener('DOMContentLoaded', function() {
+  updateSummary();
+});
+</script>
+
+{% endblock %}

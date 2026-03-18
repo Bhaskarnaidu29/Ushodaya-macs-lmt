@@ -1,0 +1,311 @@
+{% extends "base.html" %}
+
+{% block title %}Loans Management - Ushodaya MACS Ltd{% endblock %}
+{% block page_title %}Loans Management{% endblock %}
+
+{% block extra_css %}
+<style>
+    .page-header {
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        color: white;
+        border-radius: 16px;
+        padding: 30px;
+        margin-bottom: 30px;
+        box-shadow: 0 4px 20px rgba(102, 126, 234, 0.3);
+    }
+
+    .section-card {
+        background: white;
+        border-radius: 12px;
+        padding: 25px;
+        margin-bottom: 30px;
+        box-shadow: 0 2px 10px rgba(0,0,0,0.05);
+    }
+
+    .section-title {
+        font-size: 1.3rem;
+        font-weight: 700;
+        color: #2c3e50;
+        margin-bottom: 20px;
+        padding-bottom: 10px;
+        border-bottom: 3px solid #667eea;
+        display: flex;
+        align-items: center;
+        gap: 10px;
+    }
+
+    .loan-card {
+        background: white;
+        border-radius: 12px;
+        padding: 20px;
+        margin-bottom: 15px;
+        border-left: 5px solid #28a745;
+        box-shadow: 0 2px 8px rgba(0,0,0,0.05);
+        transition: all 0.3s;
+    }
+
+    .loan-card:hover {
+        transform: translateY(-3px);
+        box-shadow: 0 4px 15px rgba(0,0,0,0.1);
+    }
+
+    .approved-card {
+        border-left-color: #ffc107;
+        background: linear-gradient(to right, #fff9e6, white);
+    }
+
+    .active-loan-card {
+        border-left-color: #28a745;
+    }
+
+    .member-name {
+        font-size: 1.2rem;
+        font-weight: 700;
+        color: #2c3e50;
+        margin-bottom: 5px;
+    }
+
+    .loan-amount {
+        font-size: 1.5rem;
+        font-weight: 700;
+        color: #28a745;
+        margin: 10px 0;
+    }
+
+    .detail-row {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+        gap: 15px;
+        margin: 15px 0;
+    }
+
+    .detail-item {
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        font-size: 0.9rem;
+    }
+
+    .detail-icon {
+        color: #667eea;
+    }
+
+    .btn-disburse {
+        background: linear-gradient(135deg, #28a745, #20c997);
+        color: white;
+        padding: 10px 20px;
+        border-radius: 8px;
+        font-weight: 700;
+        text-decoration: none;
+        border: none;
+        transition: all 0.3s;
+    }
+
+    .btn-view {
+        background: linear-gradient(135deg, #667eea, #764ba2);
+        color: white;
+        padding: 10px 20px;
+        border-radius: 8px;
+        font-weight: 700;
+        text-decoration: none;
+        transition: all 0.3s;
+    }
+
+    .status-badge {
+        padding: 6px 12px;
+        border-radius: 12px;
+        font-weight: 700;
+        font-size: 0.85rem;
+    }
+
+    .status-active {
+        background: #d4edda;
+        color: #155724;
+    }
+
+    .status-closed {
+        background: #d1ecf1;
+        color: #0c5460;
+    }
+
+    .charges-summary {
+        background: #fff3cd;
+        border-radius: 8px;
+        padding: 10px;
+        margin: 10px 0;
+        font-size: 0.85rem;
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="container-fluid">
+    <div class="page-header">
+        <h2><i class="bi bi-cash-stack"></i> Loans Management</h2>
+        <p class="mb-0" style="opacity: 0.9;">Disburse approved loans and manage active loans</p>
+    </div>
+
+    <!-- Approved Applications (Ready for Disbursement) -->
+    <div class="section-card">
+        <div class="section-title">
+            <i class="bi bi-check-circle"></i> Approved Applications (Ready for Disbursement)
+            <span style="margin-left: auto; background: #ffc107; color: #000; padding: 5px 15px; border-radius: 15px; font-size: 0.9rem;">
+                {{ approved_apps|length }}
+            </span>
+        </div>
+
+        {% if approved_apps %}
+        {% for app in approved_apps %}
+        <div class="loan-card approved-card">
+            <div class="d-flex justify-content-between align-items-start">
+                <div style="flex: 1;">
+                    <div class="member-name">{{ app.MemberName }}</div>
+                    <div style="color: #6c757d; font-weight: 600;">
+                        <i class="bi bi-person-badge"></i> {{ app.MemberCode }}
+                    </div>
+
+                    <div class="loan-amount">
+                        ₹{{ "{:,.2f}".format(app.LoanAmountApproved) if app.LoanAmountApproved else '0.00' }}
+                    </div>
+
+                    <div class="detail-row">
+                        <div class="detail-item">
+                            <span class="detail-icon"><i class="bi bi-building"></i></span>
+                            <span>{{ app.CenterName or 'N/A' }}</span>
+                        </div>
+                        <div class="detail-item">
+                            <span class="detail-icon"><i class="bi bi-box"></i></span>
+                            <span>{{ app.ProductName or 'N/A' }}</span>
+                        </div>
+                        <div class="detail-item">
+                            <span class="detail-icon"><i class="bi bi-percent"></i></span>
+                            <span>{{ app.InterestRate or '0' }}% per annum</span>
+                        </div>
+                        <div class="detail-item">
+                            <span class="detail-icon"><i class="bi bi-calendar-range"></i></span>
+                            <span>{{ app.Tenure or '0' }} months</span>
+                        </div>
+                    </div>
+
+                    <div class="charges-summary">
+                        <strong>Charges:</strong>
+                        Processing Fee: ₹{{ "{:,.2f}".format(app.ProcessingFee or 0) }} |
+                        Member Insurance: ₹{{ "{:,.2f}".format(app.MemberInsurance or 0) }} |
+                        Nominee Insurance: ₹{{ "{:,.2f}".format(app.NomineeInsurance or 0) }} |
+                        Security Deposit: ₹{{ "{:,.2f}".format(app.SecurityDeposit or 0) }}
+                    </div>
+
+                    <div style="margin-top: 10px; font-size: 0.85rem; color: #6c757d;">
+                        <i class="bi bi-calendar-check"></i> 
+                        Approved: {{ app.ApprovedOn.strftime('%d %b %Y') if app.ApprovedOn else 'N/A' }}
+                    </div>
+                </div>
+
+                <div>
+                    <a href="{{ url_for('loans.disburse_loan', app_id=app.LoanApplicationID) }}" class="btn-disburse">
+                        <i class="bi bi-send-fill"></i> Disburse Loan
+                    </a>
+                </div>
+            </div>
+        </div>
+        {% endfor %}
+        {% else %}
+        <div class="text-center py-4" style="color: #6c757d;">
+            <i class="bi bi-inbox" style="font-size: 3rem;"></i>
+            <p class="mt-2">No approved applications pending disbursement</p>
+        </div>
+        {% endif %}
+    </div>
+
+    <!-- Active Loans -->
+    <div class="section-card">
+        <div class="section-title">
+            <i class="bi bi-wallet2"></i> Active Loans
+            <span style="margin-left: auto; background: #28a745; color: white; padding: 5px 15px; border-radius: 15px; font-size: 0.9rem;">
+                {{ loans|length }}
+            </span>
+        </div>
+
+        {% if loans %}
+        <div class="row">
+            {% for loan in loans %}
+            <div class="col-lg-6">
+                <div class="loan-card active-loan-card">
+                    <div class="d-flex justify-content-between align-items-start mb-2">
+                        <div style="flex: 1;">
+                            <div style="font-size: 0.85rem; color: #6c757d; font-weight: 600;">
+                                Loan ID: #{{ loan.loanid }}
+                            </div>
+                            <div class="member-name">{{ loan.MemberName }}</div>
+                            <div style="color: #6c757d;">
+                                <i class="bi bi-person-badge"></i> {{ loan.member_code }}
+                            </div>
+                        </div>
+                        <div>
+                            <span class="status-badge status-{{ loan.loanstatus|lower if loan.loanstatus else 'active' }}">
+                                {{ loan.loanstatus or 'ACTIVE' }}
+                            </span>
+                        </div>
+                    </div>
+
+                    <div class="detail-row">
+                        <div class="detail-item">
+                            <span class="detail-icon"><i class="bi bi-building"></i></span>
+                            <span>{{ loan.CenterName or 'N/A' }}</span>
+                        </div>
+                        <div class="detail-item">
+                            <span class="detail-icon"><i class="bi bi-box"></i></span>
+                            <span>{{ loan.ProductName or 'N/A' }}</span>
+                        </div>
+                    </div>
+
+                    <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 15px; margin: 15px 0; padding: 15px; background: #f8f9fa; border-radius: 8px;">
+                        <div>
+                            <div style="font-size: 0.75rem; color: #6c757d;">Loan Amount</div>
+                            <div style="font-size: 1.2rem; font-weight: 700; color: #28a745;">
+                                ₹{{ "{:,.2f}".format(loan.loanamount) if loan.loanamount else '0.00' }}
+                            </div>
+                        </div>
+                        <div>
+                            <div style="font-size: 0.75rem; color: #6c757d;">EMI</div>
+                            <div style="font-size: 1.2rem; font-weight: 700; color: #667eea;">
+                                ₹{{ "{:,.2f}".format(loan.emi) if loan.emi else '0.00' }}
+                            </div>
+                        </div>
+                        <div>
+                            <div style="font-size: 0.75rem; color: #6c757d;">Principal Outstanding</div>
+                            <div style="font-size: 1rem; font-weight: 700; color: #dc3545;">
+                                ₹{{ "{:,.2f}".format(loan.principaloutstanding) if loan.principaloutstanding else '0.00' }}
+                            </div>
+                        </div>
+                        <div>
+                            <div style="font-size: 0.75rem; color: #6c757d;">Tenure</div>
+                            <div style="font-size: 1rem; font-weight: 700;">
+                                {{ loan.tenure or '0' }} months
+                            </div>
+                        </div>
+                    </div>
+
+                    <div style="font-size: 0.85rem; color: #6c757d; margin-bottom: 10px;">
+                        <i class="bi bi-calendar-event"></i> 
+                        Disbursed: {{ loan.disbursementdate.strftime('%d %b %Y') if loan.disbursementdate else 'N/A' }}
+                    </div>
+
+                    <div style="text-align: right;">
+                        <a href="{{ url_for('loans.view_loan', loan_id=loan.loanid) }}" class="btn-view">
+                            <i class="bi bi-eye-fill"></i> View Details
+                        </a>
+                    </div>
+                </div>
+            </div>
+            {% endfor %}
+        </div>
+        {% else %}
+        <div class="text-center py-4" style="color: #6c757d;">
+            <i class="bi bi-inbox" style="font-size: 3rem;"></i>
+            <p class="mt-2">No active loans found</p>
+        </div>
+        {% endif %}
+    </div>
+</div>
+{% endblock %}

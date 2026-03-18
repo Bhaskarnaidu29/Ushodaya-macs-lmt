@@ -1,0 +1,356 @@
+{% extends "base.html" %}
+{% block title %}Reports Center - Ushodaya MACS Ltd{% endblock %}
+{% block page_title %}Reports{% endblock %}
+
+{% block extra_css %}
+<style>
+    .reports-header {
+        background: linear-gradient(135deg, #0c2a78 0%, #1857c9 100%);
+        color: white; border-radius: 12px;
+        padding: 28px 30px; margin-bottom: 30px;
+    }
+    .category-section {
+        margin-bottom: 40px;
+    }
+    .category-title {
+        font-size: 1.2rem; font-weight: 700; color: #1e293b;
+        margin-bottom: 20px; padding-bottom: 10px;
+        border-bottom: 3px solid #0c2a78;
+        display: flex; align-items: center; gap: 10px;
+    }
+    .category-icon {
+        width: 40px; height: 40px; border-radius: 10px;
+        display: flex; align-items: center; justify-content: center;
+        font-size: 1.3rem;
+    }
+    .report-card {
+        background: white; border-radius: 12px;
+        padding: 20px; box-shadow: 0 2px 10px rgba(0,0,0,.07);
+        border: 2px solid #e5e7eb;
+        transition: all .2s; cursor: pointer;
+        text-decoration: none; color: inherit;
+        display: block; height: 100%;
+    }
+    .report-card:hover {
+        border-color: #0c2a78;
+        box-shadow: 0 6px 20px rgba(12,42,120,.15);
+        transform: translateY(-2px); color: inherit;
+    }
+    .report-icon {
+        width: 48px; height: 48px; border-radius: 10px;
+        display: flex; align-items: center; justify-content: center;
+        font-size: 1.4rem; margin-bottom: 12px;
+    }
+    .report-title {
+        font-weight: 700; font-size: .95rem; color: #1e293b;
+        margin-bottom: 6px;
+    }
+    .report-desc {
+        font-size: .82rem; color: #6b7280; line-height: 1.4;
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="container-fluid">
+
+    {% with messages = get_flashed_messages(with_categories=true) %}
+        {% if messages %}{% for cat, msg in messages %}
+        <div class="alert alert-{{ cat }} alert-dismissible fade show">
+            <i class="bi bi-info-circle me-2"></i>{{ msg }}
+            <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+        </div>
+        {% endfor %}{% endif %}
+    {% endwith %}
+
+    <div class="reports-header">
+        <h4 class="fw-bold mb-1">
+            <i class="bi bi-bar-chart-line me-2"></i>Reports Center
+        </h4>
+        <small style="opacity:.85;">Comprehensive reporting system for all operations</small>
+    </div>
+
+    <!-- MEMBER REPORTS -->
+    <div class="category-section">
+        <div class="category-title">
+            <div class="category-icon" style="background:#dbeafe;">
+                <i class="bi bi-people-fill text-primary"></i>
+            </div>
+            Member Reports
+        </div>
+        <div class="row g-3">
+            <div class="col-md-4 col-lg-3">
+                <a href="{{ url_for('reports.member_joining') }}" class="report-card">
+                    <div class="report-icon" style="background:#dbeafe;">
+                        <i class="bi bi-person-plus text-primary"></i>
+                    </div>
+                    <div class="report-title">Member Joining</div>
+                    <div class="report-desc">New members joined in date range</div>
+                </a>
+            </div>
+            <div class="col-md-4 col-lg-3">
+                <a href="{{ url_for('reports.member_withdraw') }}" class="report-card">
+                    <div class="report-icon" style="background:#fee2e2;">
+                        <i class="bi bi-person-dash" style="color:#dc2626;"></i>
+                    </div>
+                    <div class="report-title">Member Withdraw</div>
+                    <div class="report-desc">Members who left or withdrawn</div>
+                </a>
+            </div>
+            <div class="col-md-4 col-lg-3">
+                <a href="{{ url_for('reports.member_details') }}" class="report-card">
+                    <div class="report-icon" style="background:#e0e7ff;">
+                        <i class="bi bi-person-lines-fill" style="color:#4f46e5;"></i>
+                    </div>
+                    <div class="report-title">Member Details</div>
+                    <div class="report-desc">Complete member information list</div>
+                </a>
+            </div>
+        </div>
+    </div>
+
+    <!-- LOAN REPORTS -->
+    <div class="category-section">
+        <div class="category-title">
+            <div class="category-icon" style="background:#fef3c7;">
+                <i class="bi bi-cash-stack" style="color:#d97706;"></i>
+            </div>
+            Loan Reports
+        </div>
+        <div class="row g-3">
+            <div class="col-md-4 col-lg-3">
+                <a href="{{ url_for('reports.loan_ledger') }}?loan_id=" class="report-card">
+                    <div class="report-icon" style="background:#fef3c7;">
+                        <i class="bi bi-journal-text" style="color:#d97706;"></i>
+                    </div>
+                    <div class="report-title">Loan Ledger</div>
+                    <div class="report-desc">Transaction history for specific loan</div>
+                </a>
+            </div>
+            <div class="col-md-4 col-lg-3">
+                <a href="{{ url_for('reports.member_loan_ledger') }}?member_code=" class="report-card">
+                    <div class="report-icon" style="background:#fff7ed;">
+                        <i class="bi bi-person-badge" style="color:#ea580c;"></i>
+                    </div>
+                    <div class="report-title">Member Loan Ledger</div>
+                    <div class="report-desc">All loans for a specific member</div>
+                </a>
+            </div>
+            <div class="col-md-4 col-lg-3">
+                <a href="{{ url_for('reports.arrear_details') }}" class="report-card">
+                    <div class="report-icon" style="background:#fee2e2;">
+                        <i class="bi bi-exclamation-triangle" style="color:#dc2626;"></i>
+                    </div>
+                    <div class="report-title">Arrear Details</div>
+                    <div class="report-desc">All overdue payments and arrears</div>
+                </a>
+            </div>
+            <div class="col-md-4 col-lg-3">
+                <a href="{{ url_for('reports.member_outstanding') }}" class="report-card">
+                    <div class="report-icon" style="background:#fce7f3;">
+                        <i class="bi bi-wallet2" style="color:#be185d;"></i>
+                    </div>
+                    <div class="report-title">Member Outstanding</div>
+                    <div class="report-desc">Outstanding balance per member</div>
+                </a>
+            </div>
+            <div class="col-md-4 col-lg-3">
+                <a href="{{ url_for('reports.center_outstanding') }}" class="report-card">
+                    <div class="report-icon" style="background:#f3e8ff;">
+                        <i class="bi bi-building" style="color:#7c3aed;"></i>
+                    </div>
+                    <div class="report-title">Center Outstanding</div>
+                    <div class="report-desc">Outstanding balance per center</div>
+                </a>
+            </div>
+        </div>
+    </div>
+
+    <!-- COLLECTION REPORTS -->
+    <div class="category-section">
+        <div class="category-title">
+            <div class="category-icon" style="background:#d1fae5;">
+                <i class="bi bi-cash-coin" style="color:#059669;"></i>
+            </div>
+            Collection Reports
+        </div>
+        <div class="row g-3">
+            <div class="col-md-4 col-lg-3">
+                <a href="{{ url_for('reports.daily_collection') }}" class="report-card">
+                    <div class="report-icon" style="background:#fef3c7;">
+                        <i class="bi bi-calendar-day" style="color:#d97706;"></i>
+                    </div>
+                    <div class="report-title">Daily Collection</div>
+                    <div class="report-desc">Collections in date range</div>
+                </a>
+            </div>
+            <div class="col-md-4 col-lg-3">
+                <a href="{{ url_for('reports.weekly_collection') }}" class="report-card">
+                    <div class="report-icon" style="background:#d1fae5;">
+                        <i class="bi bi-calendar-week" style="color:#059669;"></i>
+                    </div>
+                    <div class="report-title">Weekly Collection</div>
+                    <div class="report-desc">Weekly loan payment sheet</div>
+                </a>
+            </div>
+            <div class="col-md-4 col-lg-3">
+                <a href="{{ url_for('reports.monthly_collection') }}" class="report-card">
+                    <div class="report-icon" style="background:#dbeafe;">
+                        <i class="bi bi-calendar-month text-primary"></i>
+                    </div>
+                    <div class="report-title">Monthly Collection</div>
+                    <div class="report-desc">Monthly loan payment sheet</div>
+                </a>
+            </div>
+            <div class="col-md-4 col-lg-3">
+                <a href="{{ url_for('reports.arrears_collected') }}" class="report-card">
+                    <div class="report-icon" style="background:#fce7f3;">
+                        <i class="bi bi-clock-history" style="color:#be185d;"></i>
+                    </div>
+                    <div class="report-title">Arrears Collected</div>
+                    <div class="report-desc">Overdue payments collected</div>
+                </a>
+            </div>
+        </div>
+    </div>
+
+    <!-- ADVANCE REPORTS -->
+    <div class="category-section">
+        <div class="category-title">
+            <div class="category-icon" style="background:#e0e7ff;">
+                <i class="bi bi-fast-forward-fill" style="color:#4f46e5;"></i>
+            </div>
+            Advance Reports
+        </div>
+        <div class="row g-3">
+            <div class="col-md-4 col-lg-3">
+                <a href="{{ url_for('reports.advance_collected') }}" class="report-card">
+                    <div class="report-icon" style="background:#e0e7ff;">
+                        <i class="bi bi-arrow-up-circle" style="color:#4f46e5;"></i>
+                    </div>
+                    <div class="report-title">Advance Collected</div>
+                    <div class="report-desc">Advance payments received</div>
+                </a>
+            </div>
+            <div class="col-md-4 col-lg-3">
+                <a href="{{ url_for('reports.advance_withdraw') }}" class="report-card">
+                    <div class="report-icon" style="background:#fee2e2;">
+                        <i class="bi bi-arrow-down-circle" style="color:#dc2626;"></i>
+                    </div>
+                    <div class="report-title">Advance Withdraw</div>
+                    <div class="report-desc">Advance payment adjustments</div>
+                </a>
+            </div>
+        </div>
+    </div>
+
+    <!-- DEPOSIT REPORTS -->
+    <div class="category-section">
+        <div class="category-title">
+            <div class="category-icon" style="background:#ecfdf5;">
+                <i class="bi bi-shield-check" style="color:#10b981;"></i>
+            </div>
+            Deposit Reports
+        </div>
+        <div class="row g-3">
+            <div class="col-md-4 col-lg-3">
+                <a href="{{ url_for('reports.security_deposit_collected') }}" class="report-card">
+                    <div class="report-icon" style="background:#d1fae5;">
+                        <i class="bi bi-piggy-bank" style="color:#059669;"></i>
+                    </div>
+                    <div class="report-title">Security Deposit Collected</div>
+                    <div class="report-desc">Security deposits received</div>
+                </a>
+            </div>
+            <div class="col-md-4 col-lg-3">
+                <a href="{{ url_for('reports.security_deposit_withdraw') }}" class="report-card">
+                    <div class="report-icon" style="background:#fee2e2;">
+                        <i class="bi bi-piggy-bank-fill" style="color:#dc2626;"></i>
+                    </div>
+                    <div class="report-title">Security Deposit Withdraw</div>
+                    <div class="report-desc">Security deposit refunds</div>
+                </a>
+            </div>
+            <div class="col-md-4 col-lg-3">
+                <a href="{{ url_for('reports.sd_withdraw_receipt') }}" class="report-card">
+                    <div class="report-icon" style="background:#fff7ed;">
+                        <i class="bi bi-receipt" style="color:#ea580c;"></i>
+                    </div>
+                    <div class="report-title">SD Withdraw Receipt</div>
+                    <div class="report-desc">Print withdrawal receipt</div>
+                </a>
+            </div>
+        </div>
+    </div>
+
+    <!-- FINANCIAL REPORTS -->
+    <div class="category-section">
+        <div class="category-title">
+            <div class="category-icon" style="background:#fef3c7;">
+                <i class="bi bi-graph-up-arrow" style="color:#d97706;"></i>
+            </div>
+            Financial Reports
+        </div>
+        <div class="row g-3">
+            <div class="col-md-4 col-lg-3">
+                <a href="{{ url_for('reports.center_summary') }}?center_id=" class="report-card">
+                    <div class="report-icon" style="background:#e0e7ff;">
+                        <i class="bi bi-file-earmark-bar-graph" style="color:#4f46e5;"></i>
+                    </div>
+                    <div class="report-title">Center Summary Sheet</div>
+                    <div class="report-desc">Financial summary per center</div>
+                </a>
+            </div>
+            <div class="col-md-4 col-lg-3">
+                <a href="{{ url_for('reports.member_summary') }}?member_code=" class="report-card">
+                    <div class="report-icon" style="background:#dbeafe;">
+                        <i class="bi bi-person-vcard" style="color:#2563eb;"></i>
+                    </div>
+                    <div class="report-title">Member Summary Sheet</div>
+                    <div class="report-desc">Financial summary for member</div>
+                </a>
+            </div>
+            <div class="col-md-4 col-lg-3">
+                <a href="{{ url_for('reports.glance_report') }}" class="report-card">
+                    <div class="report-icon" style="background:#eff6ff;">
+                        <i class="bi bi-eye" style="color:#2563eb;"></i>
+                    </div>
+                    <div class="report-title">Glance Report</div>
+                    <div class="report-desc">Overall system snapshot</div>
+                </a>
+            </div>
+        </div>
+    </div>
+
+    <!-- PASSBOOK REPORTS -->
+    <div class="category-section">
+        <div class="category-title">
+            <div class="category-icon" style="background:#fce7f3;">
+                <i class="bi bi-book" style="color:#be185d;"></i>
+            </div>
+            Passbooks
+        </div>
+        <div class="row g-3">
+            <div class="col-md-4 col-lg-3">
+                <a href="{{ url_for('reports.loan_passbook') }}?loan_id=" class="report-card">
+                    <div class="report-icon" style="background:#fef3c7;">
+                        <i class="bi bi-journal-bookmark" style="color:#d97706;"></i>
+                    </div>
+                    <div class="report-title">Loan Passbook</div>
+                    <div class="report-desc">Individual loan transaction history</div>
+                </a>
+            </div>
+            <div class="col-md-4 col-lg-3">
+                <a href="{{ url_for('reports.savings_passbook') }}?member_code=" class="report-card">
+                    <div class="report-icon" style="background:#d1fae5;">
+                        <i class="bi bi-journal-check" style="color:#059669;"></i>
+                    </div>
+                    <div class="report-title">Savings Passbook</div>
+                    <div class="report-desc">Member savings transaction history</div>
+                </a>
+            </div>
+        </div>
+    </div>
+
+</div>
+{% endblock %}

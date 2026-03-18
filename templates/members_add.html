@@ -1,0 +1,481 @@
+{% extends "base.html" %}
+
+{% block title %}Add Member - Ushodaya MACS Ltd{% endblock %}
+{% block page_title %}Add New Member{% endblock %}
+
+{% block extra_css %}
+<style>
+    .form-header {
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        color: white;
+        border-radius: 12px;
+        padding: 25px;
+        margin-bottom: 30px;
+    }
+
+    .form-card {
+        background: white;
+        border-radius: 12px;
+        padding: 30px;
+        margin-bottom: 25px;
+        box-shadow: 0 2px 10px rgba(0,0,0,0.05);
+    }
+
+    .section-title {
+        font-size: 1.2rem;
+        font-weight: 700;
+        color: #2c3e50;
+        margin-bottom: 20px;
+        padding-bottom: 10px;
+        border-bottom: 3px solid #667eea;
+        display: flex;
+        align-items: center;
+        gap: 10px;
+    }
+
+    .form-label {
+        font-weight: 700;
+        color: #2c3e50;
+        margin-bottom: 8px;
+    }
+
+    .form-control, .form-select {
+        border: 2px solid #e9ecef;
+        border-radius: 8px;
+        padding: 10px 15px;
+    }
+
+    .form-control:focus, .form-select:focus {
+        border-color: #667eea;
+        box-shadow: 0 0 0 0.2rem rgba(102, 126, 234, 0.1);
+    }
+
+    .auto-code {
+        background: linear-gradient(135deg, #f8f9fa, #e9ecef);
+        border: 2px solid #667eea;
+        border-radius: 8px;
+        padding: 12px 15px;
+        font-weight: 700;
+        color: #667eea;
+        font-size: 1.1rem;
+    }
+
+    .btn-submit {
+        background: linear-gradient(135deg, #667eea, #764ba2);
+        color: white;
+        padding: 12px 30px;
+        border-radius: 8px;
+        font-weight: 700;
+        border: none;
+    }
+
+    .btn-cancel {
+        background: #6c757d;
+        color: white;
+        padding: 12px 30px;
+        border-radius: 8px;
+        font-weight: 700;
+        text-decoration: none;
+    }
+
+    .required::after {
+        content: " *";
+        color: #dc3545;
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="container-fluid">
+    <div class="row justify-content-center">
+        <div class="col-lg-10">
+            <div class="form-header">
+                <h3><i class="bi bi-person-plus-fill"></i> Add New Member</h3>
+                <p class="mb-0" style="opacity: 0.9;">Register a new group member</p>
+            </div>
+
+            <form method="POST">
+                <!-- Auto-Generated Member Code -->
+                <div class="form-card">
+                    <div class="section-title">
+                        <i class="bi bi-hash"></i> Member Code (Auto-Generated)
+                    </div>
+                    <div class="auto-code">
+                        <i class="bi bi-check-circle"></i> {{ next_member_code }}
+                        <small style="float: right; opacity: 0.7;">(Automatically assigned)</small>
+                    </div>
+                </div>
+
+                <!-- Basic Information -->
+                <div class="form-card">
+                    <div class="section-title">
+                        <i class="bi bi-person"></i> Basic Information
+                    </div>
+                    
+                    <div class="row">
+                        <div class="col-md-6 mb-3">
+                            <label class="form-label required">Full Name</label>
+                            <input type="text" class="form-control" name="full_name" required>
+                        </div>
+
+                        <div class="col-md-6 mb-3">
+                            <label class="form-label required">Center</label>
+                            <select class="form-select" name="center_id" required>
+                                <option value="">Select Center...</option>
+                                {% for center in centers %}
+                                <option value="{{ center.id }}">{{ center.center_no }} - {{ center.center_name }}</option>
+                                {% endfor %}
+                            </select>
+                        </div>
+                    </div>
+                   <div class="col-md-6 mb-3">
+<label class="form-label">Group No</label>
+
+<select class="form-select" name="group_id">
+
+<option value="">Select Group</option>
+<option value="1">Group 1</option>
+<option value="2">Group 2</option>
+<option value="3">Group 3</option>
+<option value="4">Group 4</option>
+<option value="5">Group 5</option>
+
+</select>
+
+</div>
+
+                    <div class="row">
+                        <div class="col-md-4 mb-3">
+                            <label class="form-label">Join Date</label>
+                            <input type="date" class="form-control" name="join_date" value="{{ current_date }}">
+                        </div>
+
+                        <div class="col-md-4 mb-3">
+                            <label class="form-label">Date of Birth</label>
+                            <input type="date" class="form-control" name="dob">
+                        </div>
+
+                        <div class="col-md-4 mb-3">
+                            <label class="form-label">Age</label>
+                            <input type="number" class="form-control" name="age" min="18" max="100" readonly style="background: #f8f9fa;">
+                            <small class="text-muted">Auto-calculated from DOB</small>
+                        </div>
+                    </div>
+
+                    <div class="row">
+                        <div class="col-md-6 mb-3">
+                            <label class="form-label">Gender</label>
+                            <select class="form-select" name="gender">
+                                <option value="">Select...</option>
+                                <option value="Female">Female</option>
+                                <option value="Male">Male</option>
+                                <option value="Other">Other</option>
+                            </select>
+                        </div>
+
+                        <div class="col-md-6 mb-3">
+                            <label class="form-label">Marital Status</label>
+                            <select class="form-select" name="marital_status">
+                                <option value="">Select...</option>
+                                <option value="Married">Married</option>
+                                <option value="Unmarried">Unmarried</option>
+                                <option value="Widow">Widow</option>
+                                <option value="Divorced">Divorced</option>
+                            </select>
+                        </div>
+                    </div>
+
+                    <div class="row">
+                        <div class="col-md-6 mb-3">
+                            <label class="form-label">Guardian Name</label>
+                            <input type="text" class="form-control" name="guardian_name">
+                        </div>
+
+                        <div class="col-md-6 mb-3">
+                            <label class="form-label">Spouse Name</label>
+                            <input type="text" class="form-control" name="spouse_name">
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Contact Information -->
+                <div class="form-card">
+                    <div class="section-title">
+                        <i class="bi bi-telephone"></i> Contact Information
+                    </div>
+                    
+                    <div class="row">
+                        <div class="col-md-6 mb-3">
+                            <label class="form-label">Phone 1</label>
+                            <input type="tel" class="form-control" name="phone1" 
+                                   pattern="[0-9]{10}" maxlength="10">
+                            <small class="text-muted">10 digit mobile number</small>
+                        </div>
+
+                        <div class="col-md-6 mb-3">
+                            <label class="form-label">Phone 2</label>
+                            <input type="tel" class="form-control" name="phone2" 
+                                   pattern="[0-9]{10}" maxlength="10">
+                        </div>
+                    </div>
+
+                    <div class="row">
+                        <div class="col-md-6 mb-3">
+                            <label class="form-label">Email</label>
+                            <input type="email" class="form-control" name="email">
+                        </div>
+
+                        <div class="col-md-6 mb-3">
+                            <label class="form-label">Aadhaar Number</label>
+                            <input type="text" class="form-control" name="aadhaar" 
+                                   pattern="[0-9]{12}" maxlength="12">
+                            <small class="text-muted">12 digit Aadhaar number</small>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Address Information -->
+                <div class="form-card">
+                    <div class="section-title">
+                        <i class="bi bi-geo-alt"></i> Address Information
+                    </div>
+                    
+                    <div class="row">
+                        <div class="col-md-6 mb-3">
+                            <label class="form-label">Address Line 1</label>
+                            <input type="text" class="form-control" name="address1">
+                        </div>
+
+                        <div class="col-md-6 mb-3">
+                            <label class="form-label">Address Line 2</label>
+                            <input type="text" class="form-control" name="address2">
+                        </div>
+                    </div>
+
+                    <div class="row">
+                        <div class="col-md-3 mb-3">
+                            <label class="form-label">City</label>
+                            <input type="text" class="form-control" name="city">
+                        </div>
+
+                        <div class="col-md-3 mb-3">
+                            <label class="form-label">Mandal</label>
+                            <input type="text" class="form-control" name="mandal">
+                        </div>
+
+                        <div class="col-md-3 mb-3">
+                            <label class="form-label">District</label>
+                            <input type="text" class="form-control" name="district">
+                        </div>
+
+                        <div class="col-md-3 mb-3">
+                            <label class="form-label">State</label>
+                            <input type="text" class="form-control" name="state">
+                        </div>
+                    </div>
+
+                    <div class="row">
+                        <div class="col-md-6 mb-3">
+                            <label class="form-label">Pincode</label>
+                            <input type="text" class="form-control" name="pincode" 
+                                   pattern="[0-9]{6}" maxlength="6">
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Financial Information -->
+                <div class="form-card">
+                    <div class="section-title">
+                        <i class="bi bi-currency-rupee"></i> Financial Information
+                    </div>
+                    
+                    <div class="row">
+                        <div class="col-md-6 mb-3">
+                            <label class="form-label">Monthly Income</label>
+                            <input type="number" class="form-control" name="monthly_income" 
+                                   step="0.01" min="0" value="0">
+                        </div>
+
+                        <div class="col-md-6 mb-3">
+                            <label class="form-label">Monthly Expenditure</label>
+                            <input type="number" class="form-control" name="expenditure" 
+                                   step="0.01" min="0" value="0">
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Nominee Information -->
+                <div class="form-card">
+                    <div class="section-title">
+                        <i class="bi bi-person-badge"></i> Nominee Information
+                    </div>
+                    
+                    <div class="row">
+                        <div class="col-md-6 mb-3">
+                            <label class="form-label">Nominee Name</label>
+                            <input type="text" class="form-control" name="nominee_name">
+                        </div>
+
+                        <div class="col-md-6 mb-3">
+                            <label class="form-label">Relation</label>
+                            <input type="text" class="form-control" name="nominee_relation">
+                        </div>
+                    </div>
+
+                    <div class="row">
+                        <div class="col-md-4 mb-3">
+                            <label class="form-label">Date of Birth</label>
+                            <input type="date" class="form-control" name="nominee_dob">
+                        </div>
+
+                        <div class="col-md-4 mb-3">
+                            <label class="form-label">Age</label>
+                            <input type="number" class="form-control" name="nominee_age" min="0" max="120" readonly style="background: #f8f9fa;">
+                            <small class="text-muted">Auto-calculated from DOB</small>
+                        </div>
+
+                        <div class="col-md-4 mb-3">
+                            <label class="form-label">Phone</label>
+                            <input type="tel" class="form-control" name="nominee_phone" 
+                                   pattern="[0-9]{10}" maxlength="10">
+                        </div>
+                    </div>
+
+                    <div class="row">
+                        <div class="col-md-12 mb-3">
+                            <label class="form-label">Aadhaar Number</label>
+                            <input type="text" class="form-control" name="nominee_aadhaar" 
+                                   pattern="[0-9]{12}" maxlength="12">
+                        </div>
+                    </div>
+
+                    <!-- Copy Address Checkbox -->
+                    <div class="row mb-3">
+                        <div class="col-md-12">
+                            <div class="form-check" style="background: #e3f2fd; padding: 15px; border-radius: 8px; border-left: 4px solid #2196f3;">
+                                <input class="form-check-input" type="checkbox" id="copyAddress" onclick="copyMemberAddress()">
+                                <label class="form-check-label" for="copyAddress" style="font-weight: 700; color: #1976d2;">
+                                    <i class="bi bi-clipboard-check"></i> Copy member address to nominee address
+                                </label>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="row">
+                        <div class="col-md-6 mb-3">
+                            <label class="form-label">Address Line 1</label>
+                            <input type="text" class="form-control" name="nominee_address1">
+                        </div>
+
+                        <div class="col-md-6 mb-3">
+                            <label class="form-label">Address Line 2</label>
+                            <input type="text" class="form-control" name="nominee_address2">
+                        </div>
+                    </div>
+
+                    <div class="row">
+                        <div class="col-md-3 mb-3">
+                            <label class="form-label">City</label>
+                            <input type="text" class="form-control" name="nominee_city">
+                        </div>
+
+                        <div class="col-md-3 mb-3">
+                            <label class="form-label">Mandal</label>
+                            <input type="text" class="form-control" name="nominee_mandal">
+                        </div>
+
+                        <div class="col-md-3 mb-3">
+                            <label class="form-label">District</label>
+                            <input type="text" class="form-control" name="nominee_district">
+                        </div>
+
+                        <div class="col-md-3 mb-3">
+                            <label class="form-label">State</label>
+                            <input type="text" class="form-control" name="nominee_state">
+                        </div>
+                    </div>
+
+                    <div class="row">
+                        <div class="col-md-6 mb-3">
+                            <label class="form-label">Pincode</label>
+                            <input type="text" class="form-control" name="nominee_pincode" 
+                                   pattern="[0-9]{6}" maxlength="6">
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Action Buttons -->
+                <div class="form-card">
+                    <div class="d-flex gap-3">
+                        <button type="submit" class="btn-submit">
+                            <i class="bi bi-check-circle"></i> Add Member
+                        </button>
+                        <a href="{{ url_for('members_bp.index') }}" class="btn-cancel">
+                            <i class="bi bi-x-circle"></i> Cancel
+                        </a>
+                    </div>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+    // Calculate age from date of birth
+    function calculateAge(dob) {
+        if (!dob) return '';
+        const today = new Date();
+        const birthDate = new Date(dob);
+        let age = today.getFullYear() - birthDate.getFullYear();
+        const monthDiff = today.getMonth() - birthDate.getMonth();
+        if (monthDiff < 0 || (monthDiff === 0 && today.getDate() < birthDate.getDate())) {
+            age--;
+        }
+        return age > 0 ? age : '';
+    }
+
+    // Auto-calculate member age when DOB changes
+    document.querySelector('input[name="dob"]').addEventListener('change', function() {
+        const age = calculateAge(this.value);
+        document.querySelector('input[name="age"]').value = age;
+    });
+
+    // Auto-calculate nominee age when DOB changes
+    document.querySelector('input[name="nominee_dob"]').addEventListener('change', function() {
+        const age = calculateAge(this.value);
+        document.querySelector('input[name="nominee_age"]').value = age;
+    });
+
+    // Copy member address to nominee address
+    function copyMemberAddress() {
+        const fields = ['address1', 'address2', 'city', 'mandal', 'district', 'state', 'pincode'];
+        fields.forEach(field => {
+            const memberValue = document.querySelector(`input[name="${field}"]`).value;
+            document.querySelector(`input[name="nominee_${field}"]`).value = memberValue;
+        });
+    }
+
+    // Validate phone numbers - only digits
+    document.querySelectorAll('input[type="tel"]').forEach(input => {
+        input.addEventListener('input', function(e) {
+            this.value = this.value.replace(/[^0-9]/g, '');
+        });
+    });
+
+    // Validate aadhaar - only digits
+    document.querySelectorAll('input[name="aadhaar"], input[name="nominee_aadhaar"]').forEach(input => {
+        input.addEventListener('input', function(e) {
+            this.value = this.value.replace(/[^0-9]/g, '');
+        });
+    });
+
+    // Validate pincode - only digits
+    document.querySelectorAll('input[name="pincode"], input[name="nominee_pincode"]').forEach(input => {
+        input.addEventListener('input', function(e) {
+            this.value = this.value.replace(/[^0-9]/g, '');
+        });
+    });
+</script>
+{% endblock %}

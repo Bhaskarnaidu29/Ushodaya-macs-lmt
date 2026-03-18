@@ -1,0 +1,404 @@
+{% extends "base.html" %}
+{% block title %}Recovery Posting - Ushodaya MACS Ltd{% endblock %}
+{% block page_title %}Weekly EMI Collection{% endblock %}
+
+{% block extra_css %}
+<style>
+    .collection-card {
+        background: white;
+        border-radius: 12px;
+        padding: 25px;
+        box-shadow: 0 2px 10px rgba(0,0,0,0.07);
+        margin-bottom: 20px;
+    }
+    .member-info-box {
+        background: linear-gradient(135deg, #eff6ff, #dbeafe);
+        border: 2px solid #bfdbfe;
+        border-radius: 10px;
+        padding: 16px;
+        margin-bottom: 20px;
+    }
+    .info-row {
+        display: flex;
+        justify-content: space-between;
+        padding: 6px 0;
+        border-bottom: 1px dashed #bfdbfe;
+    }
+    .info-row:last-child { border-bottom: none; }
+    .info-label { color: #6b7280; font-size: 0.9rem; }
+    .info-value { font-weight: 700; color: #1e40af; }
+    
+    /* Advance Balance Alert */
+    .advance-alert {
+        background: linear-gradient(135deg, #d1fae5, #a7f3d0);
+        border: 2px solid #6ee7b7;
+        border-radius: 10px;
+        padding: 16px;
+        margin-bottom: 20px;
+        animation: pulse-border 2s infinite;
+    }
+    @keyframes pulse-border {
+        0%, 100% { border-color: #6ee7b7; }
+        50% { border-color: #34d399; }
+    }
+    .advance-balance {
+        font-size: 1.5rem;
+        font-weight: 700;
+        color: #065f46;
+    }
+    
+    /* Use Advance Checkbox */
+    .use-advance-box {
+        background: #fef3c7;
+        border: 2px solid #fbbf24;
+        border-radius: 10px;
+        padding: 16px;
+        margin-bottom: 20px;
+    }
+    .use-advance-box input[type="checkbox"] {
+        width: 20px;
+        height: 20px;
+        cursor: pointer;
+    }
+    .use-advance-box label {
+        cursor: pointer;
+        font-size: 1rem;
+        margin-left: 10px;
+    }
+    
+    /* Payment Breakdown */
+    .payment-breakdown {
+        background: #f9fafb;
+        border-radius: 8px;
+        padding: 16px;
+        margin-top: 15px;
+    }
+    .breakdown-row {
+        display: flex;
+        justify-content: space-between;
+        padding: 8px 0;
+        font-size: 0.95rem;
+    }
+    .breakdown-total {
+        border-top: 2px solid #0c2a78;
+        padding-top: 10px;
+        font-weight: 700;
+        color: #0c2a78;
+        font-size: 1.1rem;
+    }
+    
+    .btn-submit {
+        background: linear-gradient(135deg, #0c2a78, #1857c9);
+        color: white;
+        border: none;
+        border-radius: 8px;
+        padding: 12px 30px;
+        font-weight: 700;
+        width: 100%;
+    }
+    .btn-submit:hover { opacity: 0.9; }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="container-fluid">
+
+    {% with messages = get_flashed_messages(with_categories=true) %}
+        {% if messages %}
+            {% for category, message in messages %}
+            <div class="alert alert-{{ category }} alert-dismissible fade show">
+                {{ message }}
+                <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+            </div>
+            {% endfor %}
+        {% endif %}
+    {% endwith %}
+
+    <div class="row">
+        <div class="col-lg-8">
+            <div class="collection-card">
+                <h5 class="mb-4">
+                    <i class="bi bi-cash-coin me-2 text-primary"></i>EMI Collection
+                </h5>
+
+                <!-- Member Information -->
+                <div class="member-info-box">
+                    <h6 class="mb-3 fw-bold text-primary">
+                        <i class="bi bi-person-circle me-2"></i>Member Details
+                    </h6>
+                    <div class="info-row">
+                        <span class="info-label">Member Code</span>
+                        <span class="info-value">{{ member_code }}</span>
+                    </div>
+                    <div class="info-row">
+                        <span class="info-label">Member Name</span>
+                        <span class="info-value">{{ member_name }}</span>
+                    </div>
+                    <div class="info-row">
+                        <span class="info-label">Loan ID</span>
+                        <span class="info-value">{{ loanid }}</span>
+                    </div>
+                    <div class="info-row">
+                        <span class="info-label">EMI Date</span>
+                        <span class="info-value">{{ duedate }}</span>
+                    </div>
+                </div>
+
+                <!-- ═══════════════════════════════════════════════════════ -->
+                <!-- ADVANCE BALANCE ALERT (Show if balance > 0) -->
+                <!-- ═══════════════════════════════════════════════════════ -->
+                {% if advance_balance > 0 %}
+                <div class="advance-alert">
+                    <div class="d-flex align-items-center justify-content-between">
+                        <div>
+                            <i class="bi bi-wallet2 me-2" style="font-size: 1.5rem; color: #065f46;"></i>
+                            <strong style="color: #065f46;">Advance Balance Available</strong>
+                        </div>
+                        <div class="advance-balance">
+                            ₹{{ "{:,.2f}".format(advance_balance) }}
+                        </div>
+                    </div>
+                    <small style="color: #047857; display: block; margin-top: 8px;">
+                        <i class="bi bi-info-circle me-1"></i>
+                        Ask member if they want to use this advance balance for today's payment
+                    </small>
+                </div>
+                {% endif %}
+
+                <!-- Recovery Form -->
+                <form method="POST" action="{{ url_for('recovery.post_recovery') }}" id="recoveryForm">
+                    <input type="hidden" name="loanrecid" value="{{ loanrecid }}">
+                    <input type="hidden" name="member_code" value="{{ member_code }}">
+                    <input type="hidden" name="loanid" value="{{ loanid }}">
+
+                    <!-- EMI Amount Due -->
+                    <div class="mb-3">
+                        <label class="form-label fw-bold">Total EMI Due</label>
+                        <div class="input-group input-group-lg">
+                            <span class="input-group-text">₹</span>
+                            <input type="text" class="form-control" 
+                                   value="{{ "{:,.2f}".format(total_due) }}" 
+                                   readonly style="font-weight: 700; font-size: 1.3rem;">
+                        </div>
+                    </div>
+
+                    <!-- ═══════════════════════════════════════════════════════ -->
+                    <!-- USE ADVANCE CHECKBOX (Manual Application) -->
+                    <!-- ═══════════════════════════════════════════════════════ -->
+                    {% if advance_balance > 0 %}
+                    <div class="use-advance-box">
+                        <div class="form-check">
+                            <input class="form-check-input" 
+                                   type="checkbox" 
+                                   id="useAdvance" 
+                                   name="use_advance"
+                                   onchange="updatePaymentCalculation()">
+                            <label class="form-check-label fw-bold" for="useAdvance">
+                                <i class="bi bi-check2-square me-1"></i>
+                                Use Advance Balance
+                            </label>
+                        </div>
+                        <small class="text-muted d-block mt-2">
+                            <i class="bi bi-exclamation-triangle me-1"></i>
+                            <strong>Check this ONLY if:</strong>
+                            <ul class="mb-0 mt-1" style="padding-left: 20px;">
+                                <li>Member is PRESENT at collection</li>
+                                <li>Member REQUESTS to use advance</li>
+                                <li>You have confirmed member's identity</li>
+                            </ul>
+                        </small>
+                    </div>
+                    {% endif %}
+
+                    <!-- Cash Amount to Collect -->
+                    <div class="mb-3">
+                        <label class="form-label fw-bold">Cash Amount to Collect</label>
+                        <div class="input-group input-group-lg">
+                            <span class="input-group-text"><i class="bi bi-cash-stack"></i></span>
+                            <input type="number" 
+                                   class="form-control" 
+                                   id="cashAmount"
+                                   name="cash_amount"
+                                   value="{{ "{:.2f}".format(total_due) }}"
+                                   step="0.01"
+                                   min="0"
+                                   required
+                                   style="font-weight: 700; font-size: 1.2rem;">
+                        </div>
+                        <small class="text-muted" id="cashHint">
+                            Member must pay ₹{{ "{:,.2f}".format(total_due) }} in cash
+                        </small>
+                    </div>
+
+                    <!-- Payment Breakdown -->
+                    <div class="payment-breakdown">
+                        <h6 class="fw-bold mb-3">
+                            <i class="bi bi-calculator me-2"></i>Payment Breakdown
+                        </h6>
+                        
+                        <div class="breakdown-row">
+                            <span>Principal Due</span>
+                            <span class="fw-semibold">₹{{ "{:,.2f}".format(principal_due) }}</span>
+                        </div>
+                        <div class="breakdown-row">
+                            <span>Interest Due</span>
+                            <span class="fw-semibold">₹{{ "{:,.2f}".format(interest_due) }}</span>
+                        </div>
+                        {% if savings_due > 0 %}
+                        <div class="breakdown-row">
+                            <span>Savings Due</span>
+                            <span class="fw-semibold">₹{{ "{:,.2f}".format(savings_due) }}</span>
+                        </div>
+                        {% endif %}
+                        
+                        <div class="breakdown-row mt-3" style="border-top: 2px dashed #d1d5db; padding-top: 10px;">
+                            <span class="fw-bold">From Advance</span>
+                            <span class="fw-bold text-success" id="advanceUsed">₹0.00</span>
+                        </div>
+                        <div class="breakdown-row">
+                            <span class="fw-bold">From Cash</span>
+                            <span class="fw-bold text-primary" id="cashUsed">₹{{ "{:,.2f}".format(total_due) }}</span>
+                        </div>
+                        
+                        <div class="breakdown-row breakdown-total">
+                            <span>Total Payment</span>
+                            <span id="totalPayment">₹{{ "{:,.2f}".format(total_due) }}</span>
+                        </div>
+                    </div>
+
+                    <!-- Payment Date -->
+                    <div class="mb-4 mt-3">
+                        <label class="form-label fw-bold">Payment Date</label>
+                        <input type="date" 
+                               name="payment_date" 
+                               class="form-control"
+                               value="{{ today }}"
+                               required>
+                    </div>
+
+                    <!-- Remarks (Optional) -->
+                    <div class="mb-4">
+                        <label class="form-label">Remarks <span class="text-muted">(Optional)</span></label>
+                        <textarea name="remarks" 
+                                  class="form-control" 
+                                  rows="2" 
+                                  placeholder="Any additional notes..."></textarea>
+                    </div>
+
+                    <button type="submit" class="btn-submit">
+                        <i class="bi bi-check-circle me-2"></i>Post Recovery
+                    </button>
+                </form>
+
+            </div>
+        </div>
+
+        <!-- Right Side: Summary -->
+        <div class="col-lg-4">
+            <div class="collection-card">
+                <h6 class="fw-bold mb-3">
+                    <i class="bi bi-info-circle me-2 text-primary"></i>Collection Summary
+                </h6>
+                
+                <div class="alert alert-warning">
+                    <small>
+                        <strong><i class="bi bi-exclamation-triangle me-1"></i>Important:</strong>
+                        <ul class="mb-0 mt-2" style="font-size: 0.85rem; padding-left: 18px;">
+                            <li>Verify member is present before posting</li>
+                            <li>Only use advance if member requests it</li>
+                            <li>Count cash carefully before submitting</li>
+                            <li>This action cannot be undone</li>
+                        </ul>
+                    </small>
+                </div>
+
+                {% if advance_balance > 0 %}
+                <div class="alert alert-info">
+                    <small>
+                        <strong><i class="bi bi-wallet2 me-1"></i>How Advance Works:</strong>
+                        <ul class="mb-0 mt-2" style="font-size: 0.85rem; padding-left: 18px;">
+                            <li>Available balance: ₹{{ "{:,.2f}".format(advance_balance) }}</li>
+                            <li>Check "Use Advance" if member wants to use it</li>
+                            <li>Cash amount will auto-adjust</li>
+                            <li>Balance will be reduced after posting</li>
+                        </ul>
+                    </small>
+                </div>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+// ═══════════════════════════════════════════════════════════════════════════
+// PAYMENT CALCULATION WITH ADVANCE
+// ═══════════════════════════════════════════════════════════════════════════
+
+const TOTAL_DUE = {{ total_due }};
+const ADVANCE_BALANCE = {{ advance_balance if advance_balance else 0 }};
+
+function updatePaymentCalculation() {
+    const useAdvance = document.getElementById('useAdvance') ? document.getElementById('useAdvance').checked : false;
+    const cashInput = document.getElementById('cashAmount');
+    const cashHint = document.getElementById('cashHint');
+    const advanceUsedEl = document.getElementById('advanceUsed');
+    const cashUsedEl = document.getElementById('cashUsed');
+    const totalPaymentEl = document.getElementById('totalPayment');
+    
+    if (useAdvance && ADVANCE_BALANCE > 0) {
+        // Member wants to use advance
+        const advanceToUse = Math.min(TOTAL_DUE, ADVANCE_BALANCE);
+        const cashNeeded = Math.max(0, TOTAL_DUE - advanceToUse);
+        
+        // Update cash input
+        cashInput.value = cashNeeded.toFixed(2);
+        
+        // Update hint
+        cashHint.innerHTML = `
+            <i class="bi bi-check-circle text-success me-1"></i>
+            Advance covers: ₹${advanceToUse.toFixed(2)} | 
+            Cash needed: ₹${cashNeeded.toFixed(2)}
+        `;
+        cashHint.className = 'text-success fw-semibold';
+        
+        // Update breakdown
+        advanceUsedEl.textContent = `₹${advanceToUse.toFixed(2)}`;
+        cashUsedEl.textContent = `₹${cashNeeded.toFixed(2)}`;
+        totalPaymentEl.textContent = `₹${TOTAL_DUE.toFixed(2)}`;
+        
+    } else {
+        // Full cash payment
+        cashInput.value = TOTAL_DUE.toFixed(2);
+        
+        cashHint.innerHTML = `Member must pay ₹${TOTAL_DUE.toFixed(2)} in cash`;
+        cashHint.className = 'text-muted';
+        
+        // Update breakdown
+        advanceUsedEl.textContent = '₹0.00';
+        cashUsedEl.textContent = `₹${TOTAL_DUE.toFixed(2)}`;
+        totalPaymentEl.textContent = `₹${TOTAL_DUE.toFixed(2)}`;
+    }
+}
+
+// Update when cash amount is manually changed
+document.getElementById('cashAmount').addEventListener('input', function() {
+    const useAdvance = document.getElementById('useAdvance') ? document.getElementById('useAdvance').checked : false;
+    const cashAmount = parseFloat(this.value) || 0;
+    
+    const advanceUsed = useAdvance ? Math.min(ADVANCE_BALANCE, TOTAL_DUE - cashAmount) : 0;
+    const totalPayment = cashAmount + advanceUsed;
+    
+    document.getElementById('advanceUsedEl').textContent = `₹${advanceUsed.toFixed(2)}`;
+    document.getElementById('cashUsed').textContent = `₹${cashAmount.toFixed(2)}`;
+    document.getElementById('totalPayment').textContent = `₹${totalPayment.toFixed(2)}`;
+});
+
+// Initialize on page load
+document.addEventListener('DOMContentLoaded', function() {
+    updatePaymentCalculation();
+});
+</script>
+{% endblock %}

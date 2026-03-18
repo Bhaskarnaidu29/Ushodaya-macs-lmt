@@ -1,0 +1,275 @@
+{% extends "base.html" %}
+{% block title %}Add Employee - Ushodaya MACS Ltd{% endblock %}
+{% block page_title %}Add Employee{% endblock %}
+
+{% block extra_css %}
+<style>
+  .page-header{background:linear-gradient(135deg,#0c2a78,#1857c9);color:#fff;border-radius:14px;padding:22px 28px;margin-bottom:20px}
+  .back-btn{background:#fff;color:#0c2a78;padding:8px 18px;border-radius:8px;font-weight:700;text-decoration:none;display:inline-flex;align-items:center;gap:6px;font-size:.88rem}
+  .back-btn:hover{color:#0c2a78;opacity:.9}
+  .form-card{background:#fff;border-radius:12px;padding:24px 26px;margin-bottom:16px;box-shadow:0 2px 10px rgba(0,0,0,.06)}
+  .sec-title{font-size:.9rem;font-weight:700;color:#0c2a78;border-bottom:2px solid #0c2a78;padding-bottom:7px;margin-bottom:16px;display:flex;align-items:center;gap:8px}
+  .form-label{font-weight:600;color:#374151;font-size:.86rem;margin-bottom:4px}
+  .form-label.req::after{content:" *";color:#dc2626}
+  .form-control,.form-select{border:2px solid #e5e7eb;border-radius:8px;padding:9px 13px;font-size:.9rem}
+  .form-control:focus,.form-select:focus{border-color:#0c2a78;box-shadow:0 0 0 3px rgba(12,42,120,.1);outline:none}
+
+  .auto-box{background:linear-gradient(135deg,#eff6ff,#dbeafe);border:2px solid #0c2a78;border-radius:10px;padding:14px 18px;display:flex;align-items:center;justify-content:space-between;gap:12px}
+  .auto-box .code{font-size:1.35rem;font-weight:800;color:#0c2a78}
+  .auto-box .sub{font-size:.78rem;color:#3b82f6;margin-top:3px}
+
+  .info-note{background:#f0fdf4;border:1px solid #bbf7d0;border-radius:7px;padding:9px 13px;font-size:.8rem;color:#15803d;margin-top:6px;display:flex;align-items:center;gap:6px}
+  .warn-note{background:#fef3c7;border:1px solid #fde68a;border-radius:7px;padding:9px 13px;font-size:.8rem;color:#92400e;margin-top:6px;display:flex;align-items:center;gap:6px}
+
+  .pw-wrap{position:relative}
+  .pw-toggle{position:absolute;right:11px;top:50%;transform:translateY(-50%);background:none;border:none;cursor:pointer;color:#6b7280;font-size:.95rem;padding:0}
+
+  .btn-submit{background:linear-gradient(135deg,#0c2a78,#1857c9);color:#fff;padding:11px 30px;border-radius:8px;font-weight:700;font-size:.92rem;border:none;cursor:pointer;display:inline-flex;align-items:center;gap:7px;transition:all .2s}
+  .btn-submit:hover{transform:translateY(-1px);box-shadow:0 6px 18px rgba(12,42,120,.35)}
+  .btn-cancel{background:#f1f5f9;color:#475569;padding:11px 30px;border-radius:8px;font-weight:700;font-size:.92rem;text-decoration:none;display:inline-flex;align-items:center;gap:7px}
+  .btn-cancel:hover{background:#e2e8f0;color:#334155}
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="container-fluid">
+<div class="row justify-content-center">
+<div class="col-lg-10 col-xl-9">
+
+  {% with messages = get_flashed_messages(with_categories=true) %}
+    {% if messages %}{% for cat,msg in messages %}
+    <div class="alert alert-{{cat}} alert-dismissible fade show">
+      <i class="bi bi-info-circle me-2"></i>{{msg}}
+      <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+    </div>
+    {% endfor %}{% endif %}
+  {% endwith %}
+
+  <div class="page-header d-flex justify-content-between align-items-center flex-wrap gap-2">
+    <div>
+      <h4 class="fw-bold mb-1"><i class="bi bi-person-plus-fill me-2"></i>Add New Employee</h4>
+      <small style="opacity:.85">Fill in the details below to create an employee account</small>
+    </div>
+    <a href="{{ url_for('employee.index') }}" class="back-btn">
+      <i class="bi bi-arrow-left"></i> Back
+    </a>
+  </div>
+
+  <form method="POST">
+
+    <!-- Auto Code -->
+    <div class="form-card">
+      <div class="sec-title"><i class="bi bi-hash"></i> Employee Code</div>
+      <div class="auto-box">
+        <div>
+          <div class="code"><i class="bi bi-check-circle text-success me-2"></i>{{ next_emp_code }}</div>
+          <div class="sub"><i class="bi bi-person me-1"></i>Login username will be: <strong>{{ next_emp_code|lower }}</strong></div>
+        </div>
+        <small style="color:#6b7280;font-size:.75rem">Auto-assigned</small>
+      </div>
+    </div>
+
+    <!-- Login Credentials -->
+    <div class="form-card">
+      <div class="sec-title"><i class="bi bi-key-fill"></i> Login Credentials</div>
+      <div class="row g-3">
+        <div class="col-md-4">
+          <label class="form-label req">Password</label>
+          <div class="pw-wrap">
+            <input type="password" class="form-control" name="password" id="pwInput"
+                   required minlength="6" placeholder="Min. 6 characters">
+            <button type="button" class="pw-toggle" onclick="togglePw()">
+              <i class="bi bi-eye" id="pwIcon"></i>
+            </button>
+          </div>
+          <div class="warn-note"><i class="bi bi-shield-lock"></i>Stored securely — cannot be viewed after saving</div>
+        </div>
+        <div class="col-md-3">
+          <label class="form-label req">Role</label>
+          <select class="form-select" name="role_id" required>
+            <option value="">— Select —</option>
+            {% for r in roles %}
+            <option value="{{ r[0] }}">{{ r[1] }}</option>
+            {% endfor %}
+          </select>
+        </div>
+        <div class="col-md-5">
+          <label class="form-label">Account Expiry</label>
+          <input type="date" class="form-control" name="expire" id="expireInput"
+                 value="{{ expire_default }}">
+          <div class="info-note"><i class="bi bi-calendar-check"></i>Auto-set to DOJ + 6 months when you enter the joining date</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Personal -->
+    <div class="form-card">
+      <div class="sec-title"><i class="bi bi-person"></i> Personal Information</div>
+      <div class="row g-3">
+        <div class="col-md-5">
+          <label class="form-label req">Employee Name</label>
+          <input type="text" class="form-control" name="emp_name" required autofocus placeholder="Full name">
+        </div>
+        <div class="col-md-4">
+          <label class="form-label">Father's Name</label>
+          <input type="text" class="form-control" name="father_name">
+        </div>
+        <div class="col-md-3">
+          <label class="form-label">Gender</label>
+          <select class="form-select" name="gender">
+            <option value="">— Select —</option>
+            <option value="Male">Male</option>
+            <option value="Female">Female</option>
+            <option value="Other">Other</option>
+          </select>
+        </div>
+        <div class="col-md-3">
+          <label class="form-label">Date of Birth</label>
+          <input type="date" class="form-control" name="dob">
+        </div>
+        <div class="col-md-3">
+          <label class="form-label req">Date of Joining</label>
+          <input type="date" class="form-control" name="doj" id="dojInput"
+                 value="{{ today }}" required>
+          <small class="text-muted" style="font-size:.75rem">Expiry auto-updates on change</small>
+        </div>
+      </div>
+    </div>
+
+    <!-- Job Details -->
+    <div class="form-card">
+      <div class="sec-title"><i class="bi bi-briefcase"></i> Job Details</div>
+      <div class="row g-3">
+        <div class="col-md-4">
+          <label class="form-label req">Designation</label>
+          <select class="form-select" name="designation" required>
+            <option value="">— Select Designation —</option>
+            <option value="Administrator">Administrator</option>
+            <option value="CEO">CEO</option>
+            <option value="Divisional Manager">Divisional Manager</option>
+            <option value="Internal Audit">Internal Audit</option>
+            <option value="Area Manager">Area Manager</option>
+            <option value="Branch Manager">Branch Manager</option>
+            <option value="Asset Branch Manager">Asset Branch Manager</option>
+            <option value="Field Credit Officer">Field Credit Officer</option>
+          </select>
+        </div>
+        <div class="col-md-3">
+          <label class="form-label req">Department</label>
+          <select class="form-select" name="department" required>
+            <option value="">— Select Department —</option>
+            <option value="Audit">Audit</option>
+            <option value="Field Operation">Field Operation</option>
+            <option value="IT">IT</option>
+            <option value="Office Staff">Office Staff</option>
+          </select>
+        </div>
+        <div class="col-md-3">
+          <label class="form-label">Salary (₹)</label>
+          <input type="number" class="form-control" name="salary" step="0.01" min="0" placeholder="0.00">
+        </div>
+        <div class="col-md-3">
+          <label class="form-label">Qualification</label>
+          <input type="text" class="form-control" name="qualification" placeholder="e.g. B.Com">
+        </div>
+        <div class="col-md-5">
+          <label class="form-label">Experience</label>
+          <input type="text" class="form-control" name="experience" placeholder="e.g. 3 years in banking">
+        </div>
+      </div>
+    </div>
+
+    <!-- Contact -->
+    <div class="form-card">
+      <div class="sec-title"><i class="bi bi-telephone"></i> Contact Information</div>
+      <div class="row g-3">
+        <div class="col-md-3">
+          <label class="form-label">Mobile</label>
+          <input type="tel" class="form-control" name="mobile_no" id="mobileInput" maxlength="10" placeholder="10-digit">
+        </div>
+        <div class="col-md-4">
+          <label class="form-label">Email</label>
+          <input type="email" class="form-control" name="email" placeholder="email@example.com">
+        </div>
+        <div class="col-md-12">
+          <label class="form-label">Address</label>
+          <textarea class="form-control" name="address" rows="2"></textarea>
+        </div>
+      </div>
+    </div>
+
+    <!-- Identity -->
+    <div class="form-card">
+      <div class="sec-title"><i class="bi bi-card-list"></i> Identity Documents</div>
+      <div class="row g-3">
+        <div class="col-md-4">
+          <label class="form-label">Aadhar Number</label>
+          <input type="text" class="form-control" id="aadharInput" name="aadhar_no" maxlength="12" placeholder="12-digit">
+        </div>
+        <div class="col-md-4">
+          <label class="form-label">PAN Number</label>
+          <input type="text" class="form-control" id="panInput" name="pan_no" maxlength="10"
+                 placeholder="ABCDE1234F" style="text-transform:uppercase">
+        </div>
+      </div>
+    </div>
+
+    <!-- Bank -->
+    <div class="form-card">
+      <div class="sec-title"><i class="bi bi-bank"></i> Bank Details</div>
+      <div class="row g-3">
+        <div class="col-md-4">
+          <label class="form-label">Bank Name</label>
+          <input type="text" class="form-control" name="bank_name">
+        </div>
+        <div class="col-md-4">
+          <label class="form-label">Account Number</label>
+          <input type="text" class="form-control" name="account_no" maxlength="30">
+        </div>
+        <div class="col-md-4">
+          <label class="form-label">IFSC Code</label>
+          <input type="text" class="form-control" name="ifsc_code" maxlength="20" style="text-transform:uppercase">
+        </div>
+      </div>
+    </div>
+
+    <!-- Buttons -->
+    <div class="form-card">
+      <div class="d-flex gap-3 flex-wrap">
+        <button type="submit" class="btn-submit">
+          <i class="bi bi-check-circle-fill"></i> Add Employee
+        </button>
+        <a href="{{ url_for('employee.index') }}" class="btn-cancel">
+          <i class="bi bi-x-circle"></i> Cancel
+        </a>
+      </div>
+    </div>
+
+  </form>
+</div></div></div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+  function togglePw(){
+    const i = document.getElementById('pwInput');
+    const ic = document.getElementById('pwIcon');
+    i.type = i.type==='password' ? 'text' : 'password';
+    ic.className = i.type==='password' ? 'bi bi-eye' : 'bi bi-eye-slash';
+  }
+
+  // DOJ change → expire = DOJ + 6 months
+  document.getElementById('dojInput').addEventListener('change', function(){
+    if(!this.value) return;
+    const d = new Date(this.value);
+    d.setMonth(d.getMonth() + 6);
+    const pad = n => String(n).padStart(2,'0');
+    document.getElementById('expireInput').value =
+      `${d.getFullYear()}-${pad(d.getMonth()+1)}-${pad(d.getDate())}`;
+  });
+
+  document.getElementById('mobileInput').addEventListener('input', function(){ this.value=this.value.replace(/\D/g,''); });
+  document.getElementById('aadharInput').addEventListener('input', function(){ this.value=this.value.replace(/\D/g,''); });
+  document.getElementById('panInput').addEventListener('input', function(){ this.value=this.value.toUpperCase(); });
+</script>
+{% endblock %}

@@ -1,0 +1,97 @@
+{% extends "base.html" %}
+{% block title %}Recovery Posting{% endblock %}
+
+{% block content %}
+<div class="container-fluid mt-4">
+
+  <div class="card border-0 shadow-sm">
+    <div class="card-header text-white"
+         style="background:linear-gradient(135deg,#1e3a8a,#2563eb);">
+      <h4 class="mb-0"><i class="bi bi-wallet2 me-2"></i>Recovery Posting</h4>
+    </div>
+    <div class="card-body p-4">
+
+      <!-- Center Selection -->
+      <form method="GET" class="mb-4">
+        <div class="row g-3 align-items-end">
+          <div class="col-md-5">
+            <label class="form-label fw-semibold">Select Center</label>
+            <select name="center_id" class="form-select" onchange="this.form.submit()">
+              <option value="">-- Select Center --</option>
+              {% for c in centers %}
+              <option value="{{ c[0] }}"
+                {% if selected_center and selected_center == c[0]|string %}selected{% endif %}>
+                {{ c[1] }}
+              </option>
+              {% endfor %}
+            </select>
+          </div>
+          <div class="col-md-3">
+            <button type="submit" class="btn btn-primary">
+              <i class="bi bi-search"></i> Load
+            </button>
+          </div>
+        </div>
+      </form>
+
+      <!-- Loans Grid -->
+      {% if selected_center and loans %}
+      <form method="POST">
+        <div class="table-responsive">
+          <table class="table table-bordered table-hover align-middle">
+            <thead class="table-dark">
+              <tr>
+                <th>☑</th>
+                <th>Member</th>
+                <th>Loan ID</th>
+                <th>Due Date</th>
+                <th>Principal Due</th>
+                <th>Interest Due</th>
+                <th>Principal Paid</th>
+                <th>Interest Paid</th>
+              </tr>
+            </thead>
+            <tbody>
+              {% for loan in loans %}
+              <tr>
+                <td><input type="checkbox" name="selected" value="{{ loan[0] }}"></td>
+                <td>{{ loan[1] }}<br><small class="text-muted">{{ loan[2] }}</small></td>
+                <td>{{ loan[3] }}</td>
+                <td>{{ loan[4].strftime('%d-%b-%Y') if loan[4] else '' }}</td>
+                <td>₹{{ "{:,.2f}".format(loan[5] or 0) }}</td>
+                <td>₹{{ "{:,.2f}".format(loan[6] or 0) }}</td>
+                <td>
+                  <input type="number" name="principal_{{ loan[0] }}"
+                         class="form-control form-control-sm" style="width:100px;"
+                         value="0" step="0.01" min="0">
+                </td>
+                <td>
+                  <input type="number" name="interest_{{ loan[0] }}"
+                         class="form-control form-control-sm" style="width:100px;"
+                         value="0" step="0.01" min="0">
+                </td>
+              </tr>
+              {% endfor %}
+            </tbody>
+          </table>
+        </div>
+        <div class="text-center mt-3">
+          <button type="submit" class="btn btn-success btn-lg px-5">
+            <i class="bi bi-check-circle-fill"></i> Post Recovery
+          </button>
+        </div>
+      </form>
+
+      {% elif selected_center %}
+      <div class="alert alert-info">No pending recoveries for this center.</div>
+
+      {% else %}
+      <div class="alert alert-secondary">
+        <i class="bi bi-arrow-up-circle"></i> Please select a center to view recoveries.
+      </div>
+      {% endif %}
+
+    </div>
+  </div>
+</div>
+{% endblock %}

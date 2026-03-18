@@ -1,0 +1,916 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>{% block title %}Ushodaya MACS Ltd{% endblock %}</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+    <!-- Bootstrap 5 -->
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
+    <!-- Bootstrap Icons -->
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.1/font/bootstrap-icons.css" rel="stylesheet">
+    <!-- Google Fonts -->
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+    <!-- DataTables -->
+    <link href="https://cdn.datatables.net/1.13.7/css/dataTables.bootstrap5.min.css" rel="stylesheet">
+
+    <style>
+        :root {
+            --primary:        #0c2a78;
+            --primary-dark:   #081d52;
+            --primary-light:  #1857c9;
+            --sidebar-width:  260px;
+            --topbar-height:  62px;
+            --transition:     all 0.25s ease;
+        }
+
+        * { margin:0; padding:0; box-sizing:border-box; }
+
+        body {
+            font-family: 'Inter', sans-serif;
+            background: #f0f2f5;
+            min-height: 100vh;
+            color: #2c3e50;
+            overflow-x: hidden;
+        }
+
+        /* ═══════════════════════════════
+           SIDEBAR
+        ═══════════════════════════════ */
+        .sidebar {
+            width: var(--sidebar-width);
+            height: 100vh;
+            position: fixed;
+            left: 0; top: 0;
+            background: linear-gradient(180deg, #0c2a78 0%, #0a2060 100%);
+            color: white;
+            display: flex;
+            flex-direction: column;
+            overflow: hidden;
+            box-shadow: 4px 0 20px rgba(0,0,0,0.2);
+            z-index: 1000;
+            transition: var(--transition);
+        }
+
+        /* Brand */
+        .sidebar-brand {
+            padding: 20px 18px;
+            background: rgba(0,0,0,0.25);
+            border-bottom: 1px solid rgba(255,255,255,0.1);
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            flex-shrink: 0;
+        }
+        .sidebar-brand img {
+            width: 44px; height: 44px;
+            border-radius: 50%;
+            border: 2px solid rgba(255,255,255,0.6);
+            flex-shrink: 0;
+        }
+        .sidebar-brand .brand-text h5 {
+            font-size: .9rem; font-weight: 700;
+            color: white; margin: 0; line-height: 1.2;
+        }
+        .sidebar-brand .brand-text small {
+            font-size: .7rem; opacity: .7;
+        }
+
+        /* Dashboard link */
+        .sidebar-dashboard {
+            padding: 6px 10px 4px;
+            flex-shrink: 0;
+        }
+        .sidebar-dashboard a {
+            display: flex; align-items: center; gap: 10px;
+            padding: 10px 12px;
+            color: rgba(255,255,255,.9);
+            text-decoration: none;
+            border-radius: 9px;
+            font-size: .88rem; font-weight: 500;
+            transition: var(--transition);
+        }
+        .sidebar-dashboard a:hover,
+        .sidebar-dashboard a.active {
+            background: rgba(255,255,255,.15);
+            color: white;
+        }
+        .sidebar-dashboard a i { font-size: 1.05rem; }
+
+        /* Scrollable menu area */
+        .sidebar-scroll {
+            flex: 1;
+            overflow-y: auto;
+            padding: 4px 10px 16px;
+        }
+        .sidebar-scroll::-webkit-scrollbar { width: 4px; }
+        .sidebar-scroll::-webkit-scrollbar-thumb {
+            background: rgba(255,255,255,.2); border-radius: 4px;
+        }
+
+        /* ── Accordion main menu item ── */
+        .nav-group { margin-bottom: 3px; }
+
+        .nav-group-toggle {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            padding: 11px 12px;
+            color: rgba(255,255,255,.85);
+            border-radius: 9px;
+            cursor: pointer;
+            font-size: .88rem; font-weight: 600;
+            letter-spacing: .3px;
+            transition: var(--transition);
+            user-select: none;
+            border: none; background: none; width: 100%; text-align: left;
+        }
+        .nav-group-toggle:hover {
+            background: rgba(255,255,255,.12);
+            color: white;
+        }
+        .nav-group-toggle.open {
+            background: rgba(255,255,255,.18);
+            color: white;
+        }
+        .nav-group-toggle .menu-icon { font-size: 1.05rem; flex-shrink: 0; }
+        .nav-group-toggle .menu-label { flex: 1; }
+        .nav-group-toggle .chevron {
+            font-size: .75rem;
+            transition: transform .25s ease;
+            opacity: .7;
+        }
+        .nav-group-toggle.open .chevron { transform: rotate(90deg); opacity: 1; }
+
+        /* Submenu */
+        .nav-group-items {
+            display: none;
+            margin-top: 2px;
+            padding-left: 8px;
+        }
+        .nav-group-items.open { display: block; }
+
+        .nav-group-items a {
+            display: flex; align-items: center; gap: 9px;
+            padding: 9px 12px 9px 14px;
+            color: rgba(255,255,255,.75);
+            text-decoration: none;
+            border-radius: 8px;
+            font-size: .84rem; font-weight: 400;
+            border-left: 2px solid rgba(255,255,255,.15);
+            margin-bottom: 1px;
+            transition: var(--transition);
+        }
+        .nav-group-items a:hover,
+        .nav-group-items a.active {
+            background: rgba(255,255,255,.12);
+            color: white;
+            border-left-color: #fff;
+            padding-left: 18px;
+        }
+        .nav-group-items a i { font-size: .95rem; width: 16px; text-align: center; flex-shrink: 0; }
+
+        /* ═══════════════════════════════
+           TOPBAR
+        ═══════════════════════════════ */
+        .main-content {
+            margin-left: var(--sidebar-width);
+            min-height: 100vh;
+        }
+
+        .topbar {
+            height: var(--topbar-height);
+            background: white;
+            box-shadow: 0 2px 10px rgba(0,0,0,.08);
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 0 24px;
+            position: sticky; top: 0; z-index: 999;
+        }
+
+        .topbar-left {
+            display: flex; align-items: center; gap: 12px;
+        }
+        .topbar-left .page-title {
+            font-size: 1.2rem; font-weight: 700;
+            color: var(--primary); margin: 0;
+        }
+        .sidebar-toggle {
+            background: none; border: none; cursor: pointer;
+            color: var(--primary); font-size: 1.3rem;
+            padding: 4px 6px; border-radius: 6px;
+            display: none;
+        }
+        .sidebar-toggle:hover { background: #f0f2f5; }
+
+        .topbar-right {
+            display: flex; align-items: center; gap: 10px;
+        }
+
+        /* User pill */
+        .user-pill {
+            display: flex; align-items: center; gap: 10px;
+            background: linear-gradient(135deg, #eff6ff, #dbeafe);
+            border: 1px solid #bfdbfe;
+            border-radius: 50px;
+            padding: 6px 16px 6px 6px;
+        }
+        .user-avatar {
+            width: 36px; height: 36px; border-radius: 50%;
+            background: linear-gradient(135deg, var(--primary), var(--primary-light));
+            color: white;
+            display: flex; align-items: center; justify-content: center;
+            font-weight: 700; font-size: .95rem;
+            flex-shrink: 0;
+        }
+        .user-info-text { line-height: 1.2; }
+        .user-info-name {
+            font-size: .85rem; font-weight: 700; color: var(--primary);
+            white-space: nowrap;
+        }
+        .user-info-role {
+            font-size: .72rem; font-weight: 600;
+            color: #6b7280; text-transform: uppercase; letter-spacing: .4px;
+        }
+
+        /* Logout button */
+        .btn-logout {
+            display: inline-flex; align-items: center; gap: 6px;
+            background: linear-gradient(135deg, #ef4444, #dc2626);
+            color: white;
+            border: none; border-radius: 8px;
+            padding: 8px 16px;
+            font-size: .85rem; font-weight: 700;
+            text-decoration: none;
+            cursor: pointer;
+            transition: var(--transition);
+            white-space: nowrap;
+        }
+        .btn-logout:hover {
+            color: white;
+            transform: translateY(-1px);
+            box-shadow: 0 4px 12px rgba(220,38,38,.35);
+        }
+
+        /* ═══════════════════════════════
+           CONTENT
+        ═══════════════════════════════ */
+        .content-wrapper {
+            padding: 24px;
+        }
+
+        /* Cards */
+        .card {
+            border: none; border-radius: 12px;
+            box-shadow: 0 2px 10px rgba(0,0,0,.07);
+            margin-bottom: 24px; background: white;
+            transition: var(--transition);
+        }
+        .card:hover { transform: translateY(-3px); box-shadow: 0 6px 20px rgba(0,0,0,.12); }
+        .card-header {
+            background: linear-gradient(135deg, var(--primary), var(--primary-light));
+            color: white; border: none; border-radius: 12px 12px 0 0 !important;
+            padding: 16px 22px; font-weight: 600;
+        }
+        .card-body { padding: 22px; }
+
+        /* Stat cards */
+        .stat-card {
+            background: white; border-radius: 12px;
+            padding: 22px; box-shadow: 0 2px 10px rgba(0,0,0,.07);
+            border-left: 4px solid var(--primary);
+            transition: var(--transition);
+        }
+        .stat-card:hover { transform: translateY(-4px); box-shadow: 0 6px 20px rgba(0,0,0,.12); }
+        .stat-icon { width: 52px; height: 52px; border-radius: 10px; display: flex; align-items: center; justify-content: center; font-size: 1.6rem; margin-bottom: 12px; color: white; }
+        .stat-value { font-size: 1.8rem; font-weight: 800; color: var(--primary); margin: 8px 0; }
+        .stat-label { color: #6b7280; font-size: .85rem; font-weight: 500; text-transform: uppercase; letter-spacing: .5px; }
+
+        /* Tables */
+        .table thead th { background: var(--primary); color: white; font-weight: 600; font-size: .82rem; text-transform: uppercase; letter-spacing: .4px; border: none; padding: 13px; white-space: nowrap; }
+        .table tbody tr { border-bottom: 1px solid #f0f0f0; transition: background .15s; }
+        .table tbody tr:hover { background: rgba(12,42,120,.03); }
+        .table tbody td { padding: 12px 13px; vertical-align: middle; }
+
+        /* Buttons */
+        .btn { border-radius: 8px; font-weight: 600; font-size: .88rem; transition: var(--transition); }
+        .btn-primary { background: linear-gradient(135deg, var(--primary), var(--primary-light)); border: none; color: white; }
+        .btn-primary:hover { transform: translateY(-1px); box-shadow: 0 6px 16px rgba(12,42,120,.3); color: white; }
+        .btn-success { background: linear-gradient(135deg, #10b981, #059669); border: none; }
+        .btn-danger  { background: linear-gradient(135deg, #ef4444, #dc2626); border: none; }
+        .btn-warning { background: linear-gradient(135deg, #f59e0b, #d97706); border: none; }
+        .btn-info    { background: linear-gradient(135deg, #3b82f6, #2563eb); border: none; }
+        .btn-sm { padding: 5px 14px; font-size: .8rem; }
+        .btn i { margin-right: 6px; }
+
+        /* Forms */
+        .form-control, .form-select { border-radius: 8px; border: 2px solid #e5e7eb; padding: 10px 14px; font-size: .9rem; transition: var(--transition); }
+        .form-control:focus, .form-select:focus { border-color: var(--primary); box-shadow: 0 0 0 3px rgba(12,42,120,.1); }
+        .form-label { font-weight: 600; color: #374151; margin-bottom: 6px; font-size: .88rem; }
+        .form-label.required::after { content: ' *'; color: #ef4444; }
+
+        /* Alerts */
+        .alert { border-radius: 10px; border: none; font-weight: 500; box-shadow: 0 2px 8px rgba(0,0,0,.08); padding: 14px 18px; }
+        .alert i { margin-right: 8px; }
+
+        /* Badges */
+        .badge { padding: 5px 10px; font-weight: 600; border-radius: 20px; font-size: .72rem; }
+
+        /* Footer */
+        footer {
+            background: white; padding: 16px 24px;
+            text-align: center; margin-top: 32px;
+            box-shadow: 0 -2px 8px rgba(0,0,0,.05);
+            border-radius: 12px 12px 0 0;
+        }
+        footer small { color: #6b7280; font-size: .82rem; }
+        .footer-info { display: inline-flex; align-items: center; margin: 0 12px; }
+        .footer-info i { margin-right: 5px; color: var(--primary); }
+
+        /* Spinner */
+        .spinner-overlay { position: fixed; top:0; left:0; width:100%; height:100%; background: rgba(255,255,255,.9); display:none; align-items:center; justify-content:center; z-index:9999; }
+        .spinner-overlay.show { display: flex; }
+
+        /* Scrollbar */
+        ::-webkit-scrollbar { width: 8px; height: 8px; }
+        ::-webkit-scrollbar-track { background: #f1f1f1; }
+        ::-webkit-scrollbar-thumb { background: #bbb; border-radius: 4px; }
+        ::-webkit-scrollbar-thumb:hover { background: #888; }
+
+        /* Responsive */
+        @media (max-width: 768px) {
+            .sidebar { transform: translateX(-100%); }
+            .sidebar.show { transform: translateX(0); }
+            .main-content { margin-left: 0; }
+            .sidebar-toggle { display: block; }
+            .content-wrapper { padding: 14px; }
+            .user-info-text { display: none; }
+        }
+
+        @keyframes slideInDown {
+            from { transform: translateY(-16px); opacity: 0; }
+            to   { transform: translateY(0);     opacity: 1; }
+        }
+    </style>
+
+    {% block extra_css %}{% endblock %}
+</head>
+<body>
+
+<!-- Loading Overlay -->
+<div class="spinner-overlay" id="loadingOverlay">
+    <div class="spinner-border text-primary" style="width:3rem;height:3rem;" role="status">
+        <span class="visually-hidden">Loading…</span>
+    </div>
+</div>
+
+<!-- ═══════════════ SIDEBAR ═══════════════ -->
+<div class="sidebar" id="sidebar">
+
+    <!-- Brand -->
+    <div class="sidebar-brand">
+        <img src="{{ url_for('static', filename='images/logo.jpg') }}" alt="Logo"
+             onerror="this.src='data:image/svg+xml,%3Csvg xmlns=%22http://www.w3.org/2000/svg%22 width=%2244%22 height=%2244%22%3E%3Ccircle cx=%2222%22 cy=%2222%22 r=%2221%22 fill=%22%23fff%22/%3E%3Ctext x=%2250%25%22 y=%2255%25%22 font-size=%2218%22 font-weight=%22bold%22 text-anchor=%22middle%22 dy=%22.1em%22 fill=%22%230c2a78%22%3EUM%3C/text%3E%3C/svg%3E'">
+        <div class="brand-text">
+            <h5>Ushodaya MACS</h5>
+            <small>Loan Management System</small>
+        </div>
+    </div>
+
+
+    <!-- Dashboard shortcut -->
+    <div class="sidebar-dashboard">
+        <a href="{{ url_for('home') }}" id="dashLink">
+            <i class="bi bi-speedometer2"></i>
+            <span>Dashboard</span>
+        </a>
+    </div>
+
+    <!-- Accordion Menu -->
+    <div class="sidebar-scroll">
+
+        <!-- ── FILE ── -->
+        <div class="nav-group">
+            <button class="nav-group-toggle" data-group="file">
+                <i class="bi bi-folder2-open menu-icon"></i>
+                <span class="menu-label">File</span>
+                <i class="bi bi-chevron-right chevron"></i>
+            </button>
+            <div class="nav-group-items" id="grp-file">
+                <a href="{{ url_for('employee.index') }}">
+                    <i class="bi bi-person-badge"></i> Employees
+                </a>
+                <a href="{{ url_for('dayend.dayend_check') }}">
+                    <i class="bi bi-calendar-check"></i> Day End
+                </a>
+            </div>
+        </div>
+
+        <!-- ── MASTERS ── -->
+        <div class="nav-group">
+            <button class="nav-group-toggle" data-group="masters">
+                <i class="bi bi-grid-1x2 menu-icon"></i>
+                <span class="menu-label">Masters</span>
+                <i class="bi bi-chevron-right chevron"></i>
+            </button>
+            <div class="nav-group-items" id="grp-masters">
+                <a href="{{ url_for('center.index') }}">
+                    <i class="bi bi-house"></i> Centers
+                </a>
+                <a href="{{ url_for('members_bp.index') }}">
+                    <i class="bi bi-people"></i> Members
+                </a>
+                <a href="{{ url_for('loanapplication.index') }}">
+                    <i class="bi bi-file-earmark-text"></i> Loan Applications
+                </a>
+                <a href="{{ url_for('loanapplication.pending_applications') }}">
+                    <i class="bi bi-clipboard-check"></i> Loan Approvals
+                </a>
+                <a href="{{ url_for('loans.index') }}">
+                    <i class="bi bi-credit-card"></i> Loan Disbursement
+                </a>
+                <a href="{{ url_for('fixeddeposit_bp.fd_list') }}">
+                    <i class="bi bi-piggy-bank"></i> Fixed Deposit
+                </a>
+                <a href="{{ url_for('recurringdeposit_bp.rd_index') }}">
+                    <i class="bi bi-arrow-repeat"></i> Recurring Deposit
+                </a>
+            </div>
+        </div>
+
+        <!-- ── DAILY ── -->
+        <div class="nav-group">
+            <button class="nav-group-toggle" data-group="daily">
+                <i class="bi bi-calendar-day menu-icon"></i>
+                <span class="menu-label">Daily</span>
+                <i class="bi bi-chevron-right chevron"></i>
+            </button>
+            <div class="nav-group-items" id="grp-daily">
+                <a href="{{ url_for('loanrec.recovery_posting') }}">
+                    <i class="bi bi-diagram-3"></i> Recovery Posting
+                </a>
+                <a href="{{ url_for('rec_member.member_prepaid') }}">
+                    <i class="bi bi-person-lines-fill"></i> Memberwise Posting
+                </a>
+                <a href="{{ url_for('savings_bp.savings_dashboard') }}">
+                    <i class="bi bi-piggy-bank-fill"></i> Savings
+                </a>
+                <a href="{{ url_for('advance.show_add_advance_form') }}">
+                    <i class="bi bi-wallet2"></i> Advance Posting
+                </a>
+                <a href="{{ url_for('sd_withdraw.sd_withdraw') }}" class="nav-link">
+                    <i class="bi bi-shield-check me-2"></i>Security Deposit Withdrawal
+                 </a>
+                <a href="{{ url_for('fdcollections_bp.fdcollections') }}">
+                    <i class="bi bi-bank"></i> FD Collection
+                </a>
+                <a href="{{ url_for('rdcollections_bp.rd_collections') }}">
+                    <i class="bi bi-cash-coin"></i> RD Collection
+                </a>
+            </div>
+        </div>
+
+        <!-- ── ADMIN (admin only) ── -->
+        {% if role == 'admin' %}
+        <div class="nav-group">
+            <button class="nav-group-toggle" data-group="admin">
+                <i class="bi bi-shield-lock menu-icon"></i>
+                <span class="menu-label">Admin</span>
+                <i class="bi bi-chevron-right chevron"></i>
+            </button>
+            <div class="nav-group-items" id="grp-admin">
+                <a href="{{ url_for('product.product_add') }}">
+                    <i class="bi bi-box-seam"></i> Products
+                </a>
+                <a href="{{ url_for('settings_bp.settings') }}">
+                    <i class="bi bi-gear-fill"></i> Admin Settings
+                </a>
+            </div>
+        </div>
+        {% endif %}
+        <!-- SuperAdmin Menu -->
+{% if session.get('is_superadmin') %}
+<li class="nav-item dropdown">
+    <a class="nav-link dropdown-toggle" href="#" id="superadminDropdown"
+       role="button" data-bs-toggle="dropdown">
+        <i class="bi bi-shield-check"></i> SuperAdmin
+    </a>
+    <ul class="dropdown-menu">
+        <li>
+            <a class="dropdown-item" href="{{ url_for('user_mgmt.user_list') }}">
+                <i class="bi bi-people-fill"></i> User Management
+            </a>
+        </li>
+        <li>
+         <a href="{{ url_for('help.backup') }}">
+                    <i class="bi bi-database-fill-down"></i> Data Backup
+                </a>
+          </li>
+           <li>
+                <a href="{{ url_for('help.restore') }}">
+                    <i class="bi bi-database-fill-up"></i> Data Restore
+                </a>
+        </li>
+        <li>
+            <a class="dropdown-item" href="{{ url_for('login.switch_branch') }}">
+                <i class="bi bi-arrow-left-right"></i> Switch Branch
+            </a>
+        </li>
+        <li><hr class="dropdown-divider"></li>
+        <li>
+            <a class="dropdown-item" href="{{ url_for('settings_bp.settings') }}">
+                <i class="bi bi-gear-fill"></i> System Settings
+            </a>
+        </li>
+    </ul>
+</li>
+{% endif %}
+
+<!-- Branch Indicator -->
+{% if session.get('branch_name') %}
+<li class="nav-item">
+    <a class="nav-link" href="{{ url_for('login.switch_branch') if session.get('is_superadmin') else '#' }}">
+        <i class="bi bi-building"></i> {{ session.get('branch_name') }}
+        {% if session.get('is_superadmin') %}
+        <i class="bi bi-arrow-repeat"></i>
+        {% endif %}
+    </a>
+</li>
+{% endif %}
+
+        <!-- ── REPORTS ── -->
+        <!-- ── REPORTS ── -->
+<div class="nav-group">
+    <button class="nav-group-toggle" data-group="reports">
+        <i class="bi bi-bar-chart-line menu-icon"></i>
+        <span class="menu-label">Reports</span>
+        <i class="bi bi-chevron-right chevron"></i>
+    </button>
+
+    <div class="nav-group-items" id="grp-reports">
+
+        <!-- MEMBER REPORTS -->
+        <a href="/reports/member_joining">
+            <i class="bi bi-person-plus"></i> Member Joining
+        </a>
+        <a href="/reports/member_withdraw">
+            <i class="bi bi-person-dash"></i> Member Withdraw
+        </a>
+        <a href="/reports/member_details">
+            <i class="bi bi-people"></i> Member Details
+        </a>
+
+        <!-- LOAN REPORTS -->
+        <a href="/reports/loan_ledger">
+            <i class="bi bi-journal-text"></i> Loan Ledger
+        </a>
+        <a href="/reports/member_loan_ledger">
+            <i class="bi bi-journal-bookmark"></i> Member Loan Ledger
+        </a>
+        <a href="/reports/arrear_details">
+            <i class="bi bi-exclamation-triangle"></i> Arrear Details
+        </a>
+        <a href="/reports/member_outstanding">
+            <i class="bi bi-cash-stack"></i> Member Outstanding
+        </a>
+        <a href="/reports/center_outstanding">
+            <i class="bi bi-building"></i> Center Outstanding
+        </a>
+
+        <!-- COLLECTION REPORTS -->
+        <a href="/reports/daily_collection">
+            <i class="bi bi-calendar-day"></i> Daily Collection
+        </a>
+        <a href="/reports/weekly_collection">
+            <i class="bi bi-calendar-week"></i> Weekly Collection
+        </a>
+        <a href="/reports/monthly_collection">
+            <i class="bi bi-calendar-month"></i> Monthly Collection
+        </a>
+        <a href="/reports/arrears_collected">
+            <i class="bi bi-cash"></i> Arrears Collected
+        </a>
+
+        <!-- ADVANCE REPORTS -->
+        <a href="/reports/advance_collected">
+            <i class="bi bi-wallet2"></i> Advance Collected
+        </a>
+        <a href="/reports/advance_withdraw">
+            <i class="bi bi-wallet"></i> Advance Withdraw
+        </a>
+
+        <!-- DEPOSIT REPORTS -->
+        <a href="/reports/security_deposit_collected">
+            <i class="bi bi-shield-lock"></i> Security Deposit Collected
+        </a>
+        <a href="/reports/security_deposit_withdraw">
+            <i class="bi bi-shield-minus"></i> Security Deposit Withdraw
+        </a>
+        <a href="/reports/sd_withdraw_receipt">
+            <i class="bi bi-receipt"></i> SD Withdraw Receipt
+        </a>
+
+        <!-- FINANCIAL REPORTS -->
+        <a href="/reports/center_summary">
+            <i class="bi bi-diagram-3"></i> Center Summary
+        </a>
+        <a href="/reports/member_summary">
+            <i class="bi bi-person-lines-fill"></i> Member Summary
+        </a>
+        <a href="/reports/glance_report">
+            <i class="bi bi-bar-chart"></i> Glance Report
+        </a>
+
+        <!-- PASSBOOK REPORTS -->
+        <a href="/reports/loan_passbook">
+            <i class="bi bi-book"></i> Loan Passbook
+        </a>
+        <a href="/reports/savings_passbook">
+            <i class="bi bi-book-half"></i> Savings Passbook
+        </a>
+
+    </div>
+</div>
+
+        <!-- ── HELP & SUPPORT ── -->
+        <div class="nav-group">
+            <button class="nav-group-toggle" data-group="help">
+                <i class="bi bi-question-circle-fill menu-icon"></i>
+                <span class="menu-label">Help & Support</span>
+                <i class="bi bi-chevron-right chevron"></i>
+            </button>
+            <div class="nav-group-items" id="grp-help">
+                <a href="{{ url_for('help.about') }}">
+                    <i class="bi bi-info-circle"></i> About System
+                </a>
+
+                <a href="{{ url_for('help.updates') }}">
+                    <i class="bi bi-arrow-repeat"></i> System Updates
+                </a>
+            </div>
+        </div>
+
+    </div><!-- /sidebar-scroll -->
+</div><!-- /sidebar -->
+
+<!-- ═══════════════ MAIN CONTENT ═══════════════ -->
+<div class="main-content">
+
+    <!-- ── TOPBAR ── -->
+    <div class="topbar">
+        <div class="topbar-left">
+            <button class="sidebar-toggle" onclick="toggleSidebar()" id="sidebarToggleBtn">
+                <i class="bi bi-list"></i>
+            </button>
+            <h1 class="page-title">{% block page_title %}Dashboard{% endblock %}</h1>
+        </div>
+
+        <div class="topbar-right">
+            <!-- Staff name + role pill -->
+            <div class="user-pill">
+                <div class="user-avatar">
+                    {{ staff_name[0]|upper if staff_name else 'U' }}
+                </div>
+                <div class="user-info-text">
+                    <div class="user-info-name">{{ staff_name or 'User' }}</div>
+                    <div class="user-info-role">{{ role or 'Staff' }}</div>
+                </div>
+            </div>
+
+            <!-- Logout -->
+            <a href="{{ url_for('logout') }}" class="btn-logout">
+                <i class="bi bi-box-arrow-right"></i>
+                <span>Logout</span>
+            </a>
+        </div>
+    </div>
+
+    <!-- ── CONTENT ── -->
+    <div class="content-wrapper">
+
+        {% with messages = get_flashed_messages(with_categories=true) %}
+          {% if messages %}
+            {% for category, message in messages %}
+              <div class="alert alert-{{ category }} alert-dismissible fade show" role="alert"
+                   style="animation: slideInDown .4s;">
+                <i class="bi bi-{% if category == 'success' %}check-circle-fill{% elif category == 'danger' %}exclamation-triangle-fill{% elif category == 'warning' %}exclamation-circle-fill{% else %}info-circle-fill{% endif %}"></i>
+                {{ message }}
+                <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+              </div>
+            {% endfor %}
+          {% endif %}
+        {% endwith %}
+
+        {% block content %}{% endblock %}
+
+        <!-- Footer -->
+        <footer>
+            <small>
+                <span class="footer-info"><i class="bi bi-c-circle"></i> {{ current_year }} Ushodaya MACS Ltd</span>
+                <span class="footer-info"><i class="bi bi-person-circle"></i> {{ staff_name }}</span>
+                <span class="footer-info"><i class="bi bi-clock"></i> {{ idle_time or 'N/A' }}</span>
+                <span class="footer-info"><i class="bi bi-calendar-check"></i> Last Dayend: {{ last_dayend_date or 'Not Completed' }}</span>
+            </small>
+        </footer>
+    </div>
+</div>
+<!-- In your base.html sidebar -->
+<ul class="nav flex-column">
+
+    <!-- Dashboard - Everyone can view -->
+    {% if check_permission('/home', 'view') %}
+    <li class="nav-item">
+        <a class="nav-link" href="/home">
+            <i class="bi bi-speedometer2"></i> Dashboard
+            {% if is_readonly_access('/home') %}
+                <span style="background:#6c757d;color:white;padding:2px 6px;border-radius:10px;font-size:0.7rem;">👁️</span>
+            {% endif %}
+        </a>
+    </li>
+    {% endif %}
+
+    <!-- Members - CEO has full access -->
+    {% if check_permission('/members', 'view') %}
+    <li class="nav-item">
+        <a class="nav-link" href="/members">
+            <i class="bi bi-people"></i> Members
+            {% if is_readonly_access('/members') %}
+                <span style="background:#6c757d;color:white;padding:2px 6px;border-radius:10px;font-size:0.7rem;">👁️</span>
+            {% endif %}
+        </a>
+    </li>
+    {% endif %}
+
+    <!-- Loans - CEO has full access -->
+    {% if check_permission('/loanform', 'view') %}
+    <li class="nav-item">
+        <a class="nav-link" href="/loanform">
+            <i class="bi bi-cash-stack"></i> Loans
+            {% if is_readonly_access('/loanform') %}
+                <span style="background:#6c757d;color:white;padding:2px 6px;border-radius:10px;font-size:0.7rem;">👁️</span>
+            {% endif %}
+        </a>
+    </li>
+    {% endif %}
+
+    <!-- Fixed Deposits - CEO has full access -->
+    {% if check_permission('/fixeddeposit', 'view') %}
+    <li class="nav-item">
+        <a class="nav-link" href="/fixeddeposit">
+            <i class="bi bi-piggy-bank"></i> Fixed Deposits
+            {% if is_readonly_access('/fixeddeposit') %}
+                <span style="background:#6c757d;color:white;padding:2px 6px;border-radius:10px;font-size:0.7rem;">👁️</span>
+            {% endif %}
+        </a>
+    </li>
+    {% endif %}
+
+    <!-- Collections - CEO has full access -->
+    {% if check_permission('/collections', 'view') %}
+    <li class="nav-item">
+        <a class="nav-link" href="/collections">
+            <i class="bi bi-currency-exchange"></i> Collections
+            {% if is_readonly_access('/collections') %}
+                <span style="background:#6c757d;color:white;padding:2px 6px;border-radius:10px;font-size:0.7rem;">👁️</span>
+            {% endif %}
+        </a>
+    </li>
+    {% endif %}
+
+    <!-- Reports - CEO has VIEW ONLY -->
+    {% if check_permission('/reports', 'view') %}
+    <li class="nav-item">
+        <a class="nav-link" href="/reports">
+            <i class="bi bi-bar-chart"></i> Reports
+            {% if is_readonly_access('/reports') %}
+                <span style="background:#6c757d;color:white;padding:2px 6px;border-radius:10px;font-size:0.7rem;">👁️</span>
+            {% endif %}
+        </a>
+    </li>
+    {% endif %}
+
+    <!-- Settings - CEO has VIEW ONLY (THIS IS THE FIX!) -->
+    {% if check_permission('/settings', 'view') %}
+    <li class="nav-item">
+        <a class="nav-link" href="/settings">
+            <i class="bi bi-gear"></i> Settings
+            {% if is_readonly_access('/settings') %}
+                <span style="background:#6c757d;color:white;padding:2px 6px;border-radius:10px;font-size:0.7rem;">👁️</span>
+            {% endif %}
+        </a>
+    </li>
+    {% endif %}
+
+</ul>
+
+<!-- Scripts -->
+<script src="https://code.jquery.com/jquery-3.7.0.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
+<script src="https://cdn.datatables.net/1.13.7/js/jquery.dataTables.min.js"></script>
+<script src="https://cdn.datatables.net/1.13.7/js/dataTables.bootstrap5.min.js"></script>
+
+<script>
+/* ── DataTables ── */
+$(document).ready(function () {
+    $('.data-table').DataTable({
+        pageLength: 25,
+        order: [[0, 'desc']],
+        language: {
+            search: 'Search:', lengthMenu: 'Show _MENU_ entries',
+            info: 'Showing _START_ to _END_ of _TOTAL_',
+            paginate: { first:'First', last:'Last', next:'Next', previous:'Previous' }
+        }
+    });
+    // Auto-dismiss alerts
+    setTimeout(() => $('.alert').fadeOut('slow'), 5000);
+});
+
+/* ── Accordion sidebar ── */
+const STORAGE_KEY = 'openNavGroup';
+
+function openGroup(name, save) {
+    // Close all
+    document.querySelectorAll('.nav-group-toggle').forEach(btn => {
+        btn.classList.remove('open');
+        const grpId = 'grp-' + btn.dataset.group;
+        const grp = document.getElementById(grpId);
+        if (grp) grp.classList.remove('open');
+    });
+    // Open requested
+    if (name) {
+        const btn = document.querySelector(`.nav-group-toggle[data-group="${name}"]`);
+        const grp = document.getElementById('grp-' + name);
+        if (btn && grp) {
+            btn.classList.add('open');
+            grp.classList.add('open');
+        }
+    }
+    if (save !== false) {
+        sessionStorage.setItem(STORAGE_KEY, name || '');
+    }
+}
+
+document.querySelectorAll('.nav-group-toggle').forEach(btn => {
+    btn.addEventListener('click', function () {
+        const name = this.dataset.group;
+        const isOpen = this.classList.contains('open');
+        openGroup(isOpen ? null : name); // toggle: if already open → close all
+    });
+});
+
+// Restore last open group & highlight active link
+(function init() {
+    const currentPath = window.location.pathname + window.location.search;
+    let activeGroup = null;
+
+    document.querySelectorAll('.nav-group-items a, .sidebar-dashboard a').forEach(a => {
+        const href = a.getAttribute('href');
+        if (href && href !== '/' && currentPath.startsWith(href)) {
+            a.classList.add('active');
+            // Find which group it belongs to
+            const items = a.closest('.nav-group-items');
+            if (items) {
+                const grpId = items.id.replace('grp-', '');
+                activeGroup = grpId;
+            }
+        }
+    });
+
+    // Prefer active group, else restore from session
+    const saved = sessionStorage.getItem(STORAGE_KEY);
+    openGroup(activeGroup || saved || null, false);
+})();
+
+/* ── Mobile sidebar toggle ── */
+function toggleSidebar() {
+    document.getElementById('sidebar').classList.toggle('show');
+}
+
+/* ── Loading overlay ── */
+function showLoading() { document.getElementById('loadingOverlay').classList.add('show'); }
+function hideLoading()  { document.getElementById('loadingOverlay').classList.remove('show'); }
+
+window.addEventListener('load', hideLoading);
+$('form').on('submit', showLoading);
+
+/* ── Confirm delete helper ── */
+function confirmDelete(msg) {
+    return confirm(msg || 'Are you sure? This cannot be undone.');
+}
+
+/* ── Bootstrap form validation ── */
+(function () {
+    'use strict';
+    document.querySelectorAll('.needs-validation').forEach(form => {
+        form.addEventListener('submit', e => {
+            if (!form.checkValidity()) { e.preventDefault(); e.stopPropagation(); }
+            form.classList.add('was-validated');
+        });
+    });
+})();
+</script>
+
+{% block extra_js %}{% endblock %}
+</body>
+</html>

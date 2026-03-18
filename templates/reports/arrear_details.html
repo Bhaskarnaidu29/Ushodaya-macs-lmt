@@ -1,0 +1,40 @@
+{% extends "base.html" %}
+{% block content %}
+
+<div class="container mt-4">
+<h3>Arrear Details Report</h3>
+
+<table class="table table-bordered">
+<thead class="table-dark">
+<tr>
+<th>Member Code</th>
+<th>Name</th>
+<th>Center</th>
+<th>Loan ID</th>
+<th>Due Date</th>
+<th>Days Overdue</th>
+<th>Principal Arrear</th>
+<th>Interest Arrear</th>
+<th>Total Arrear</th>
+</tr>
+</thead>
+
+<tbody>
+{% for r in rows %}
+<tr>
+<td>{{r.member_code}}</td>
+<td>{{r.full_name}}</td>
+<td>{{r.center_name}}</td>
+<td>{{r.loanid}}</td>
+<td>{{r.duedate}}</td>
+<td>{{r.days_overdue}}</td>
+<td>{{r.principal_arrear}}</td>
+<td>{{r.interest_arrear}}</td>
+<td>{{r.total_arrear}}</td>
+</tr>
+{% endfor %}
+</tbody>
+</table>
+
+</div>
+{% endblock %}

@@ -1,0 +1,514 @@
+2026-03-13 11:57:01,945 INFO: UDLMS startup [in C:\Software\UD Lms\App.py:64]
+2026-03-13 11:57:02,248 INFO: Starting UDLMS on 127.0.0.1:5000 [in C:\Software\UD Lms\App.py:349]
+2026-03-13 11:57:06,319 ERROR: Page not found: http://127.0.0.1:5000/favicon.ico [in C:\Software\UD Lms\App.py:143]
+2026-03-13 11:58:13,083 ERROR: Unhandled Exception: Could not build url for endpoint 'advance.get_loan_details' with values ['loanid']. Did you mean 'advance.get_loans' instead? [in C:\Software\UD Lms\App.py:153]
+Traceback (most recent call last):
+  File "C:\Users\pardh\AppData\Local\Programs\Python\Python313\Lib\site-packages\flask\app.py", line 867, in full_dispatch_request
+    rv = self.dispatch_request()
+  File "C:\Users\pardh\AppData\Local\Programs\Python\Python313\Lib\site-packages\flask\app.py", line 852, in dispatch_request
+    return self.ensure_sync(self.view_functions[rule.endpoint])(**view_args)
+           ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~^^^^^^^^^^^^^
+  File "C:\Software\UD Lms\login.py", line 20, in decorated_function
+    return f(*args, **kwargs)
+  File "C:\Software\UD Lms\advance.py", line 117, in show_add_advance_form
+    return render_template("advance_add.html")
+  File "C:\Users\pardh\AppData\Local\Programs\Python\Python313\Lib\site-packages\flask\templating.py", line 152, in render_template
+    return _render(app, template, context)
+  File "C:\Users\pardh\AppData\Local\Programs\Python\Python313\Lib\site-packages\flask\templating.py", line 133, in _render
+    rv = template.render(context)
+  File "C:\Users\pardh\AppData\Local\Programs\Python\Python313\Lib\site-packages\jinja2\environment.py", line 1295, in render
+    self.environment.handle_exception()
+    ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~^^
+  File "C:\Users\pardh\AppData\Local\Programs\Python\Python313\Lib\site-packages\jinja2\environment.py", line 942, in handle_exception
+    raise rewrite_traceback_stack(source=source)
+  File "C:\Software\UD Lms\templates\advance_add.html", line 1, in top-level template code
+    {% extends "base.html" %}
+  File "C:\Software\UD Lms\templates\base.html", line 911, in top-level template code
+    {% block extra_js %}{% endblock %}
+    ^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Software\UD Lms\templates\advance_add.html", line 281, in block 'extra_js'
+    const BALANCE_URL = "{{ url_for('advance.get_loan_details', loanid=0) }}".replace('/0', '/');
+    ^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\pardh\AppData\Local\Programs\Python\Python313\Lib\site-packages\flask\app.py", line 1071, in url_for
+    return self.handle_url_build_error(error, endpoint, values)
+           ~~~~~~~~~~~~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\pardh\AppData\Local\Programs\Python\Python313\Lib\site-packages\flask\app.py", line 1060, in url_for
+    rv = url_adapter.build(  # type: ignore[union-attr]
+        endpoint,
+    ...<3 lines>...
+        force_external=_external,
+    )
+  File "C:\Users\pardh\AppData\Local\Programs\Python\Python313\Lib\site-packages\werkzeug\routing\map.py", line 919, in build
+    raise BuildError(endpoint, values, method, self)
+werkzeug.routing.exceptions.BuildError: Could not build url for endpoint 'advance.get_loan_details' with values ['loanid']. Did you mean 'advance.get_loans' instead?
+2026-03-13 11:58:16,057 ERROR: Unhandled Exception: Could not build url for endpoint 'advance.get_loan_details' with values ['loanid']. Did you mean 'advance.get_loans' instead? [in C:\Software\UD Lms\App.py:153]
+Traceback (most recent call last):
+  File "C:\Users\pardh\AppData\Local\Programs\Python\Python313\Lib\site-packages\flask\app.py", line 867, in full_dispatch_request
+    rv = self.dispatch_request()
+  File "C:\Users\pardh\AppData\Local\Programs\Python\Python313\Lib\site-packages\flask\app.py", line 852, in dispatch_request
+    return self.ensure_sync(self.view_functions[rule.endpoint])(**view_args)
+           ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~^^^^^^^^^^^^^
+  File "C:\Software\UD Lms\login.py", line 20, in decorated_function
+    return f(*args, **kwargs)
+  File "C:\Software\UD Lms\advance.py", line 117, in show_add_advance_form
+    return render_template("advance_add.html")
+  File "C:\Users\pardh\AppData\Local\Programs\Python\Python313\Lib\site-packages\flask\templating.py", line 152, in render_template
+    return _render(app, template, context)
+  File "C:\Users\pardh\AppData\Local\Programs\Python\Python313\Lib\site-packages\flask\templating.py", line 133, in _render
+    rv = template.render(context)
+  File "C:\Users\pardh\AppData\Local\Programs\Python\Python313\Lib\site-packages\jinja2\environment.py", line 1295, in render
+    self.environment.handle_exception()
+    ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~^^
+  File "C:\Users\pardh\AppData\Local\Programs\Python\Python313\Lib\site-packages\jinja2\environment.py", line 942, in handle_exception
+    raise rewrite_traceback_stack(source=source)
+  File "C:\Software\UD Lms\templates\advance_add.html", line 1, in top-level template code
+    {% extends "base.html" %}
+  File "C:\Software\UD Lms\templates\base.html", line 911, in top-level template code
+    {% block extra_js %}{% endblock %}
+    ^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Software\UD Lms\templates\advance_add.html", line 281, in block 'extra_js'
+    const BALANCE_URL = "{{ url_for('advance.get_loan_details', loanid=0) }}".replace('/0', '/');
+    ^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\pardh\AppData\Local\Programs\Python\Python313\Lib\site-packages\flask\app.py", line 1071, in url_for
+    return self.handle_url_build_error(error, endpoint, values)
+           ~~~~~~~~~~~~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\pardh\AppData\Local\Programs\Python\Python313\Lib\site-packages\flask\app.py", line 1060, in url_for
+    rv = url_adapter.build(  # type: ignore[union-attr]
+        endpoint,
+    ...<3 lines>...
+        force_external=_external,
+    )
+  File "C:\Users\pardh\AppData\Local\Programs\Python\Python313\Lib\site-packages\werkzeug\routing\map.py", line 919, in build
+    raise BuildError(endpoint, values, method, self)
+werkzeug.routing.exceptions.BuildError: Could not build url for endpoint 'advance.get_loan_details' with values ['loanid']. Did you mean 'advance.get_loans' instead?
+2026-03-13 11:58:25,692 INFO: User logged out: KAKI PARDHA SARADHI [in C:\Software\UD Lms\App.py:327]
+2026-03-13 12:12:49,013 INFO: UDLMS startup [in C:\Software\UD Lms\App.py:64]
+2026-03-13 12:12:49,578 INFO: Starting UDLMS on 127.0.0.1:5000 [in C:\Software\UD Lms\App.py:349]
+2026-03-13 12:12:55,904 ERROR: Page not found: http://127.0.0.1:5000/favicon.ico [in C:\Software\UD Lms\App.py:143]
+2026-03-13 20:18:51,280 INFO: UDLMS startup [in C:\Software\UD Lms\App.py:64]
+2026-03-13 20:18:51,833 INFO: Starting UDLMS on 127.0.0.1:5000 [in C:\Software\UD Lms\App.py:349]
+2026-03-13 20:18:59,417 ERROR: Page not found: http://127.0.0.1:5000/favicon.ico [in C:\Software\UD Lms\App.py:143]
+2026-03-13 20:19:29,131 ERROR: Unhandled Exception: Could not build url for endpoint 'loanrec.prepaid_posting'. Did you mean 'loanrec.recovery_posting' instead? [in C:\Software\UD Lms\App.py:153]
+Traceback (most recent call last):
+  File "C:\Users\pardh\AppData\Local\Programs\Python\Python313\Lib\site-packages\flask\app.py", line 867, in full_dispatch_request
+    rv = self.dispatch_request()
+  File "C:\Users\pardh\AppData\Local\Programs\Python\Python313\Lib\site-packages\flask\app.py", line 852, in dispatch_request
+    return self.ensure_sync(self.view_functions[rule.endpoint])(**view_args)
+           ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~^^^^^^^^^^^^^
+  File "C:\Software\UD Lms\loanrec.py", line 425, in recovery_posting
+    return render_template("loanrec_main.html",
+                           centers=centers,
+    ...<4 lines>...
+                           advance_balances=advance_balances,
+                           advance_enabled=ADVANCE_ENABLED)
+  File "C:\Users\pardh\AppData\Local\Programs\Python\Python313\Lib\site-packages\flask\templating.py", line 152, in render_template
+    return _render(app, template, context)
+  File "C:\Users\pardh\AppData\Local\Programs\Python\Python313\Lib\site-packages\flask\templating.py", line 133, in _render
+    rv = template.render(context)
+  File "C:\Users\pardh\AppData\Local\Programs\Python\Python313\Lib\site-packages\jinja2\environment.py", line 1295, in render
+    self.environment.handle_exception()
+    ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~^^
+  File "C:\Users\pardh\AppData\Local\Programs\Python\Python313\Lib\site-packages\jinja2\environment.py", line 942, in handle_exception
+    raise rewrite_traceback_stack(source=source)
+  File "C:\Software\UD Lms\templates\loanrec_main.html", line 1, in top-level template code
+    {% extends "base.html" %}
+  File "C:\Software\UD Lms\templates\base.html", line 702, in top-level template code
+    {% block content %}{% endblock %}
+    ^^^^^^^^^^^^^^^^^
+  File "C:\Software\UD Lms\templates\loanrec_main.html", line 64, in block 'content'
+    <a class="nav-link" href="{{ url_for('loanrec.prepaid_posting') }}">
+    ^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\pardh\AppData\Local\Programs\Python\Python313\Lib\site-packages\flask\app.py", line 1071, in url_for
+    return self.handle_url_build_error(error, endpoint, values)
+           ~~~~~~~~~~~~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\pardh\AppData\Local\Programs\Python\Python313\Lib\site-packages\flask\app.py", line 1060, in url_for
+    rv = url_adapter.build(  # type: ignore[union-attr]
+        endpoint,
+    ...<3 lines>...
+        force_external=_external,
+    )
+  File "C:\Users\pardh\AppData\Local\Programs\Python\Python313\Lib\site-packages\werkzeug\routing\map.py", line 919, in build
+    raise BuildError(endpoint, values, method, self)
+werkzeug.routing.exceptions.BuildError: Could not build url for endpoint 'loanrec.prepaid_posting'. Did you mean 'loanrec.recovery_posting' instead?
+2026-03-13 20:20:31,435 ERROR: Unhandled Exception: Could not build url for endpoint 'loanrec.prepaid_posting'. Did you mean 'loanrec.recovery_posting' instead? [in C:\Software\UD Lms\App.py:153]
+Traceback (most recent call last):
+  File "C:\Users\pardh\AppData\Local\Programs\Python\Python313\Lib\site-packages\flask\app.py", line 867, in full_dispatch_request
+    rv = self.dispatch_request()
+  File "C:\Users\pardh\AppData\Local\Programs\Python\Python313\Lib\site-packages\flask\app.py", line 852, in dispatch_request
+    return self.ensure_sync(self.view_functions[rule.endpoint])(**view_args)
+           ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~^^^^^^^^^^^^^
+  File "C:\Software\UD Lms\loanrec.py", line 425, in recovery_posting
+    return render_template("loanrec_main.html",
+                           centers=centers,
+    ...<4 lines>...
+                           advance_balances=advance_balances,
+                           advance_enabled=ADVANCE_ENABLED)
+  File "C:\Users\pardh\AppData\Local\Programs\Python\Python313\Lib\site-packages\flask\templating.py", line 152, in render_template
+    return _render(app, template, context)
+  File "C:\Users\pardh\AppData\Local\Programs\Python\Python313\Lib\site-packages\flask\templating.py", line 133, in _render
+    rv = template.render(context)
+  File "C:\Users\pardh\AppData\Local\Programs\Python\Python313\Lib\site-packages\jinja2\environment.py", line 1295, in render
+    self.environment.handle_exception()
+    ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~^^
+  File "C:\Users\pardh\AppData\Local\Programs\Python\Python313\Lib\site-packages\jinja2\environment.py", line 942, in handle_exception
+    raise rewrite_traceback_stack(source=source)
+  File "C:\Software\UD Lms\templates\loanrec_main.html", line 1, in top-level template code
+    {% extends "base.html" %}
+  File "C:\Software\UD Lms\templates\base.html", line 702, in top-level template code
+    {% block content %}{% endblock %}
+    ^^^^^^^^^^^^^^^^^
+  File "C:\Software\UD Lms\templates\loanrec_main.html", line 64, in block 'content'
+    <a class="nav-link" href="{{ url_for('loanrec.prepaid_posting') }}">
+    ^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\pardh\AppData\Local\Programs\Python\Python313\Lib\site-packages\flask\app.py", line 1071, in url_for
+    return self.handle_url_build_error(error, endpoint, values)
+           ~~~~~~~~~~~~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\pardh\AppData\Local\Programs\Python\Python313\Lib\site-packages\flask\app.py", line 1060, in url_for
+    rv = url_adapter.build(  # type: ignore[union-attr]
+        endpoint,
+    ...<3 lines>...
+        force_external=_external,
+    )
+  File "C:\Users\pardh\AppData\Local\Programs\Python\Python313\Lib\site-packages\werkzeug\routing\map.py", line 919, in build
+    raise BuildError(endpoint, values, method, self)
+werkzeug.routing.exceptions.BuildError: Could not build url for endpoint 'loanrec.prepaid_posting'. Did you mean 'loanrec.recovery_posting' instead?
+2026-03-13 20:26:18,087 INFO: UDLMS startup [in C:\Software\UD Lms\App.py:64]
+2026-03-13 20:26:19,135 INFO: Starting UDLMS on 127.0.0.1:5000 [in C:\Software\UD Lms\App.py:349]
+2026-03-13 20:28:38,975 INFO: UDLMS startup [in C:\Software\UD Lms\App.py:64]
+2026-03-13 20:32:12,541 INFO: UDLMS startup [in C:\Software\UD Lms\App.py:64]
+2026-03-13 20:32:13,118 INFO: Starting UDLMS on 127.0.0.1:5000 [in C:\Software\UD Lms\App.py:349]
+2026-03-13 20:32:22,420 ERROR: Page not found: http://127.0.0.1:5000/favicon.ico [in C:\Software\UD Lms\App.py:143]
+2026-03-13 20:32:57,940 ERROR: Unhandled Exception: Could not build url for endpoint 'advance.get_loan_details' with values ['loanid']. Did you mean 'advance.get_loans' instead? [in C:\Software\UD Lms\App.py:153]
+Traceback (most recent call last):
+  File "C:\Users\pardh\AppData\Local\Programs\Python\Python313\Lib\site-packages\flask\app.py", line 867, in full_dispatch_request
+    rv = self.dispatch_request()
+  File "C:\Users\pardh\AppData\Local\Programs\Python\Python313\Lib\site-packages\flask\app.py", line 852, in dispatch_request
+    return self.ensure_sync(self.view_functions[rule.endpoint])(**view_args)
+           ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~^^^^^^^^^^^^^
+  File "C:\Software\UD Lms\login.py", line 20, in decorated_function
+    return f(*args, **kwargs)
+  File "C:\Software\UD Lms\advance.py", line 117, in show_add_advance_form
+    return render_template("advance_add.html")
+  File "C:\Users\pardh\AppData\Local\Programs\Python\Python313\Lib\site-packages\flask\templating.py", line 152, in render_template
+    return _render(app, template, context)
+  File "C:\Users\pardh\AppData\Local\Programs\Python\Python313\Lib\site-packages\flask\templating.py", line 133, in _render
+    rv = template.render(context)
+  File "C:\Users\pardh\AppData\Local\Programs\Python\Python313\Lib\site-packages\jinja2\environment.py", line 1295, in render
+    self.environment.handle_exception()
+    ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~^^
+  File "C:\Users\pardh\AppData\Local\Programs\Python\Python313\Lib\site-packages\jinja2\environment.py", line 942, in handle_exception
+    raise rewrite_traceback_stack(source=source)
+  File "C:\Software\UD Lms\templates\advance_add.html", line 1, in top-level template code
+    {% extends "base.html" %}
+  File "C:\Software\UD Lms\templates\base.html", line 911, in top-level template code
+    {% block extra_js %}{% endblock %}
+    ^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Software\UD Lms\templates\advance_add.html", line 281, in block 'extra_js'
+    const BALANCE_URL = "{{ url_for('advance.get_loan_details', loanid=0) }}".replace('/0', '/');
+    ^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\pardh\AppData\Local\Programs\Python\Python313\Lib\site-packages\flask\app.py", line 1071, in url_for
+    return self.handle_url_build_error(error, endpoint, values)
+           ~~~~~~~~~~~~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\pardh\AppData\Local\Programs\Python\Python313\Lib\site-packages\flask\app.py", line 1060, in url_for
+    rv = url_adapter.build(  # type: ignore[union-attr]
+        endpoint,
+    ...<3 lines>...
+        force_external=_external,
+    )
+  File "C:\Users\pardh\AppData\Local\Programs\Python\Python313\Lib\site-packages\werkzeug\routing\map.py", line 919, in build
+    raise BuildError(endpoint, values, method, self)
+werkzeug.routing.exceptions.BuildError: Could not build url for endpoint 'advance.get_loan_details' with values ['loanid']. Did you mean 'advance.get_loans' instead?
+2026-03-13 20:33:07,283 ERROR: Unhandled Exception: Could not build url for endpoint 'advance.get_loan_details' with values ['loanid']. Did you mean 'advance.get_loans' instead? [in C:\Software\UD Lms\App.py:153]
+Traceback (most recent call last):
+  File "C:\Users\pardh\AppData\Local\Programs\Python\Python313\Lib\site-packages\flask\app.py", line 867, in full_dispatch_request
+    rv = self.dispatch_request()
+  File "C:\Users\pardh\AppData\Local\Programs\Python\Python313\Lib\site-packages\flask\app.py", line 852, in dispatch_request
+    return self.ensure_sync(self.view_functions[rule.endpoint])(**view_args)
+           ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~^^^^^^^^^^^^^
+  File "C:\Software\UD Lms\login.py", line 20, in decorated_function
+    return f(*args, **kwargs)
+  File "C:\Software\UD Lms\advance.py", line 117, in show_add_advance_form
+    return render_template("advance_add.html")
+  File "C:\Users\pardh\AppData\Local\Programs\Python\Python313\Lib\site-packages\flask\templating.py", line 152, in render_template
+    return _render(app, template, context)
+  File "C:\Users\pardh\AppData\Local\Programs\Python\Python313\Lib\site-packages\flask\templating.py", line 133, in _render
+    rv = template.render(context)
+  File "C:\Users\pardh\AppData\Local\Programs\Python\Python313\Lib\site-packages\jinja2\environment.py", line 1295, in render
+    self.environment.handle_exception()
+    ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~^^
+  File "C:\Users\pardh\AppData\Local\Programs\Python\Python313\Lib\site-packages\jinja2\environment.py", line 942, in handle_exception
+    raise rewrite_traceback_stack(source=source)
+  File "C:\Software\UD Lms\templates\advance_add.html", line 1, in top-level template code
+    {% extends "base.html" %}
+  File "C:\Software\UD Lms\templates\base.html", line 911, in top-level template code
+    {% block extra_js %}{% endblock %}
+    ^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Software\UD Lms\templates\advance_add.html", line 281, in block 'extra_js'
+    const BALANCE_URL = "{{ url_for('advance.get_loan_details', loanid=0) }}".replace('/0', '/');
+    ^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\pardh\AppData\Local\Programs\Python\Python313\Lib\site-packages\flask\app.py", line 1071, in url_for
+    return self.handle_url_build_error(error, endpoint, values)
+           ~~~~~~~~~~~~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\pardh\AppData\Local\Programs\Python\Python313\Lib\site-packages\flask\app.py", line 1060, in url_for
+    rv = url_adapter.build(  # type: ignore[union-attr]
+        endpoint,
+    ...<3 lines>...
+        force_external=_external,
+    )
+  File "C:\Users\pardh\AppData\Local\Programs\Python\Python313\Lib\site-packages\werkzeug\routing\map.py", line 919, in build
+    raise BuildError(endpoint, values, method, self)
+werkzeug.routing.exceptions.BuildError: Could not build url for endpoint 'advance.get_loan_details' with values ['loanid']. Did you mean 'advance.get_loans' instead?
+2026-03-13 20:37:14,379 ERROR: Unhandled Exception: Could not build url for endpoint 'advance.get_loan_details' with values ['loanid']. Did you mean 'advance.get_loans' instead? [in C:\Software\UD Lms\App.py:153]
+Traceback (most recent call last):
+  File "C:\Users\pardh\AppData\Local\Programs\Python\Python313\Lib\site-packages\flask\app.py", line 867, in full_dispatch_request
+    rv = self.dispatch_request()
+  File "C:\Users\pardh\AppData\Local\Programs\Python\Python313\Lib\site-packages\flask\app.py", line 852, in dispatch_request
+    return self.ensure_sync(self.view_functions[rule.endpoint])(**view_args)
+           ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~^^^^^^^^^^^^^
+  File "C:\Software\UD Lms\login.py", line 20, in decorated_function
+    return f(*args, **kwargs)
+  File "C:\Software\UD Lms\advance.py", line 117, in show_add_advance_form
+    return render_template("advance_add.html")
+  File "C:\Users\pardh\AppData\Local\Programs\Python\Python313\Lib\site-packages\flask\templating.py", line 152, in render_template
+    return _render(app, template, context)
+  File "C:\Users\pardh\AppData\Local\Programs\Python\Python313\Lib\site-packages\flask\templating.py", line 133, in _render
+    rv = template.render(context)
+  File "C:\Users\pardh\AppData\Local\Programs\Python\Python313\Lib\site-packages\jinja2\environment.py", line 1295, in render
+    self.environment.handle_exception()
+    ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~^^
+  File "C:\Users\pardh\AppData\Local\Programs\Python\Python313\Lib\site-packages\jinja2\environment.py", line 942, in handle_exception
+    raise rewrite_traceback_stack(source=source)
+  File "C:\Software\UD Lms\templates\advance_add.html", line 1, in top-level template code
+    {% extends "base.html" %}
+  File "C:\Software\UD Lms\templates\base.html", line 911, in top-level template code
+    {% block extra_js %}{% endblock %}
+    ^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Software\UD Lms\templates\advance_add.html", line 281, in block 'extra_js'
+    const BALANCE_URL = "{{ url_for('advance.get_loan_details', loanid=0) }}".replace('/0', '/');
+    ^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\pardh\AppData\Local\Programs\Python\Python313\Lib\site-packages\flask\app.py", line 1071, in url_for
+    return self.handle_url_build_error(error, endpoint, values)
+           ~~~~~~~~~~~~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\pardh\AppData\Local\Programs\Python\Python313\Lib\site-packages\flask\app.py", line 1060, in url_for
+    rv = url_adapter.build(  # type: ignore[union-attr]
+        endpoint,
+    ...<3 lines>...
+        force_external=_external,
+    )
+  File "C:\Users\pardh\AppData\Local\Programs\Python\Python313\Lib\site-packages\werkzeug\routing\map.py", line 919, in build
+    raise BuildError(endpoint, values, method, self)
+werkzeug.routing.exceptions.BuildError: Could not build url for endpoint 'advance.get_loan_details' with values ['loanid']. Did you mean 'advance.get_loans' instead?
+2026-03-13 21:34:13,759 INFO: UDLMS startup [in C:\Software\UD Lms\App.py:64]
+2026-03-13 21:42:46,912 INFO: UDLMS startup [in C:\Software\UD Lms\App.py:64]
+2026-03-13 21:42:47,663 INFO: Starting UDLMS on 127.0.0.1:5000 [in C:\Software\UD Lms\App.py:349]
+2026-03-13 21:42:55,663 ERROR: Page not found: http://127.0.0.1:5000/favicon.ico [in C:\Software\UD Lms\App.py:143]
+2026-03-13 21:43:12,509 ERROR: Unhandled Exception: Could not build url for endpoint 'loanrec.prepaid_posting'. Did you mean 'loanrec.recovery_posting' instead? [in C:\Software\UD Lms\App.py:153]
+Traceback (most recent call last):
+  File "C:\Users\pardh\AppData\Local\Programs\Python\Python313\Lib\site-packages\flask\app.py", line 867, in full_dispatch_request
+    rv = self.dispatch_request()
+  File "C:\Users\pardh\AppData\Local\Programs\Python\Python313\Lib\site-packages\flask\app.py", line 852, in dispatch_request
+    return self.ensure_sync(self.view_functions[rule.endpoint])(**view_args)
+           ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~^^^^^^^^^^^^^
+  File "C:\Software\UD Lms\loanrec.py", line 354, in recovery_posting
+    return render_template("loanrec_main.html",
+                           centers=centers,
+    ...<4 lines>...
+                           advance_balances=advance_balances,
+                           advance_enabled=ADVANCE_ENABLED)
+  File "C:\Users\pardh\AppData\Local\Programs\Python\Python313\Lib\site-packages\flask\templating.py", line 152, in render_template
+    return _render(app, template, context)
+  File "C:\Users\pardh\AppData\Local\Programs\Python\Python313\Lib\site-packages\flask\templating.py", line 133, in _render
+    rv = template.render(context)
+  File "C:\Users\pardh\AppData\Local\Programs\Python\Python313\Lib\site-packages\jinja2\environment.py", line 1295, in render
+    self.environment.handle_exception()
+    ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~^^
+  File "C:\Users\pardh\AppData\Local\Programs\Python\Python313\Lib\site-packages\jinja2\environment.py", line 942, in handle_exception
+    raise rewrite_traceback_stack(source=source)
+  File "C:\Software\UD Lms\templates\loanrec_main.html", line 1, in top-level template code
+    {% extends "base.html" %}
+  File "C:\Software\UD Lms\templates\base.html", line 702, in top-level template code
+    {% block content %}{% endblock %}
+    ^^^^^^^^^^^^^^^^^
+  File "C:\Software\UD Lms\templates\loanrec_main.html", line 64, in block 'content'
+    <a class="nav-link" href="{{ url_for('loanrec.prepaid_posting') }}">
+    ^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\pardh\AppData\Local\Programs\Python\Python313\Lib\site-packages\flask\app.py", line 1071, in url_for
+    return self.handle_url_build_error(error, endpoint, values)
+           ~~~~~~~~~~~~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\pardh\AppData\Local\Programs\Python\Python313\Lib\site-packages\flask\app.py", line 1060, in url_for
+    rv = url_adapter.build(  # type: ignore[union-attr]
+        endpoint,
+    ...<3 lines>...
+        force_external=_external,
+    )
+  File "C:\Users\pardh\AppData\Local\Programs\Python\Python313\Lib\site-packages\werkzeug\routing\map.py", line 919, in build
+    raise BuildError(endpoint, values, method, self)
+werkzeug.routing.exceptions.BuildError: Could not build url for endpoint 'loanrec.prepaid_posting'. Did you mean 'loanrec.recovery_posting' instead?
+2026-03-13 21:43:14,895 ERROR: Unhandled Exception: Could not build url for endpoint 'advance.get_loan_details' with values ['loanid']. Did you mean 'advance.get_loans' instead? [in C:\Software\UD Lms\App.py:153]
+Traceback (most recent call last):
+  File "C:\Users\pardh\AppData\Local\Programs\Python\Python313\Lib\site-packages\flask\app.py", line 867, in full_dispatch_request
+    rv = self.dispatch_request()
+  File "C:\Users\pardh\AppData\Local\Programs\Python\Python313\Lib\site-packages\flask\app.py", line 852, in dispatch_request
+    return self.ensure_sync(self.view_functions[rule.endpoint])(**view_args)
+           ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~^^^^^^^^^^^^^
+  File "C:\Software\UD Lms\login.py", line 20, in decorated_function
+    return f(*args, **kwargs)
+  File "C:\Software\UD Lms\advance.py", line 117, in show_add_advance_form
+    return render_template("advance_add.html")
+  File "C:\Users\pardh\AppData\Local\Programs\Python\Python313\Lib\site-packages\flask\templating.py", line 152, in render_template
+    return _render(app, template, context)
+  File "C:\Users\pardh\AppData\Local\Programs\Python\Python313\Lib\site-packages\flask\templating.py", line 133, in _render
+    rv = template.render(context)
+  File "C:\Users\pardh\AppData\Local\Programs\Python\Python313\Lib\site-packages\jinja2\environment.py", line 1295, in render
+    self.environment.handle_exception()
+    ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~^^
+  File "C:\Users\pardh\AppData\Local\Programs\Python\Python313\Lib\site-packages\jinja2\environment.py", line 942, in handle_exception
+    raise rewrite_traceback_stack(source=source)
+  File "C:\Software\UD Lms\templates\advance_add.html", line 1, in top-level template code
+    {% extends "base.html" %}
+  File "C:\Software\UD Lms\templates\base.html", line 911, in top-level template code
+    {% block extra_js %}{% endblock %}
+    ^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Software\UD Lms\templates\advance_add.html", line 281, in block 'extra_js'
+    const BALANCE_URL = "{{ url_for('advance.get_loan_details', loanid=0) }}".replace('/0', '/');
+    ^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\pardh\AppData\Local\Programs\Python\Python313\Lib\site-packages\flask\app.py", line 1071, in url_for
+    return self.handle_url_build_error(error, endpoint, values)
+           ~~~~~~~~~~~~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\pardh\AppData\Local\Programs\Python\Python313\Lib\site-packages\flask\app.py", line 1060, in url_for
+    rv = url_adapter.build(  # type: ignore[union-attr]
+        endpoint,
+    ...<3 lines>...
+        force_external=_external,
+    )
+  File "C:\Users\pardh\AppData\Local\Programs\Python\Python313\Lib\site-packages\werkzeug\routing\map.py", line 919, in build
+    raise BuildError(endpoint, values, method, self)
+werkzeug.routing.exceptions.BuildError: Could not build url for endpoint 'advance.get_loan_details' with values ['loanid']. Did you mean 'advance.get_loans' instead?
+2026-03-13 21:43:17,559 ERROR: Unhandled Exception: Could not build url for endpoint 'loanrec.prepaid_posting'. Did you mean 'loanrec.recovery_posting' instead? [in C:\Software\UD Lms\App.py:153]
+Traceback (most recent call last):
+  File "C:\Users\pardh\AppData\Local\Programs\Python\Python313\Lib\site-packages\flask\app.py", line 867, in full_dispatch_request
+    rv = self.dispatch_request()
+  File "C:\Users\pardh\AppData\Local\Programs\Python\Python313\Lib\site-packages\flask\app.py", line 852, in dispatch_request
+    return self.ensure_sync(self.view_functions[rule.endpoint])(**view_args)
+           ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~^^^^^^^^^^^^^
+  File "C:\Software\UD Lms\loanrec.py", line 354, in recovery_posting
+    return render_template("loanrec_main.html",
+                           centers=centers,
+    ...<4 lines>...
+                           advance_balances=advance_balances,
+                           advance_enabled=ADVANCE_ENABLED)
+  File "C:\Users\pardh\AppData\Local\Programs\Python\Python313\Lib\site-packages\flask\templating.py", line 152, in render_template
+    return _render(app, template, context)
+  File "C:\Users\pardh\AppData\Local\Programs\Python\Python313\Lib\site-packages\flask\templating.py", line 133, in _render
+    rv = template.render(context)
+  File "C:\Users\pardh\AppData\Local\Programs\Python\Python313\Lib\site-packages\jinja2\environment.py", line 1295, in render
+    self.environment.handle_exception()
+    ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~^^
+  File "C:\Users\pardh\AppData\Local\Programs\Python\Python313\Lib\site-packages\jinja2\environment.py", line 942, in handle_exception
+    raise rewrite_traceback_stack(source=source)
+  File "C:\Software\UD Lms\templates\loanrec_main.html", line 1, in top-level template code
+    {% extends "base.html" %}
+  File "C:\Software\UD Lms\templates\base.html", line 702, in top-level template code
+    {% block content %}{% endblock %}
+    ^^^^^^^^^^^^^^^^^
+  File "C:\Software\UD Lms\templates\loanrec_main.html", line 64, in block 'content'
+    <a class="nav-link" href="{{ url_for('loanrec.prepaid_posting') }}">
+    ^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\pardh\AppData\Local\Programs\Python\Python313\Lib\site-packages\flask\app.py", line 1071, in url_for
+    return self.handle_url_build_error(error, endpoint, values)
+           ~~~~~~~~~~~~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\pardh\AppData\Local\Programs\Python\Python313\Lib\site-packages\flask\app.py", line 1060, in url_for
+    rv = url_adapter.build(  # type: ignore[union-attr]
+        endpoint,
+    ...<3 lines>...
+        force_external=_external,
+    )
+  File "C:\Users\pardh\AppData\Local\Programs\Python\Python313\Lib\site-packages\werkzeug\routing\map.py", line 919, in build
+    raise BuildError(endpoint, values, method, self)
+werkzeug.routing.exceptions.BuildError: Could not build url for endpoint 'loanrec.prepaid_posting'. Did you mean 'loanrec.recovery_posting' instead?
+2026-03-13 21:52:24,062 INFO: UDLMS startup [in C:\Software\UD Lms\App.py:64]
+2026-03-13 21:52:25,008 INFO: Starting UDLMS on 127.0.0.1:5000 [in C:\Software\UD Lms\App.py:349]
+2026-03-13 21:52:36,873 ERROR: Page not found: http://127.0.0.1:5000/favicon.ico [in C:\Software\UD Lms\App.py:143]
+2026-03-13 21:56:02,995 INFO: User logged out: KAKI PARDHA SARADHI [in C:\Software\UD Lms\App.py:327]
+2026-03-13 21:56:10,413 INFO: UDLMS startup [in C:\Software\UD Lms\App.py:64]
+2026-03-13 21:56:10,885 INFO: Starting UDLMS on 127.0.0.1:5000 [in C:\Software\UD Lms\App.py:349]
+2026-03-13 21:56:13,451 INFO: UDLMS startup [in C:\Software\UD Lms\App.py:64]
+2026-03-13 21:56:13,755 INFO: Starting UDLMS on 127.0.0.1:5000 [in C:\Software\UD Lms\App.py:349]
+2026-03-13 21:56:21,573 ERROR: Page not found: http://127.0.0.1:5000/favicon.ico [in C:\Software\UD Lms\App.py:143]
+2026-03-13 21:57:46,257 INFO: User logged out: KAKI PARDHA SARADHI [in C:\Software\UD Lms\App.py:327]
+2026-03-13 21:59:56,174 INFO: UDLMS startup [in C:\Software\UD Lms\App.py:64]
+2026-03-13 21:59:56,622 INFO: Starting UDLMS on 127.0.0.1:5000 [in C:\Software\UD Lms\App.py:349]
+2026-03-13 22:00:03,412 ERROR: Page not found: http://127.0.0.1:5000/favicon.ico [in C:\Software\UD Lms\App.py:143]
+2026-03-13 22:01:55,028 INFO: UDLMS startup [in C:\Software\UD Lms\App.py:64]
+2026-03-13 22:01:56,101 INFO: Starting UDLMS on 127.0.0.1:5000 [in C:\Software\UD Lms\App.py:349]
+2026-03-13 22:02:17,630 ERROR: Page not found: http://127.0.0.1:5000/favicon.ico [in C:\Software\UD Lms\App.py:143]
+2026-03-13 22:02:52,204 INFO: User logged out: superadmin [in C:\Software\UD Lms\App.py:327]
+2026-03-13 22:03:16,947 INFO: UDLMS startup [in C:\Software\UD Lms\App.py:64]
+2026-03-13 22:03:17,343 INFO: Starting UDLMS on 127.0.0.1:5000 [in C:\Software\UD Lms\App.py:349]
+2026-03-13 22:03:51,683 ERROR: Page not found: http://127.0.0.1:5000/favicon.ico [in C:\Software\UD Lms\App.py:143]
+2026-03-13 22:04:10,518 INFO: UDLMS startup [in C:\Software\UD Lms\App.py:64]
+2026-03-13 22:04:11,442 INFO: Starting UDLMS on 127.0.0.1:5000 [in C:\Software\UD Lms\App.py:349]
+2026-03-13 22:04:14,771 ERROR: Page not found: http://127.0.0.1:5000/favicon.ico [in C:\Software\UD Lms\App.py:143]
+2026-03-14 08:38:46,806 INFO: UDLMS startup [in C:\Software\UD Lms\App.py:64]
+2026-03-14 08:38:47,478 INFO: Starting UDLMS on 127.0.0.1:5000 [in C:\Software\UD Lms\App.py:349]
+2026-03-14 08:38:59,026 ERROR: Page not found: http://127.0.0.1:5000/favicon.ico [in C:\Software\UD Lms\App.py:143]
+2026-03-14 09:43:42,248 INFO: UDLMS startup [in C:\Software\UD Lms\App.py:64]
+2026-03-14 09:43:42,802 INFO: Starting UDLMS on 127.0.0.1:5000 [in C:\Software\UD Lms\App.py:349]
+2026-03-14 09:47:09,013 INFO: User logged out: KAKI PARDHA SARADHI [in C:\Software\UD Lms\App.py:327]
+2026-03-14 09:47:17,010 INFO: UDLMS startup [in C:\Software\UD Lms\App.py:64]
+2026-03-14 09:47:17,543 INFO: Starting UDLMS on 127.0.0.1:5000 [in C:\Software\UD Lms\App.py:349]
+2026-03-14 09:47:24,324 ERROR: Page not found: http://127.0.0.1:5000/favicon.ico [in C:\Software\UD Lms\App.py:143]
+2026-03-14 09:49:40,618 INFO: User logged out: KAKI PARDHA SARADHI [in C:\Software\UD Lms\App.py:327]
+2026-03-14 09:49:48,819 INFO: UDLMS startup [in C:\Software\UD Lms\App.py:64]
+2026-03-14 09:49:49,487 INFO: Starting UDLMS on 127.0.0.1:5000 [in C:\Software\UD Lms\App.py:349]
+2026-03-14 09:49:54,419 ERROR: Page not found: http://127.0.0.1:5000/favicon.ico [in C:\Software\UD Lms\App.py:143]
+2026-03-14 09:55:45,553 INFO: User logged out: KAKI PARDHA SARADHI [in C:\Software\UD Lms\App.py:327]
+2026-03-14 11:44:33,926 INFO: UDLMS startup [in C:\Software\UD Lms\App.py:64]
+2026-03-14 11:44:35,014 INFO: Starting UDLMS on 127.0.0.1:5000 [in C:\Software\UD Lms\App.py:349]
+2026-03-14 13:55:55,911 INFO: UDLMS startup [in C:\Software\UD Lms\App.py:64]
+2026-03-14 13:55:56,473 INFO: Starting UDLMS on 127.0.0.1:5000 [in C:\Software\UD Lms\App.py:349]
+2026-03-14 13:56:04,493 ERROR: Page not found: http://127.0.0.1:5000/favicon.ico [in C:\Software\UD Lms\App.py:143]
+2026-03-14 14:06:22,905 INFO: User logged out: KAKI PARDHA SARADHI [in C:\Software\UD Lms\App.py:327]
+2026-03-14 14:06:30,609 INFO: UDLMS startup [in C:\Software\UD Lms\App.py:64]
+2026-03-14 14:06:31,089 INFO: Starting UDLMS on 127.0.0.1:5000 [in C:\Software\UD Lms\App.py:349]
+2026-03-14 14:15:01,793 INFO: UDLMS startup [in C:\Software\UD Lms\App.py:64]
+2026-03-14 14:15:30,108 INFO: UDLMS startup [in C:\Software\UD Lms\App.py:64]
+2026-03-14 14:15:59,886 INFO: UDLMS startup [in C:\Software\UD Lms\App.py:64]
+2026-03-14 14:16:00,298 INFO: Starting UDLMS on 127.0.0.1:5000 [in C:\Software\UD Lms\App.py:349]
+2026-03-14 14:16:04,649 ERROR: Page not found: http://127.0.0.1:5000/favicon.ico [in C:\Software\UD Lms\App.py:143]
+2026-03-14 14:17:11,746 INFO: UDLMS startup [in C:\Software\UD Lms\App.py:64]
+2026-03-14 14:17:12,196 INFO: Starting UDLMS on 127.0.0.1:5000 [in C:\Software\UD Lms\App.py:349]
+2026-03-14 14:23:58,402 INFO: UDLMS startup [in C:\Software\UD Lms\App.py:64]
+2026-03-14 14:23:59,395 INFO: Starting UDLMS on 127.0.0.1:5000 [in C:\Software\UD Lms\App.py:349]
+2026-03-14 14:24:06,393 ERROR: Page not found: http://127.0.0.1:5000/favicon.ico [in C:\Software\UD Lms\App.py:143]
+2026-03-14 14:28:24,922 INFO: User logged out: KAKI PARDHA SARADHI [in C:\Software\UD Lms\App.py:327]
+2026-03-14 14:32:06,347 INFO: UDLMS startup [in C:\Software\UD Lms\App.py:64]
+2026-03-14 14:32:06,888 INFO: Starting UDLMS on 127.0.0.1:5000 [in C:\Software\UD Lms\App.py:349]
+2026-03-14 14:38:18,899 ERROR: Page not found: http://127.0.0.1:5000/favicon.ico [in C:\Software\UD Lms\App.py:143]
+2026-03-14 14:39:02,612 INFO: User logged out: KAKI PARDHA SARADHI [in C:\Software\UD Lms\App.py:327]
+2026-03-14 14:39:07,725 INFO: UDLMS startup [in C:\Software\UD Lms\App.py:64]
+2026-03-14 14:39:08,124 INFO: Starting UDLMS on 127.0.0.1:5000 [in C:\Software\UD Lms\App.py:349]
+2026-03-14 21:22:58,051 INFO: UDLMS startup [in C:\Software\UD Lms\App.py:64]
+2026-03-14 21:22:58,716 INFO: Starting UDLMS on 127.0.0.1:5000 [in C:\Software\UD Lms\App.py:349]
+2026-03-14 21:23:01,695 ERROR: Page not found: http://127.0.0.1:5000/favicon.ico [in C:\Software\UD Lms\App.py:143]
+2026-03-14 21:23:45,707 ERROR: Page not found: http://127.0.0.1:5000/favicon.ico [in C:\Software\UD Lms\App.py:143]
+2026-03-14 21:24:43,705 ERROR: Page not found: http://127.0.0.1:5000/.well-known/appspecific/com.chrome.devtools.json [in C:\Software\UD Lms\App.py:143]
+2026-03-14 21:32:12,128 ERROR: Page not found: http://127.0.0.1:5000/.well-known/appspecific/com.chrome.devtools.json [in C:\Software\UD Lms\App.py:143]
+2026-03-14 21:33:08,759 INFO: User logged out: KAKI PARDHA SARADHI [in C:\Software\UD Lms\App.py:327]
+2026-03-14 21:33:18,821 INFO: UDLMS startup [in C:\Software\UD Lms\App.py:64]
+2026-03-14 21:33:19,313 INFO: Starting UDLMS on 127.0.0.1:5000 [in C:\Software\UD Lms\App.py:349]
+2026-03-14 21:33:23,686 ERROR: Page not found: http://127.0.0.1:5000/favicon.ico [in C:\Software\UD Lms\App.py:143]
+2026-03-14 21:34:05,622 INFO: User logged out: KAKI PARDHA SARADHI [in C:\Software\UD Lms\App.py:327]
+2026-03-14 21:37:29,772 INFO: UDLMS startup [in C:\Software\UD Lms\App.py:64]
+2026-03-14 21:37:30,204 INFO: Starting UDLMS on 127.0.0.1:5000 [in C:\Software\UD Lms\App.py:349]
+2026-03-14 21:37:33,090 ERROR: Page not found: http://127.0.0.1:5000/favicon.ico [in C:\Software\UD Lms\App.py:143]
+2026-03-15 08:48:49,849 INFO: UDLMS startup [in C:\Software\UD Lms\App.py:64]
+2026-03-15 08:48:50,709 INFO: Starting UDLMS on 127.0.0.1:5000 [in C:\Software\UD Lms\App.py:349]
+2026-03-15 08:49:01,070 ERROR: Page not found: http://127.0.0.1:5000/favicon.ico [in C:\Software\UD Lms\App.py:143]
+2026-03-15 09:45:45,893 INFO: UDLMS startup [in C:\Software\UD Lms\App.py:64]
+2026-03-15 09:45:46,383 INFO: Starting UDLMS on 127.0.0.1:5000 [in C:\Software\UD Lms\App.py:351]
+2026-03-15 09:46:02,034 ERROR: Page not found: http://127.0.0.1:5000/favicon.ico [in C:\Software\UD Lms\App.py:145]
+2026-03-15 09:56:35,652 INFO: User logged out: KAKI PARDHA SARADHI [in C:\Software\UD Lms\App.py:329]
+2026-03-15 10:19:49,728 INFO: UDLMS startup [in C:\Software\UD Lms 1503\UD Lms\App.py:64]
+2026-03-15 10:19:50,287 INFO: Starting UDLMS on 127.0.0.1:5000 [in C:\Software\UD Lms 1503\UD Lms\App.py:351]
+2026-03-15 10:20:08,045 ERROR: Page not found: http://127.0.0.1:5000/favicon.ico [in C:\Software\UD Lms 1503\UD Lms\App.py:145]

@@ -1,0 +1,273 @@
+{% extends "base.html" %}
+{% block title %}Loans Management - Ushodaya MACS Ltd{% endblock %}
+{% block page_title %}Loans Management{% endblock %}
+
+{% block extra_css %}
+<style>
+    .page-header { background:linear-gradient(135deg,#0c2a78 0%,#1857c9 100%); color:white; border-radius:14px; padding:24px 28px; margin-bottom:22px; }
+    .section-card { background:white; border-radius:12px; padding:22px; margin-bottom:22px; box-shadow:0 2px 10px rgba(0,0,0,.06); }
+    .section-title { font-size:1rem; font-weight:700; color:#0c2a78; border-bottom:2px solid #0c2a78; padding-bottom:8px; margin-bottom:16px; display:flex; align-items:center; gap:8px; }
+    .count-badge { margin-left:auto; font-size:.8rem; font-weight:700; border-radius:20px; padding:3px 12px; }
+
+    .toolbar { display:flex; align-items:center; gap:12px; flex-wrap:wrap; margin-bottom:14px; }
+    .toolbar input { flex:1; min-width:180px; border:2px solid #e5e7eb; border-radius:8px; padding:7px 12px; font-size:.88rem; }
+    .toolbar input:focus { border-color:#0c2a78; outline:none; }
+    .record-count { font-size:.83rem; color:#6b7280; font-weight:600; white-space:nowrap; }
+
+    /* Cards */
+    .loans-grid { display:grid; grid-template-columns:repeat(auto-fill,minmax(340px,1fr)); gap:16px; }
+    .loan-card { background:white; border-radius:12px; padding:18px; box-shadow:0 2px 8px rgba(0,0,0,.07); border-left:5px solid #0c2a78; transition:all .2s; }
+    .loan-card:hover { transform:translateY(-2px); box-shadow:0 5px 16px rgba(0,0,0,.12); }
+    .loan-card.approved { border-left-color:#f59e0b; }
+    .loan-card.active   { border-left-color:#10b981; }
+    .member-name { font-size:1rem; font-weight:700; color:#1e293b; margin-bottom:2px; }
+    .member-code-sm { font-size:.8rem; color:#6b7280; }
+    .loan-amount { font-size:1.3rem; font-weight:800; color:#10b981; margin:8px 0; }
+    .loan-amount.outstanding { color:#dc2626; font-size:1.1rem; }
+    .detail-grid { display:grid; grid-template-columns:1fr 1fr; gap:8px; background:#f8fafc; border-radius:8px; padding:12px; margin:10px 0; font-size:.83rem; }
+    .detail-label { color:#9ca3af; }
+    .detail-value { font-weight:700; color:#374151; }
+    .status-badge { border-radius:20px; padding:3px 10px; font-size:.75rem; font-weight:700; }
+    .status-active   { background:#d1fae5; color:#065f46; }
+    .status-closed   { background:#f1f5f9; color:#475569; }
+    .status-approved { background:#fef3c7; color:#92400e; }
+    .btn-disburse { background:linear-gradient(135deg,#f59e0b,#d97706); color:white; border:none; border-radius:7px; padding:8px 16px; font-size:.83rem; font-weight:700; cursor:pointer; text-decoration:none; display:inline-flex; align-items:center; gap:5px; }
+    .btn-view { background:#0c2a78; color:white; border-radius:7px; padding:8px 16px; font-size:.83rem; font-weight:700; text-decoration:none; display:inline-flex; align-items:center; gap:5px; }
+
+    /* List view */
+    .list-view { background:white; border-radius:12px; box-shadow:0 2px 8px rgba(0,0,0,.06); overflow:hidden; }
+    .list-view table thead th { background:#0c2a78; color:white; font-weight:600; white-space:nowrap; padding:11px 13px; font-size:.85rem; }
+    .list-view table tbody td { padding:10px 13px; vertical-align:middle; font-size:.85rem; }
+    .list-view table tbody tr:hover { background:#f0f7ff; }
+    .list-view table tbody tr { border-bottom:1px solid #f1f5f9; }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="container-fluid">
+
+    {% with messages = get_flashed_messages(with_categories=true) %}
+        {% if messages %}{% for cat,msg in messages %}
+        <div class="alert alert-{{ cat }} alert-dismissible fade show">
+            <i class="bi bi-info-circle me-2"></i>{{ msg }}
+            <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+        </div>
+        {% endfor %}{% endif %}
+    {% endwith %}
+
+    <div class="page-header d-flex justify-content-between align-items-center flex-wrap gap-2">
+        <div>
+            <h4 class="fw-bold mb-1"><i class="bi bi-wallet2 me-2"></i>Loans Management</h4>
+            <small style="opacity:.85;">View approved applications and active loans</small>
+        </div>
+        <a href="{{ url_for('loanapplication.loan_applications') }}" class="add-btn" style="background:white;color:#0c2a78;padding:10px 22px;border-radius:8px;font-weight:700;text-decoration:none;display:inline-flex;align-items:center;gap:7px;">
+            <i class="bi bi-file-text"></i> Loan Applications
+        </a>
+    </div>
+
+    <!-- ══ APPROVED APPLICATIONS ══ -->
+    <div class="section-card">
+        <div class="section-title">
+            <i class="bi bi-check-circle"></i> Approved — Ready for Disbursement
+            <span class="count-badge bg-warning text-dark">{{ approved_apps|length }}</span>
+        </div>
+
+        {% if approved_apps %}
+
+        <!-- Toolbar -->
+        <div class="toolbar">
+            <i class="bi bi-search text-muted"></i>
+            <input type="text" id="approvedSearch" placeholder="Search member, center, product...">
+            <span class="record-count" id="approvedCount">{{ approved_apps|length }} records</span>
+            <div class="btn-group">
+                <button class="btn btn-sm" id="apBtnCard" onclick="setView('approved','card')"><i class="bi bi-grid-3x3-gap"></i> Card</button>
+                <button class="btn btn-sm" id="apBtnList" onclick="setView('approved','list')"><i class="bi bi-list-ul"></i> List</button>
+            </div>
+        </div>
+
+        <!-- Card -->
+        <div id="approvedCard" class="loans-grid">
+            {% for a in approved_apps %}
+            <div class="loan-card approved"
+                 data-name="{{ a.MemberName|lower }}" data-code="{{ a.MemberCode|lower }}"
+                 data-center="{{ a.CenterName|lower if a.CenterName else '' }}" data-product="{{ a.ProductName|lower if a.ProductName else '' }}">
+                <div class="d-flex justify-content-between align-items-start">
+                    <div>
+                        <div class="member-name">{{ a.MemberName }}</div>
+                        <div class="member-code-sm"><i class="bi bi-person-badge me-1"></i>{{ a.MemberCode }}</div>
+                    </div>
+                    <span class="status-badge status-approved">Approved</span>
+                </div>
+                <div class="loan-amount">₹{{ "{:,.2f}".format(a.LoanAmountApproved or 0) }}</div>
+                <div class="detail-grid">
+                    <div><div class="detail-label">Center</div><div class="detail-value">{{ a.CenterName or 'N/A' }}</div></div>
+                    <div><div class="detail-label">Product</div><div class="detail-value">{{ a.ProductName or 'N/A' }}</div></div>
+                    <div><div class="detail-label">Interest</div><div class="detail-value">{{ a.InterestRate or 0 }}% p.a.</div></div>
+                    <div><div class="detail-label">Tenure</div><div class="detail-value">{{ a.Tenure or 0 }} months</div></div>
+                </div>
+                <div class="d-flex justify-content-between align-items-center">
+                    <small class="text-muted"><i class="bi bi-calendar-check me-1"></i>{{ a.ApprovedOn.strftime('%d %b %Y') if a.ApprovedOn else 'N/A' }}</small>
+                    <a href="{{ url_for('loans.disburse_loan', app_id=a.LoanApplicationID) }}" class="btn-disburse">
+                        <i class="bi bi-send-fill"></i> Disburse
+                    </a>
+                </div>
+            </div>
+            {% endfor %}
+        </div>
+
+        <!-- List -->
+        <div id="approvedList" class="list-view mt-2" style="display:none;">
+            <table class="table mb-0">
+                <thead><tr>
+                    <th>#</th><th>Member</th><th>Code</th><th>Center</th><th>Product</th>
+                    <th>Amount (₹)</th><th>Interest</th><th>Tenure</th><th>Approved On</th><th>Action</th>
+                </tr></thead>
+                <tbody id="approvedListBody">
+                    {% for a in approved_apps %}
+                    <tr data-name="{{ a.MemberName|lower }}" data-code="{{ a.MemberCode|lower }}"
+                        data-center="{{ a.CenterName|lower if a.CenterName else '' }}" data-product="{{ a.ProductName|lower if a.ProductName else '' }}">
+                        <td class="text-muted">{{ loop.index }}</td>
+                        <td><strong>{{ a.MemberName }}</strong></td>
+                        <td>{{ a.MemberCode }}</td>
+                        <td>{{ a.CenterName or '—' }}</td>
+                        <td>{{ a.ProductName or '—' }}</td>
+                        <td><strong>₹{{ "{:,.2f}".format(a.LoanAmountApproved or 0) }}</strong></td>
+                        <td>{{ a.InterestRate or 0 }}%</td>
+                        <td>{{ a.Tenure or 0 }} mo</td>
+                        <td>{{ a.ApprovedOn.strftime('%d %b %Y') if a.ApprovedOn else '—' }}</td>
+                        <td><a href="{{ url_for('loans.disburse_loan', app_id=a.LoanApplicationID) }}" class="btn-disburse btn-sm"><i class="bi bi-send-fill"></i></a></td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+
+        {% else %}
+        <div class="text-center py-4 text-muted">
+            <i class="bi bi-inbox" style="font-size:2.5rem;"></i>
+            <p class="mt-2">No approved applications pending disbursement</p>
+        </div>
+        {% endif %}
+    </div>
+
+    <!-- ══ ACTIVE LOANS ══ -->
+    <div class="section-card">
+        <div class="section-title">
+            <i class="bi bi-wallet2"></i> Active Loans
+            <span class="count-badge bg-success text-white">{{ loans|length }}</span>
+        </div>
+
+        {% if loans %}
+
+        <div class="toolbar">
+            <i class="bi bi-search text-muted"></i>
+            <input type="text" id="loansSearch" placeholder="Search member, center, product...">
+            <span class="record-count" id="loansCount">{{ loans|length }} records</span>
+            <div class="btn-group">
+                <button class="btn btn-sm" id="lnBtnCard" onclick="setView('loans','card')"><i class="bi bi-grid-3x3-gap"></i> Card</button>
+                <button class="btn btn-sm" id="lnBtnList" onclick="setView('loans','list')"><i class="bi bi-list-ul"></i> List</button>
+            </div>
+        </div>
+
+        <!-- Card -->
+        <div id="loansCard" class="loans-grid">
+            {% for l in loans %}
+            <div class="loan-card active"
+                 data-name="{{ l.MemberName|lower }}" data-code="{{ l.member_code|lower }}"
+                 data-center="{{ l.CenterName|lower if l.CenterName else '' }}" data-product="{{ l.ProductName|lower if l.ProductName else '' }}">
+                <div class="d-flex justify-content-between align-items-start">
+                    <div>
+                        <div class="member-code-sm">Loan #{{ l.loanid }}</div>
+                        <div class="member-name">{{ l.MemberName }}</div>
+                        <div class="member-code-sm"><i class="bi bi-person-badge me-1"></i>{{ l.member_code }}</div>
+                    </div>
+                    <span class="status-badge status-active">{{ l.loanstatus or 'Active' }}</span>
+                </div>
+                <div class="detail-grid">
+                    <div><div class="detail-label">Loan Amount</div><div class="detail-value" style="color:#10b981;">₹{{ "{:,.0f}".format(l.loanamount or 0) }}</div></div>
+                    <div><div class="detail-label">EMI</div><div class="detail-value" style="color:#0c2a78;">₹{{ "{:,.0f}".format(l.emi or 0) }}</div></div>
+                    <div><div class="detail-label">Outstanding</div><div class="detail-value" style="color:#dc2626;">₹{{ "{:,.0f}".format(l.principaloutstanding or 0) }}</div></div>
+                    <div><div class="detail-label">Tenure</div><div class="detail-value">{{ l.tenure or 0 }} mo</div></div>
+                </div>
+                <div class="d-flex justify-content-between align-items-center">
+                    <small class="text-muted"><i class="bi bi-calendar me-1"></i>{{ l.disbursementdate.strftime('%d %b %Y') if l.disbursementdate else 'N/A' }}</small>
+                    <a href="{{ url_for('loans.view_loan', loan_id=l.loanid) }}" class="btn-view"><i class="bi bi-eye-fill"></i> View</a>
+                </div>
+            </div>
+            {% endfor %}
+        </div>
+
+        <!-- List -->
+        <div id="loansList" class="list-view mt-2" style="display:none;">
+            <table class="table mb-0">
+                <thead><tr>
+                    <th>#</th><th>Loan ID</th><th>Member</th><th>Code</th><th>Center</th>
+                    <th>Amount (₹)</th><th>EMI (₹)</th><th>Outstanding (₹)</th><th>Tenure</th><th>Disbursed</th><th>Status</th><th>Action</th>
+                </tr></thead>
+                <tbody id="loansListBody">
+                    {% for l in loans %}
+                    <tr data-name="{{ l.MemberName|lower }}" data-code="{{ l.member_code|lower }}"
+                        data-center="{{ l.CenterName|lower if l.CenterName else '' }}" data-product="{{ l.ProductName|lower if l.ProductName else '' }}">
+                        <td class="text-muted">{{ loop.index }}</td>
+                        <td><strong>#{{ l.loanid }}</strong></td>
+                        <td>{{ l.MemberName }}</td>
+                        <td>{{ l.member_code }}</td>
+                        <td>{{ l.CenterName or '—' }}</td>
+                        <td>₹{{ "{:,.0f}".format(l.loanamount or 0) }}</td>
+                        <td>₹{{ "{:,.0f}".format(l.emi or 0) }}</td>
+                        <td><strong style="color:#dc2626;">₹{{ "{:,.0f}".format(l.principaloutstanding or 0) }}</strong></td>
+                        <td>{{ l.tenure or 0 }} mo</td>
+                        <td>{{ l.disbursementdate.strftime('%d %b %Y') if l.disbursementdate else '—' }}</td>
+                        <td><span class="status-badge status-active">{{ l.loanstatus or 'Active' }}</span></td>
+                        <td><a href="{{ url_for('loans.view_loan', loan_id=l.loanid) }}" class="btn-view btn-sm"><i class="bi bi-eye-fill"></i></a></td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+
+        {% else %}
+        <div class="text-center py-4 text-muted">
+            <i class="bi bi-inbox" style="font-size:2.5rem;"></i>
+            <p class="mt-2">No active loans found</p>
+        </div>
+        {% endif %}
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+const views = { approved: localStorage.getItem('loansApprovedView')||'card', loans: localStorage.getItem('loansActiveView')||'card' };
+
+function setView(section, v) {
+    views[section] = v;
+    localStorage.setItem(section==='approved' ? 'loansApprovedView' : 'loansActiveView', v);
+    const isApproved = section === 'approved';
+    document.getElementById(isApproved ? 'approvedCard' : 'loansCard').style.display = v==='card' ? '' : 'none';
+    document.getElementById(isApproved ? 'approvedList' : 'loansList').style.display = v==='list' ? '' : 'none';
+    const btnC = document.getElementById(isApproved ? 'apBtnCard' : 'lnBtnCard');
+    const btnL = document.getElementById(isApproved ? 'apBtnList' : 'lnBtnList');
+    btnC.className = 'btn btn-sm ' + (v==='card' ? 'btn-primary active' : 'btn-outline-primary');
+    btnL.className = 'btn btn-sm ' + (v==='list' ? 'btn-primary active' : 'btn-outline-primary');
+}
+
+// Init
+setView('approved', views.approved);
+setView('loans', views.loans);
+
+function makeSearch(inputId, cardSel, bodyId, countId) {
+    document.getElementById(inputId).addEventListener('input', function () {
+        const t = this.value.toLowerCase(); let v = 0;
+        document.querySelectorAll(cardSel + ', #' + bodyId + ' tr').forEach(el => {
+            const match = ['name','code','center','product'].some(k => (el.dataset[k]||'').includes(t));
+            el.style.display = match ? '' : 'none';
+            if (match) v++;
+        });
+        document.getElementById(countId).textContent = (v/2|0) + ' records';
+    });
+}
+makeSearch('approvedSearch', '.loan-card.approved', 'approvedListBody', 'approvedCount');
+makeSearch('loansSearch', '.loan-card.active', 'loansListBody', 'loansCount');
+</script>
+{% endblock %}

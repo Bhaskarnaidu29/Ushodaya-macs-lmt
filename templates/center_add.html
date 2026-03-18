@@ -1,0 +1,221 @@
+{% extends "base.html" %}
+{% block title %}Add Center - Ushodaya MACS Ltd{% endblock %}
+{% block page_title %}Add New Center{% endblock %}
+
+{% block extra_css %}
+<style>
+  .page-header{background:linear-gradient(135deg,#0c2a78,#1857c9);color:#fff;border-radius:14px;padding:24px 28px;margin-bottom:22px}
+  .back-btn{background:#fff;color:#0c2a78;padding:8px 18px;border-radius:11px;font-weight:700;text-decoration:none;display:inline-flex;align-items:center;gap:6px;font-size:.9rem}
+  .back-btn:hover{color:#0c2a78;opacity:.9}
+  .form-card{background:#fff;border-radius:12px;padding:26px 28px;margin-bottom:18px;box-shadow:0 2px 10px rgba(0,0,0,.06)}
+  .sec-title{font-size:.95rem;font-weight:700;color:#0c2a78;border-bottom:2px solid #0c2a78;padding-bottom:8px;margin-bottom:18px;display:flex;align-items:center;gap:8px}
+  .form-label{font-weight:600;color:#374151;font-size:.88rem;margin-bottom:5px}
+  .form-label.req::after{content:" *";color:#dc2626}
+  .form-control,.form-select{border:2px solid #e5e7eb;border-radius:8px;padding:10px 14px;font-size:.93rem}
+  .form-control:focus,.form-select:focus{border-color:#0c2a78;box-shadow:0 0 0 3px rgba(12,42,120,.1);outline:none}
+  .auto-no{background:linear-gradient(135deg,#eff6ff,#dbeafe);border:2px solid #0c2a78;border-radius:8px;padding:14px 18px;font-size:1.4rem;font-weight:800;color:#0c2a78;display:flex;align-items:center;justify-content:space-between}
+  .auto-no small{font-size:.75rem;font-weight:400;color:#6b7280}
+  .btn-submit{background:linear-gradient(135deg,#0c2a78,#1857c9);color:#fff;padding:12px 32px;border-radius:9px;font-weight:700;font-size:.95rem;border:none;cursor:pointer;display:inline-flex;align-items:center;gap:7px;transition:all .2s}
+  .btn-submit:hover{transform:translateY(-1px);box-shadow:0 6px 18px rgba(12,42,120,.35)}
+  .btn-cancel{background:#f1f5f9;color:#475569;padding:12px 32px;border-radius:9px;font-weight:700;font-size:.95rem;text-decoration:none;display:inline-flex;align-items:center;gap:7px}
+  .btn-cancel:hover{background:#e2e8f0;color:#334155}
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="container-fluid">
+<div class="row justify-content-center">
+<div class="col-lg-10 col-xl-9">
+
+  {% with messages = get_flashed_messages(with_categories=true) %}
+    {% if messages %}{% for cat,msg in messages %}
+    <div class="alert alert-{{cat}} alert-dismissible fade show">
+      <i class="bi bi-info-circle me-2"></i>{{msg}}
+      <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+    </div>
+    {% endfor %}{% endif %}
+  {% endwith %}
+
+  <div class="page-header d-flex justify-content-between align-items-center flex-wrap gap-2">
+    <div>
+      <h4 class="fw-bold mb-1"><i class="bi bi-house-add me-2"></i>Add New Center</h4>
+      <small style="opacity:.85">Create a new center for member groups</small>
+    </div>
+    <a href="{{ url_for('center.index') }}" class="back-btn">
+      <i class="bi bi-arrow-left"></i> Back to Centers
+    </a>
+  </div>
+
+  <form method="POST">
+
+    <!-- Auto-generated number -->
+    <div class="form-card">
+      <div class="sec-title"><i class="bi bi-hash"></i> Center Number</div>
+      <div class="auto-no">
+        <span><i class="bi bi-check-circle text-success me-2"></i>#{{ next_center_no }}</span>
+        <small>Auto-generated — cannot be changed</small>
+      </div>
+    </div>
+
+    <!-- Basic -->
+    <div class="form-card">
+      <div class="sec-title"><i class="bi bi-info-circle"></i> Basic Information</div>
+      <div class="row g-3">
+        <div class="col-md-6">
+          <label class="form-label req">Center Name</label>
+          <input type="text" class="form-control" name="center_name" required autofocus placeholder="Enter center name">
+        </div>
+        <div class="col-md-6">
+          <label class="form-label">Creation Date</label>
+          <input type="date" class="form-control" name="create_date" value="{{ current_date }}">
+        </div>
+        <div class="col-md-6">
+          <label class="form-label req">Handling Staff</label>
+          <select class="form-select" name="handling_staff" required>
+            <option value="">— Select Staff —</option>
+            {% for s in staff_list %}
+            <option value="{{ s }}">{{ s }}</option>
+            {% endfor %}
+          </select>
+          <small class="text-muted">Staff member responsible for this center</small>
+        </div>
+        <div class="col-md-6">
+          <label class="form-label">Maximum Members</label>
+          <input type="number" class="form-control" name="max_members" value="50" min="1">
+        </div>
+      </div>
+    </div>
+
+    <!-- Loan config -->
+    <div class="form-card">
+      <div class="sec-title"><i class="bi bi-cash-stack"></i> Loan Configuration</div>
+      <div class="row g-3">
+        <div class="col-md-3">
+          <label class="form-label req">Loan Type</label>
+          <select class="form-select" name="loan_type" required id="loanTypeSelect">
+            <option value="Weekly">Weekly</option>
+            <option value="Monthly">Monthly</option>
+          </select>
+        </div>
+        <div class="col-md-3" id="weeklyDayCol">
+          <label class="form-label">Weekly Collection Day</label>
+         <select name="weekly_collection_day" class="form-control">
+             <option value="">Select Day</option>
+             <option value="Monday">Monday</option>
+            <option value="Tuesday">Tuesday</option>
+            <option value="Wednesday">Wednesday</option>
+            <option value="Thursday">Thursday</option>
+            <option value="Friday">Friday</option>
+          <option value="Saturday">Saturday</option>
+          </select>
+        </div>
+        <div class="col-md-3" id="monthlyDayCol" style="display:none">
+          <label class="form-label">Monthly Collection Day</label>
+          <input type="number" class="form-control" name="collection_day" min="1" max="31" placeholder="e.g. 5">
+          <small class="text-muted">Day of month (1–31)</small>
+        </div>
+        <div class="col-md-3">
+          <label class="form-label">Due Day (text)</label>
+          <input type="text" class="form-control" name="due_day" placeholder="e.g. Monday, 15th">
+        </div>
+        <div class="col-md-3">
+          <label class="form-label">Due Date</label>
+          <input type="date" class="form-control" name="due_date">
+        </div>
+      </div>
+    </div>
+
+    <!-- Address -->
+    <div class="form-card">
+      <div class="sec-title"><i class="bi bi-geo-alt"></i> Address Information</div>
+      <div class="row g-3">
+        <div class="col-md-6">
+          <label class="form-label">Address Line 1</label>
+          <input type="text" class="form-control" name="address1">
+        </div>
+        <div class="col-md-6">
+          <label class="form-label">Address Line 2</label>
+          <input type="text" class="form-control" name="address2">
+        </div>
+        <div class="col-md-4">
+          <label class="form-label">City</label>
+          <input type="text" class="form-control" name="city">
+        </div>
+        <div class="col-md-4">
+          <label class="form-label">District</label>
+          <input type="text" class="form-control" name="district">
+        </div>
+        <div class="col-md-4">
+          <label class="form-label">State</label>
+          <input type="text" class="form-control" name="state">
+        </div>
+        <div class="col-md-6">
+          <label class="form-label">Pincode</label>
+          <input type="text" class="form-control" name="pincode" id="pincodeInput" maxlength="6" placeholder="6-digit pincode">
+        </div>
+        <div class="col-md-6">
+          <label class="form-label">Landmark</label>
+          <input type="text" class="form-control" name="landmark">
+        </div>
+      </div>
+    </div>
+
+    <!-- Financial -->
+    <div class="form-card">
+      <div class="sec-title"><i class="bi bi-currency-rupee"></i> Financial Details</div>
+      <div class="row g-3">
+        <div class="col-md-4">
+          <label class="form-label">Share Capital (₹)</label>
+          <input type="number" class="form-control" name="share_capital" step="0.01" value="0" min="0">
+        </div>
+        <div class="col-md-4">
+          <label class="form-label">Savings (₹)</label>
+          <input type="number" class="form-control" name="savings" step="0.01" value="0" min="0">
+        </div>
+        <div class="col-md-4">
+          <label class="form-label">Joining Fee (₹)</label>
+          <input type="number" class="form-control" name="joining_fee" step="0.01" value="0" min="0">
+        </div>
+      </div>
+    </div>
+
+    <!-- Notes -->
+    <div class="form-card">
+      <div class="sec-title"><i class="bi bi-pencil-square"></i> Additional Notes</div>
+      <textarea class="form-control" name="note" rows="3" placeholder="Any additional information about this center"></textarea>
+    </div>
+
+    <!-- Buttons -->
+    <div class="form-card">
+      <div class="d-flex gap-3 flex-wrap">
+        <button type="submit" class="btn-submit">
+          <i class="bi bi-check-circle-fill"></i> Create Center
+        </button>
+        <a href="{{ url_for('center.index') }}" class="btn-cancel">
+          <i class="bi bi-x-circle"></i> Cancel
+        </a>
+      </div>
+    </div>
+
+  </form>
+</div></div></div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+  // Pincode digits only
+  document.getElementById('pincodeInput').addEventListener('input', function(){
+    this.value = this.value.replace(/[^0-9]/g,'');
+  });
+
+  // Show/hide weekly vs monthly collection day
+  const loanType = document.getElementById('loanTypeSelect');
+  function toggleCollectionDay(){
+    const isWeekly = loanType.value === 'Weekly';
+    document.getElementById('weeklyDayCol').style.display  = isWeekly ? '' : 'none';
+    document.getElementById('monthlyDayCol').style.display = isWeekly ? 'none' : '';
+  }
+  loanType.addEventListener('change', toggleCollectionDay);
+  toggleCollectionDay();
+</script>
+{% endblock %}

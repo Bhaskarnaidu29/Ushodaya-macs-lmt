@@ -1,0 +1,451 @@
+{% extends "base.html" %}
+{% block title %}RD Collections{% endblock %}
+
+{% block extra_css %}
+<style>
+  .rd-collections-header {
+    background: linear-gradient(135deg, #7c3aed 0%, #2563eb 100%);
+    color: #fff;
+    border-radius: 12px;
+    padding: 20px 28px;
+    margin-bottom: 20px;
+  }
+  .stat-card {
+    border: none;
+    border-radius: 10px;
+    padding: 16px 20px;
+    position: relative;
+    overflow: hidden;
+  }
+  .stat-card::before {
+    content: "";
+    position: absolute;
+    top: -20px; right: -20px;
+    width: 80px; height: 80px;
+    border-radius: 50%;
+    opacity: .12;
+    background: currentColor;
+  }
+  .stat-card .stat-icon { font-size: 1.8rem; opacity: .85; }
+  .stat-card .stat-val  { font-size: 1.4rem; font-weight: 700; line-height: 1.1; }
+  .stat-card .stat-lbl  { font-size: .75rem; opacity: .75; text-transform: uppercase; letter-spacing: .5px; }
+  .filter-bar { background: #fff; border-radius: 10px; padding: 16px 20px; box-shadow: 0 1px 4px rgba(0,0,0,.06); }
+  .rd-table { font-size: .85rem; border-collapse: separate; border-spacing: 0; width: 100%; }
+  .rd-table thead th {
+    background: #7c3aed;
+    color: #fff;
+    padding: 10px 8px;
+    white-space: nowrap;
+    position: sticky;
+    top: 0;
+    z-index: 10;
+  }
+  .rd-table thead th:first-child { border-radius: 8px 0 0 0; }
+  .rd-table thead th:last-child  { border-radius: 0 8px 0 0; }
+  .rd-table tbody tr { transition: background .15s; }
+  .rd-table tbody tr:hover { background: #faf5ff; }
+  .rd-table tbody td { padding: 8px 7px; border-bottom: 1px solid #e2e8f0; vertical-align: middle; }
+  .rd-table tbody tr.row-paid   { background: #f0fdf4; }
+  .rd-table tbody tr.row-overdue{ background: #fef2f2; }
+  .rd-input {
+    width: 90px;
+    padding: 4px 6px;
+    border: 1px solid #cbd5e1;
+    border-radius: 5px;
+    font-size: .82rem;
+    text-align: right;
+  }
+  .rd-input:focus { border-color: #7c3aed; outline: none; box-shadow: 0 0 0 2px #ddd6fe; }
+  .rd-date { width: 110px; }
+  .badge-paid    { background: #dcfce7; color: #15803d; font-size:.75rem; padding:3px 8px; border-radius:20px; }
+  .badge-pending { background: #fef9c3; color: #854d0e; font-size:.75rem; padding:3px 8px; border-radius:20px; }
+  .badge-overdue { background: #fee2e2; color: #b91c1c; font-size:.75rem; padding:3px 8px; border-radius:20px; }
+  .cb-col { width: 34px; text-align: center; }
+  .update-cb { width: 17px; height: 17px; cursor: pointer; accent-color: #7c3aed; }
+  .action-bar {
+    background: linear-gradient(90deg,#7c3aed,#2563eb);
+    color: #fff;
+    border-radius: 10px;
+    padding: 14px 20px;
+    display: flex;
+    align-items: center;
+    gap: 20px;
+    flex-wrap: wrap;
+  }
+  .table-wrap { max-height: 62vh; overflow-y: auto; border-radius: 10px; border: 1px solid #e2e8f0; }
+  @keyframes pulse-red { 0%,100%{opacity:1} 50%{opacity:.55} }
+  .overdue-pulse { animation: pulse-red 2s infinite; }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="container-fluid mt-3 px-3">
+
+  {# Flash Messages #}
+  {% with msgs = get_flashed_messages(with_categories=true) %}
+    {% if msgs %}
+      {% for cat, msg in msgs %}
+      <div class="alert alert-{{ cat }} alert-dismissible fade show" role="alert">
+        {{ msg }}
+        <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+      </div>
+      {% endfor %}
+    {% endif %}
+  {% endwith %}
+
+  {# Header #}
+  <div class="rd-collections-header d-flex justify-content-between align-items-center flex-wrap gap-2">
+    <div>
+      <h4 class="mb-0 fw-bold"><i class="bi bi-calendar-range-fill me-2"></i>RD Collections</h4>
+      <small style="opacity:.8;">Post recurring deposit payments</small>
+    </div>
+    <div class="d-flex gap-2">
+      <a href="{{ url_for('recurringdeposit_bp.add_rd') }}" class="btn btn-sm btn-light">
+        <i class="bi bi-plus-circle"></i> New RD
+      </a>
+      <a href="{{ url_for('recurringdeposit_bp.rd_list') }}" class="btn btn-sm btn-outline-light">
+        <i class="bi bi-list-ul"></i> RD List
+      </a>
+    </div>
+  </div>
+
+  {# Summary Cards #}
+  <div class="row g-3 mb-3">
+    <div class="col-6 col-md-3">
+      <div class="stat-card bg-primary text-white">
+        <div class="d-flex justify-content-between align-items-start">
+          <div>
+            <div class="stat-lbl">Total Records</div>
+            <div class="stat-val">{{ (count_paid + count_pending) }}</div>
+          </div>
+          <i class="bi bi-file-earmark-text stat-icon"></i>
+        </div>
+      </div>
+    </div>
+
+    <div class="col-6 col-md-3">
+      <div class="stat-card bg-success text-white">
+        <div class="d-flex justify-content-between align-items-start">
+          <div>
+            <div class="stat-lbl">Paid</div>
+            <div class="stat-val">{{ count_paid }}</div>
+          </div>
+          <i class="bi bi-check-circle stat-icon"></i>
+        </div>
+      </div>
+    </div>
+
+    <div class="col-6 col-md-3">
+      <div class="stat-card bg-warning text-dark">
+        <div class="d-flex justify-content-between align-items-start">
+          <div>
+            <div class="stat-lbl">Pending</div>
+            <div class="stat-val">{{ count_pending }}</div>
+          </div>
+          <i class="bi bi-hourglass-split stat-icon"></i>
+        </div>
+      </div>
+    </div>
+
+    <div class="col-6 col-md-3">
+      <div class="stat-card bg-info text-white">
+        <div class="d-flex justify-content-between align-items-start">
+          <div>
+            <div class="stat-lbl">Amount Due</div>
+            <div class="stat-val">₹{{ "{:,.0f}".format(total_due) }}</div>
+          </div>
+          <i class="bi bi-currency-rupee stat-icon"></i>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  {# Filter Bar #}
+  <div class="filter-bar mb-3">
+    <form method="GET" class="row g-2 align-items-end">
+      <div class="col-6 col-md-2">
+        <label class="form-label small fw-semibold mb-1">Branch ID</label>
+        <input type="text" name="BranchId" class="form-control form-control-sm"
+               value="{{ branch_filter }}" placeholder="Branch">
+      </div>
+      <div class="col-6 col-md-2">
+        <label class="form-label small fw-semibold mb-1">RD Number</label>
+        <input type="text" name="RDNumber" class="form-control form-control-sm"
+               value="{{ rd_number_filter }}" placeholder="RD001">
+      </div>
+      <div class="col-6 col-md-3">
+        <label class="form-label small fw-semibold mb-1">Member Name</label>
+        <input type="text" name="MemberName" class="form-control form-control-sm"
+               value="{{ member_filter }}" placeholder="Search name…">
+      </div>
+      <div class="col-6 col-md-2">
+        <label class="form-label small fw-semibold mb-1">Status</label>
+        <select name="Status" class="form-select form-select-sm">
+          <option value="All"     {% if status_filter == 'All'     %}selected{% endif %}>All</option>
+          <option value="Pending" {% if status_filter == 'Pending' %}selected{% endif %}>Pending</option>
+          <option value="Paid"    {% if status_filter == 'Paid'    %}selected{% endif %}>Paid</option>
+          <option value="Overdue" {% if status_filter == 'Overdue' %}selected{% endif %}>Overdue</option>
+        </select>
+      </div>
+      <div class="col-6 col-md-2">
+        <label class="form-label small fw-semibold mb-1 text-danger">
+          <i class="bi bi-calendar-range"></i> Show Future?
+        </label>
+        <div class="form-check form-switch pt-1">
+          <input class="form-check-input" type="checkbox" name="ShowAll" value="1"
+                 id="showAllToggle" {% if show_all == '1' %}checked{% endif %}
+                 onchange="this.form.submit()">
+          <label class="form-check-label small text-danger fw-bold" for="showAllToggle">
+            Include Future
+          </label>
+        </div>
+      </div>
+      <div class="col-12 col-md-1 d-flex gap-2">
+        <button type="submit" class="btn btn-primary btn-sm px-3">
+          <i class="bi bi-search"></i>
+        </button>
+        <a href="{{ url_for('rdcollections_bp.rd_collections') }}" class="btn btn-outline-secondary btn-sm">
+          <i class="bi bi-x-lg"></i>
+        </a>
+      </div>
+    </form>
+
+    <div class="mt-2 d-flex gap-3 flex-wrap">
+      <small class="{{ 'text-danger fw-bold' if show_all == '1' else 'text-info' }}">
+        <i class="bi bi-{{ 'exclamation-triangle-fill' if show_all == '1' else 'funnel-fill' }}"></i>
+        <strong>Showing:</strong> 
+        {% if show_all == '1' %}
+        ALL records including FUTURE months
+        {% else %}
+        Only today &amp; past due dates
+        {% endif %}
+      </small>
+      {% if dayend_date %}
+      <small class="text-muted">
+        <i class="bi bi-calendar-check text-success"></i>
+        Dayend: <strong class="text-success">{{ dayend_date }}</strong>
+      </small>
+      {% endif %}
+    </div>
+  </div>
+
+  {# Show All Warning #}
+  {% if show_all == '1' %}
+  <div class="alert alert-danger border-0 mb-3 d-flex align-items-center" 
+       style="background:linear-gradient(90deg,#fee2e2,#fecaca);">
+    <i class="bi bi-exclamation-triangle-fill fs-3 me-3 text-danger"></i>
+    <div>
+      <h6 class="mb-1 fw-bold text-danger">
+        SHOWING ALL RECORDS (Including Future Months)
+      </h6>
+      <small class="text-dark">
+        Future unpaid installments visible. Uncheck "Include Future" for normal view.
+      </small>
+    </div>
+  </div>
+  {% endif %}
+
+  {# Bulk Update Form #}
+  {% if collections %}
+  <form method="POST" id="bulkForm">
+    <input type="hidden" name="bulk_update" value="1">
+    <input type="hidden" name="form_row_count" value="{{ collections|length }}" id="rowCount">
+
+    {# Action Bar #}
+    <div class="action-bar mb-2">
+      <div class="d-flex align-items-center gap-3">
+        <div>
+          <input type="checkbox" id="selectAll" class="update-cb"
+                 title="Select / Deselect all pending rows"
+                 onchange="toggleAll(this)">
+          <label for="selectAll" class="mb-0 ms-1 small">Select All Pending</label>
+        </div>
+        <button type="button" class="btn btn-sm btn-warning" onclick="autoFillAll()">
+          <i class="bi bi-lightning-fill"></i> Auto-Fill Amounts
+        </button>
+      </div>
+
+      <div class="ms-auto d-flex align-items-center gap-3 flex-wrap">
+        <div class="small">
+          Selected: <strong id="selectedCount">0</strong> |
+          Total: ₹<strong id="selTotal">0.00</strong>
+        </div>
+        <button type="submit" class="btn btn-light fw-bold px-4"
+                onclick="return confirmPost()">
+          <i class="bi bi-check2-all text-success"></i> POST PAYMENTS
+        </button>
+      </div>
+    </div>
+
+    {# Table #}
+    <div class="table-wrap">
+      <table class="rd-table">
+        <thead>
+          <tr>
+            <th class="cb-col">☑</th>
+            <th>#</th>
+            <th>RD Number</th>
+            <th>Member</th>
+            <th>Due Date</th>
+            <th>Amount Due</th>
+            <th>Amount Paid</th>
+            <th>Paid Date</th>
+            <th>Status</th>
+          </tr>
+        </thead>
+        <tbody>
+          {% for i, row in enumerate(collections) %}
+          {# Columns: Id, RDId, RDNumber, MemberCode, MemberName, DueDate,
+                      AmountDue, AmountPaid, PaidDate, Status, BranchId, PayStatus #}
+          {% set is_paid = row[8] is not none %}
+          {% set is_overdue = (not is_paid) and row[5] and row[5] < today %}
+
+          <tr class="{{ 'row-paid' if is_paid else ('row-overdue' if is_overdue else '') }}">
+
+            <input type="hidden" name="CollectionId_{{ i }}" value="{{ row[0] }}">
+
+            <td class="cb-col">
+              {% if not is_paid %}
+              <input type="checkbox"
+                     class="update-cb row-cb"
+                     name="update_{{ i }}"
+                     value="1"
+                     data-amount="{{ row[6] or 0 }}"
+                     onchange="updateSummary()">
+              {% else %}
+              <i class="bi bi-check-circle-fill text-success"></i>
+              {% endif %}
+            </td>
+
+            <td>{{ i + 1 }}</td>
+            <td><strong>{{ row[2] }}</strong></td>
+            <td>
+              {{ row[4] }}<br>
+              <small class="text-muted">{{ row[3] }}</small>
+            </td>
+            <td>
+              {% if is_overdue %}
+              <span class="overdue-pulse text-danger fw-bold">
+                {{ row[5].strftime('%d-%b-%Y') if row[5] else '' }}
+              </span>
+              {% else %}
+              {{ row[5].strftime('%d-%b-%Y') if row[5] else '' }}
+              {% endif %}
+            </td>
+
+            {# Amount Paid input #}
+            <td class="text-end">₹{{ "{:,.2f}".format(row[6] or 0) }}</td>
+            <td>
+              {% if not is_paid %}
+              <input type="number" step="0.01" min="0"
+                     class="rd-input amount-input"
+                     name="AmountPaid_{{ i }}"
+                     value="{{ row[7] or '' }}"
+                     placeholder="{{ "{:.2f}".format(row[6] or 0) }}"
+                     onchange="updateSummary()">
+              {% else %}
+              ₹{{ "{:,.2f}".format(row[7] or 0) }}
+              {% endif %}
+            </td>
+
+            {# Paid Date input #}
+            <td>
+              {% if not is_paid %}
+              <input type="date"
+                     class="rd-input rd-date"
+                     name="PaidDate_{{ i }}"
+                     value="{{ today_str }}"
+                     {% if dayend_date %}max="{{ dayend_date }}"{% endif %}>
+              {% else %}
+              {{ row[8].strftime('%d-%b-%Y') if row[8] else '' }}
+              {% endif %}
+            </td>
+
+            {# Status #}
+            <td>
+              {% if is_paid %}
+              <span class="badge-paid"><i class="bi bi-check2"></i> Paid</span>
+              {% elif is_overdue %}
+              <span class="badge-overdue"><i class="bi bi-exclamation-triangle"></i> Overdue</span>
+              {% else %}
+              <span class="badge-pending"><i class="bi bi-clock"></i> Pending</span>
+              {% endif %}
+            </td>
+
+          </tr>
+          {% endfor %}
+        </tbody>
+
+        <tfoot>
+          <tr style="background:#7c3aed;color:#fff;font-weight:600;">
+            <td colspan="5" class="text-end pe-3">TOTALS</td>
+            <td class="text-end">₹{{ "{:,.2f}".format(total_due) }}</td>
+            <td class="text-end">₹{{ "{:,.2f}".format(total_paid) }}</td>
+            <td colspan="2"></td>
+          </tr>
+        </tfoot>
+      </table>
+    </div>
+
+  </form>
+
+  {% else %}
+  <div class="alert alert-info text-center py-5">
+    <i class="bi bi-inbox fs-1 d-block mb-2 opacity-50"></i>
+    <strong>No collections found</strong> for the selected filters.
+  </div>
+  {% endif %}
+
+</div>
+
+<script>
+const TODAY_STR = "{{ today_str }}";
+const DAYEND    = "{{ dayend_date }}";
+
+function toggleAll(master) {
+  document.querySelectorAll('.row-cb').forEach(cb => {
+    cb.checked = master.checked;
+  });
+  updateSummary();
+}
+
+function autoFillAll() {
+  document.querySelectorAll('.row-cb:checked').forEach(cb => {
+    const row = cb.closest('tr');
+    const amt = parseFloat(cb.dataset.amount || 0);
+    const inp = row.querySelector('.amount-input');
+    if (inp && !inp.value) inp.value = amt.toFixed(2);
+  });
+  updateSummary();
+}
+
+function updateSummary() {
+  let count = 0, total = 0;
+  document.querySelectorAll('.row-cb:checked').forEach(cb => {
+    count++;
+    const row = cb.closest('tr');
+    const amt = parseFloat(row.querySelector('.amount-input')?.value || 0);
+    total += amt;
+  });
+  document.getElementById('selectedCount').textContent = count;
+  document.getElementById('selTotal').textContent = total.toLocaleString('en-IN', {minimumFractionDigits:2});
+}
+
+function confirmPost() {
+  const count = parseInt(document.getElementById('selectedCount').textContent);
+  if (count === 0) {
+    alert('Please select at least one row');
+    return false;
+  }
+  const total = document.getElementById('selTotal').textContent;
+  return confirm(`Post payments for ${count} record(s)?\nTotal: ₹${total}`);
+}
+
+document.addEventListener('DOMContentLoaded', () => {
+  document.querySelectorAll('.rd-date').forEach(el => {
+    if (!el.value) el.value = TODAY_STR;
+  });
+  updateSummary();
+});
+</script>
+{% endblock %}

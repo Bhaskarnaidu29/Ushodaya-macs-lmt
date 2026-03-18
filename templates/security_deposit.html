@@ -1,0 +1,294 @@
+{% extends "base.html" %}
+{% block title %}Security Deposit Withdrawal{% endblock %}
+
+{% block extra_css %}
+<style>
+  .sd-header {
+    background: linear-gradient(135deg, #f59e0b 0%, #d97706 100%);
+    color: #fff;
+    border-radius: 12px;
+    padding: 20px 28px;
+    margin-bottom: 20px;
+  }
+  .sd-card {
+    background: #fff;
+    border-radius: 10px;
+    padding: 20px;
+    box-shadow: 0 2px 8px rgba(0,0,0,.08);
+    margin-bottom: 20px;
+  }
+  .loan-item {
+    border: 2px solid #fef3c7;
+    border-radius: 10px;
+    padding: 16px;
+    margin-bottom: 12px;
+    background: linear-gradient(135deg, #fffbeb, #fef3c7);
+    transition: all .2s;
+  }
+  .loan-item:hover {
+    border-color: #f59e0b;
+    box-shadow: 0 4px 12px rgba(245,158,11,.2);
+  }
+  .info-row {
+    display: flex;
+    justify-content: space-between;
+    padding: 4px 0;
+    border-bottom: 1px solid rgba(245,158,11,.1);
+  }
+  .info-row:last-child { border-bottom: none; }
+  .info-label { font-size: .85rem; opacity: .75; }
+  .info-value { font-weight: 600; color: #92400e; }
+  .amount-available {
+    background: linear-gradient(135deg, #10b981, #059669);
+    color: #fff;
+    padding: 12px 16px;
+    border-radius: 8px;
+    text-align: center;
+    font-size: 1.2rem;
+    font-weight: 700;
+  }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="container-fluid mt-3 px-3">
+
+  {# Flash Messages #}
+  {% with msgs = get_flashed_messages(with_categories=true) %}
+    {% if msgs %}
+      {% for cat, msg in msgs %}
+      <div class="alert alert-{{ cat }} alert-dismissible fade show" role="alert">
+        {{ msg }}
+        <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+      </div>
+      {% endfor %}
+    {% endif %}
+  {% endwith %}
+
+  {# Header #}
+  <div class="sd-header d-flex justify-content-between align-items-center flex-wrap gap-2">
+    <div>
+      <h4 class="mb-0 fw-bold">
+        <i class="bi bi-shield-check me-2"></i>Security Deposit Withdrawal
+      </h4>
+      <small style="opacity:.85;">Withdraw security deposits from closed/prepaid loans</small>
+    </div>
+    <div>
+      <a href="{{ url_for('savings_bp.savings_dashboard') }}" class="btn btn-sm btn-light">
+        <i class="bi bi-arrow-left"></i> Back to Savings
+      </a>
+    </div>
+  </div>
+
+  <div class="row">
+    
+    {# Left - Member Selection #}
+    <div class="col-lg-4">
+      <div class="sd-card">
+        <h6 class="fw-bold text-warning mb-3">
+          <i class="bi bi-person-circle"></i> Select Member
+        </h6>
+        
+        <form method="GET" id="memberForm">
+          <div class="mb-3">
+            <label class="form-label fw-semibold">Member Code</label>
+            <div class="position-relative">
+              <input type="text" id="member_code_search" name="member_code"
+                     class="form-control" placeholder="Type to search..."
+                     autocomplete="off" value="{{ member_code }}">
+              <ul id="member-suggestions" class="list-group position-absolute w-100"
+                  style="z-index:1000;display:none;max-height:200px;overflow-y:auto;
+                         box-shadow:0 4px 12px rgba(0,0,0,.15);">
+              </ul>
+            </div>
+          </div>
+
+          <div class="mb-3">
+            <input type="text" id="member_name" class="form-control" 
+                   placeholder="Member name" readonly>
+          </div>
+
+          <button type="submit" class="btn btn-warning w-100">
+            <i class="bi bi-search"></i> Search Loans
+          </button>
+        </form>
+
+        {% if member_code and not loans %}
+        <div class="alert alert-info mt-3">
+          <i class="bi bi-info-circle"></i>
+          No security deposits available for withdrawal.
+        </div>
+        {% endif %}
+      </div>
+
+      {# Info Box #}
+      <div class="alert alert-warning">
+        <h6 class="fw-bold">
+          <i class="bi bi-info-circle"></i> About Security Deposits
+        </h6>
+        <ul class="small mb-0 ps-3">
+          <li>Security deposits are taken at loan disbursement (typically 10%)</li>
+          <li>Can only be withdrawn when loan is <strong>Closed</strong>, <strong>Prepaid</strong>, or <strong>Settled</strong></li>
+          <li>Withdrawal is credited to member's savings account</li>
+          <li>Partial withdrawals allowed</li>
+        </ul>
+      </div>
+    </div>
+
+    {# Right - Available Loans #}
+    <div class="col-lg-8">
+      
+      {% if loans %}
+      <div class="sd-card">
+        <h6 class="fw-bold text-warning mb-3">
+          <i class="bi bi-bank"></i> Loans with Available Security Deposit
+        </h6>
+
+        {% for loan in loans %}
+        {# Columns: loanid, member_code, loanamount, securitydepositamount, 
+                    withdrawn, loanstatus #}
+        {% set available = (loan[3] or 0) - (loan[4] or 0) %}
+        
+        {% if available > 0 %}
+        <div class="loan-item">
+          <div class="d-flex justify-content-between align-items-start mb-2">
+            <div>
+              <h6 class="fw-bold mb-0 text-warning">Loan ID: {{ loan[0] }}</h6>
+              <small class="text-muted">{{ loan[5] or 'Closed' }}</small>
+            </div>
+            <span class="badge bg-success">Available</span>
+          </div>
+
+          <div class="info-row">
+            <span class="info-label">Loan Amount:</span>
+            <span class="info-value">₹{{ "{:,.2f}".format(loan[2] or 0) }}</span>
+          </div>
+          <div class="info-row">
+            <span class="info-label">Total Security Deposit:</span>
+            <span class="info-value">₹{{ "{:,.2f}".format(loan[3] or 0) }}</span>
+          </div>
+          <div class="info-row">
+            <span class="info-label">Already Withdrawn:</span>
+            <span class="info-value">₹{{ "{:,.2f}".format(loan[4] or 0) }}</span>
+          </div>
+
+          <div class="amount-available mt-3 mb-3">
+            <div class="small" style="opacity:.85;">Available for Withdrawal</div>
+            <div>₹{{ "{:,.2f}".format(available) }}</div>
+          </div>
+
+          {# Withdrawal Form #}
+          <form method="POST" onsubmit="return confirmWithdrawal({{ available }})">
+            <input type="hidden" name="loan_id" value="{{ loan[0] }}">
+            <input type="hidden" name="member_code" value="{{ loan[1] }}">
+            
+            <div class="row g-2">
+              <div class="col-8">
+                <label class="form-label small fw-semibold mb-1">Withdrawal Amount</label>
+                <div class="input-group">
+                  <span class="input-group-text">₹</span>
+                  <input type="number" name="amount" class="form-control"
+                         step="0.01" min="1" max="{{ available }}"
+                         value="{{ available }}"
+                         placeholder="{{ available }}" required>
+                </div>
+              </div>
+              <div class="col-4 d-flex align-items-end">
+                <button type="submit" class="btn btn-success w-100">
+                  <i class="bi bi-check-circle"></i> Withdraw
+                </button>
+              </div>
+            </div>
+          </form>
+        </div>
+        {% endif %}
+        {% endfor %}
+
+      </div>
+      {% else %}
+      <div class="alert alert-info text-center py-5">
+        <i class="bi bi-search fs-1 d-block mb-3 opacity-50"></i>
+        <h5>Search for a Member</h5>
+        <p class="text-muted mb-0">
+          Enter member code on the left to check for available security deposits
+        </p>
+      </div>
+      {% endif %}
+
+    </div>
+  </div>
+
+</div>
+
+<script>
+const MEMBER_API = "{{ url_for('savings_bp.members_api') }}";
+
+// Member autocomplete
+function debounce(fn, ms) {
+  let t;
+  return (...a) => { clearTimeout(t); t = setTimeout(() => fn(...a), ms); };
+}
+
+const doLookup = debounce(async function(e) {
+  const val = e.target.value.trim();
+  const ul = document.getElementById('member-suggestions');
+  
+  if (val.length < 2) {
+    ul.style.display = 'none';
+    return;
+  }
+
+  try {
+    const res = await fetch(`${MEMBER_API}?term=${encodeURIComponent(val)}`);
+    const data = res.ok ? await res.json() : [];
+    
+    ul.innerHTML = '';
+    if (!data.length) {
+      ul.style.display = 'none';
+      return;
+    }
+
+    data.forEach(m => {
+      const li = document.createElement('li');
+      li.className = 'list-group-item list-group-item-action py-2';
+      li.innerHTML = `<strong>${m.member_code}</strong> — ${m.full_name}`;
+      li.onclick = () => {
+        document.getElementById('member_code_search').value = m.member_code;
+        document.getElementById('member_name').value = m.full_name;
+        ul.style.display = 'none';
+        document.getElementById('memberForm').submit();
+      };
+      ul.appendChild(li);
+    });
+    ul.style.display = 'block';
+  } catch {
+    ul.style.display = 'none';
+  }
+}, 300);
+
+function confirmWithdrawal(maxAmount) {
+  const form = event.target;
+  const amount = parseFloat(form.querySelector('input[name="amount"]').value);
+  
+  if (amount > maxAmount) {
+    alert(`Amount exceeds available: ₹${maxAmount.toLocaleString('en-IN', {minimumFractionDigits:2})}`);
+    return false;
+  }
+  
+  return confirm(
+    `Withdraw ₹${amount.toLocaleString('en-IN', {minimumFractionDigits:2})} security deposit?\n\n` +
+    `This will be credited to the member's savings account.`
+  );
+}
+
+document.addEventListener('DOMContentLoaded', () => {
+  document.getElementById('member_code_search').addEventListener('input', doLookup);
+  
+  // Hide suggestions when clicking elsewhere
+  document.addEventListener('click', e => {
+    if (!e.target.closest('#member-suggestions') && e.target.id !== 'member_code_search')
+      document.getElementById('member-suggestions').style.display = 'none';
+  });
+});
+</script>
+{% endblock %}

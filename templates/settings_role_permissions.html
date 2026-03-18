@@ -1,0 +1,127 @@
+{% extends "base.html" %}
+{% block title %}Role Permissions{% endblock %}
+
+{% block extra_css %}
+<style>
+    .perm-table { width: 100%; border-collapse: collapse; }
+    .perm-table th { background: #667eea; color: white; padding: 10px; text-align: center; }
+    .perm-table td { padding: 8px; text-align: center; border: 1px solid #ddd; }
+    .perm-table tr:hover { background: #f5f5f5; }
+    .perm-check { width: 20px; height: 20px; cursor: pointer; accent-color: #667eea; }
+    .menu-col { text-align: left !important; font-weight: 500; }
+    .save-btn { background: #10b981; color: white; padding: 12px 30px; border: none; border-radius: 6px; font-size: 16px; cursor: pointer; }
+    .save-btn:hover { background: #059669; }
+    .debug-info { background: #fef3c7; padding: 10px; margin-bottom: 15px; border-radius: 6px; font-size: 0.85rem; }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="container-fluid mt-4">
+    <h2><i class="bi bi-shield-lock-fill text-primary"></i> Role Permissions</h2>
+    <p class="text-muted">Check boxes to grant permissions</p>
+    
+    <!-- Debug Info -->
+    <div class="debug-info">
+        <strong>Status:</strong> {{ roles|length }} roles, {{ menus|length }} menus, {{ permissions|length }} existing permissions loaded
+    </div>
+    
+    <form method="POST">
+        <table class="perm-table">
+            <thead>
+                <tr>
+                    <th rowspan="2" style="width: 250px;">Menu / Module</th>
+                    {% for role in roles %}
+                    <th colspan="4">{{ role[1] }}</th>
+                    {% endfor %}
+                </tr>
+                <tr>
+                    {% for role in roles %}
+                    <th title="View">👁️</th>
+                    <th title="Add">➕</th>
+                    <th title="Edit">✏️</th>
+                    <th title="Delete">🗑️</th>
+                    {% endfor %}
+                </tr>
+            </thead>
+            <tbody>
+                {% for menu in menus %}
+                <tr>
+                    <td class="menu-col">
+                        <strong>{{ menu[1] }}</strong>
+                        {% if menu[2] %}
+                        <br><small class="text-muted">{{ menu[2] }}</small>
+                        {% endif %}
+                    </td>
+                    {% for role in roles %}
+                        {% set key = role[0]|string + '_' + menu[0]|string %}
+                        {% set perm = permissions.get(key, {'can_view': false, 'can_add': false, 'can_edit': false, 'can_delete': false}) %}
+                        
+                        <td>
+                            <input type="checkbox" 
+                                   class="perm-check" 
+                                   name="perm_{{ role[0] }}_{{ menu[0] }}_view"
+                                   value="1"
+                                   {% if perm.can_view %}checked{% endif %}>
+                        </td>
+                        <td>
+                            <input type="checkbox" 
+                                   class="perm-check" 
+                                   name="perm_{{ role[0] }}_{{ menu[0] }}_add"
+                                   value="1"
+                                   {% if perm.can_add %}checked{% endif %}>
+                        </td>
+                        <td>
+                            <input type="checkbox" 
+                                   class="perm-check" 
+                                   name="perm_{{ role[0] }}_{{ menu[0] }}_edit"
+                                   value="1"
+                                   {% if perm.can_edit %}checked{% endif %}>
+                        </td>
+                        <td>
+                            <input type="checkbox" 
+                                   class="perm-check" 
+                                   name="perm_{{ role[0] }}_{{ menu[0] }}_delete"
+                                   value="1"
+                                   {% if perm.can_delete %}checked{% endif %}>
+                        </td>
+                    {% endfor %}
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+        
+        <div class="text-center mt-4">
+            <button type="submit" class="save-btn" onclick="return confirm('Save all permissions?')">
+                💾 SAVE ALL PERMISSIONS
+            </button>
+            <a href="{{ url_for('settings_bp.settings') }}" class="btn btn-secondary ms-2">
+                ← Back to Settings
+            </a>
+        </div>
+    </form>
+    
+    <!-- Quick Actions -->
+    <div class="mt-4">
+        <h5>Quick Actions:</h5>
+        <button type="button" class="btn btn-sm btn-success" onclick="checkAllView()">✓ Check All View</button>
+        <button type="button" class="btn btn-sm btn-danger" onclick="uncheckAll()">✗ Uncheck All</button>
+        <a href="{{ url_for('settings_bp.bulk_permissions') }}" class="btn btn-sm btn-info">🔧 Bulk Assign</a>
+    </div>
+</div>
+
+<script>
+function checkAllView() {
+    document.querySelectorAll('input[name$="_view"]').forEach(cb => cb.checked = true);
+}
+
+function uncheckAll() {
+    document.querySelectorAll('.perm-check').forEach(cb => cb.checked = false);
+}
+
+// Show count of checked boxes
+let checkboxes = document.querySelectorAll('.perm-check');
+let checkedCount = document.querySelectorAll('.perm-check:checked').length;
+console.log('Total checkboxes:', checkboxes.length);
+console.log('Currently checked:', checkedCount);
+</script>
+{% endblock %}

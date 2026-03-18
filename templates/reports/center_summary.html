@@ -1,0 +1,46 @@
+{% extends "base.html" %}
+{% block content %}
+
+<div class="container mt-4">
+<h3>Center Summary Report</h3>
+
+<form method="POST" class="card p-3 mb-3">
+    <div class="row">
+        <div class="col-md-4">
+            <label>Center ID</label>
+            <input type="text" name="center_id" class="form-control" value="{{ center_id }}" placeholder="Enter Center ID">
+        </div>
+        <div class="col-md-2 mt-4">
+            <button class="btn btn-primary">Generate</button>
+        </div>
+    </div>
+</form>
+
+<table class="table table-bordered">
+<thead class="table-dark">
+<tr>
+<th>Center Name</th>
+<th>Total Members</th>
+<th>Total Loans</th>
+<th>Total Loan Amount</th>
+<th>Principal Outstanding</th>
+<th>Interest Outstanding</th>
+</tr>
+</thead>
+
+<tbody>
+{% for r in rows %}
+<tr>
+<td>{{r.center_name}}</td>
+<td>{{r.total_members}}</td>
+<td>{{r.total_loans}}</td>
+<td>{{r.total_loan_amount}}</td>
+<td>{{r.principal_outstanding}}</td>
+<td>{{r.interest_outstanding}}</td>
+</tr>
+{% endfor %}
+</tbody>
+</table>
+
+</div>
+{% endblock %}

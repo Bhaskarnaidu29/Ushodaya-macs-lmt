@@ -1,0 +1,48 @@
+{% extends "base.html" %}
+{% block content %}
+
+<div class="container mt-4">
+<h3>Member Loan Ledger</h3>
+
+<form method="POST" class="card p-3 mb-3">
+    <div class="row">
+        <div class="col-md-4">
+            <label>Member Code</label>
+            <input type="text" name="member_code" class="form-control" value="{{ member_code }}" placeholder="Enter Member Code">
+        </div>
+        <div class="col-md-2 mt-4">
+            <button class="btn btn-primary">Search</button>
+        </div>
+    </div>
+</form>
+
+<table class="table table-bordered">
+<thead class="table-dark">
+<tr>
+<th>Loan ID</th>
+<th>Loan Amount</th>
+<th>Loan Date</th>
+<th>Tenure</th>
+<th>Status</th>
+<th>Principal Outstanding</th>
+<th>Interest Outstanding</th>
+</tr>
+</thead>
+
+<tbody>
+{% for r in rows %}
+<tr>
+<td>{{r.loanid}}</td>
+<td>{{r.loanamount}}</td>
+<td>{{r.loandate}}</td>
+<td>{{r.tenure}}</td>
+<td>{{r.loanstatus}}</td>
+<td>{{r.principaloutstanding}}</td>
+<td>{{r.interestoutstanding}}</td>
+</tr>
+{% endfor %}
+</tbody>
+</table>
+
+</div>
+{% endblock %}

@@ -1,0 +1,365 @@
+{% extends "base.html" %}
+{% block title %}Pre-Close FD{% endblock %}
+
+{% block extra_css %}
+<style>
+  .preclose-header {
+    background: linear-gradient(135deg, #dc2626 0%, #f59e0b 100%);
+    color: #fff;
+    border-radius: 12px;
+    padding: 25px 28px;
+    margin-bottom: 20px;
+  }
+  .preclose-form {
+    background: #fff;
+    border-radius: 12px;
+    padding: 30px;
+    box-shadow: 0 4px 12px rgba(0,0,0,.1);
+  }
+  .warning-box {
+    background: #fee2e2;
+    border-left: 4px solid #dc2626;
+    padding: 15px 20px;
+    border-radius: 8px;
+    margin-bottom: 20px;
+  }
+  .fd-info {
+    background: #f8fafc;
+    border-radius: 8px;
+    padding: 20px;
+    margin-bottom: 20px;
+  }
+  .info-row {
+    display: flex;
+    justify-content: space-between;
+    padding: 8px 0;
+    border-bottom: 1px solid #e2e8f0;
+  }
+  .info-row:last-child { border-bottom: none; }
+  .info-label { color: #64748b; font-size: .9rem; }
+  .info-value { font-weight: 600; color: #1e293b; }
+  
+  .calculation-preview {
+    background: linear-gradient(135deg, #0d9488 0%, #06b6d4 100%);
+    color: #fff;
+    border-radius: 12px;
+    padding: 25px;
+    margin-top: 20px;
+  }
+  .calc-row {
+    display: flex;
+    justify-content: space-between;
+    padding: 10px 0;
+    border-bottom: 1px solid rgba(255,255,255,.2);
+    font-size: .95rem;
+  }
+  .calc-row:last-child {
+    border-bottom: none;
+    font-size: 1.2rem;
+    font-weight: 700;
+    margin-top: 10px;
+    padding-top: 15px;
+    border-top: 2px solid rgba(255,255,255,.3);
+  }
+  .calc-label { opacity: .85; }
+  .calc-value { font-weight: 600; }
+  
+  .formula-box {
+    background: #fef3c7;
+    border: 2px dashed #f59e0b;
+    border-radius: 8px;
+    padding: 15px;
+    margin-top: 15px;
+    font-family: 'Courier New', monospace;
+    font-size: .85rem;
+  }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="container-fluid mt-4">
+
+  {# Header #}
+  <div class="preclose-header">
+    <div class="d-flex justify-content-between align-items-center">
+      <div>
+        <h4 class="mb-1 fw-bold"><i class="bi bi-x-circle me-2"></i>Pre-Close Fixed Deposit</h4>
+        <small style="opacity:.85;">Interest calculated ONLY from last paid date to pre-close date</small>
+      </div>
+      <a href="{{ url_for('fixeddeposit_bp.fd_view', fd_id=fd[0]) }}" class="btn btn-light btn-sm">
+        <i class="bi bi-arrow-left"></i> Back
+      </a>
+    </div>
+  </div>
+
+  {% if fd %}
+  {# FD: Id, FDNumber, MemberName, DepositAmount, ROI, DepositDate, WithdrawDate, FDStatus #}
+  
+  {# FD Information #}
+  <div class="fd-info">
+    <h5 class="mb-3 text-primary"><i class="bi bi-info-circle"></i> FD Details</h5>
+    <div class="row">
+      <div class="col-md-6">
+        <div class="info-row">
+          <span class="info-label">FD Number:</span>
+          <span class="info-value">{{ fd[1] }}</span>
+        </div>
+        <div class="info-row">
+          <span class="info-label">Member Name:</span>
+          <span class="info-value">{{ fd[2] }}</span>
+        </div>
+        <div class="info-row">
+          <span class="info-label">Deposit Amount:</span>
+          <span class="info-value">₹{{ "{:,.0f}".format(fd[3] or 0) }}</span>
+        </div>
+      </div>
+      <div class="col-md-6">
+        <div class="info-row">
+          <span class="info-label">ROI (% p.a.):</span>
+          <span class="info-value" id="fd_roi">{{ fd[4] }}%</span>
+        </div>
+        <div class="info-row">
+          <span class="info-label">Deposit Date:</span>
+          <span class="info-value" id="deposit_date_display">{{ fd[5].strftime('%d-%b-%Y') if fd[5] else '' }}</span>
+        </div>
+        <div class="info-row">
+          <span class="info-label">Maturity Date:</span>
+          <span class="info-value">{{ fd[6].strftime('%d-%b-%Y') if fd[6] else '' }}</span>
+        </div>
+        <div class="info-row">
+          <span class="info-label">Last Interest Paid:</span>
+          <span class="info-value" id="last_paid_display">
+            {% if last_paid_date %}
+              {{ last_paid_date.strftime('%d-%b-%Y') }}
+            {% else %}
+              <span class="text-warning">No interest paid yet</span>
+            {% endif %}
+          </span>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  {# Warning Box #}
+  <div class="warning-box">
+    <h6 class="mb-2"><i class="bi bi-exclamation-triangle"></i> Important - Interest Calculation</h6>
+    <ul class="mb-0">
+      <li><strong>Interest Period:</strong> From 
+        {% if last_paid_date %}
+          <strong>{{ last_paid_date.strftime('%d-%b-%Y') }}</strong> (last paid date)
+        {% else %}
+          <strong>{{ fd[5].strftime('%d-%b-%Y') if fd[5] else '' }}</strong> (deposit date)
+        {% endif %}
+        to <strong>Pre-Close Date</strong>
+      </li>
+      <li><strong>NO future interest</strong> will be paid beyond pre-close date</li>
+      <li>Settlement = Deposit + Accrued Interest - Penalty</li>
+      <li><strong>This action cannot be undone</strong></li>
+    </ul>
+  </div>
+
+  {# Pre-Close Form #}
+  <div class="preclose-form">
+    <h5 class="mb-4 text-danger"><i class="bi bi-file-earmark-x"></i> Pre-Closure Form</h5>
+    
+    <form method="POST" onsubmit="return confirmPreClose();">
+      
+      <input type="hidden" id="deposit_amount" value="{{ fd[3] or 0 }}">
+      <input type="hidden" id="roi_rate" value="{{ fd[4] or 0 }}">
+      <input type="hidden" id="deposit_date" value="{{ fd[5].strftime('%Y-%m-%d') if fd[5] else '' }}">
+      <input type="hidden" id="last_paid_date" value="{% if last_paid_date %}{{ last_paid_date.strftime('%Y-%m-%d') }}{% endif %}">
+      
+      <div class="row g-3">
+        
+        <div class="col-md-4">
+          <label class="form-label fw-bold">Pre-Close Date <span class="text-danger">*</span></label>
+          <input type="date" 
+                 name="preclose_date" 
+                 id="preclose_date"
+                 class="form-control" 
+                 value="{{ today }}" 
+                 min="{{ fd[5].strftime('%Y-%m-%d') if fd[5] else '' }}"
+                 max="{{ fd[6].strftime('%Y-%m-%d') if fd[6] else '' }}"
+                 onchange="calculateSettlement()"
+                 required>
+          <small class="text-muted">Date when FD is being closed</small>
+        </div>
+
+        <div class="col-md-4">
+          <label class="form-label fw-bold">Penalty Amount</label>
+          <input type="number" 
+                 name="penalty_amount" 
+                 id="penalty_amount"
+                 class="form-control" 
+                 step="0.01" 
+                 min="0" 
+                 value="0"
+                 placeholder="0.00"
+                 onchange="calculateSettlement()">
+          <small class="text-muted">Pre-closure penalty (if any)</small>
+        </div>
+
+        <div class="col-md-12">
+          <label class="form-label fw-bold">Remarks</label>
+          <textarea name="remarks" class="form-control" rows="3" 
+                    placeholder="Reason for pre-closure (e.g., Member requested early withdrawal, Emergency, etc.)"></textarea>
+          <small class="text-muted">Optional notes about why FD is being pre-closed</small>
+        </div>
+
+      </div>
+
+      {# LIVE CALCULATION PREVIEW #}
+      <div class="calculation-preview" id="calc_preview" style="display:none;">
+        <h5 class="mb-3"><i class="bi bi-calculator"></i> Settlement Calculation</h5>
+        
+        <div class="calc-row">
+          <span class="calc-label">Interest Period:</span>
+          <span class="calc-value" id="calc_period">—</span>
+        </div>
+        
+        <div class="calc-row">
+          <span class="calc-label">Number of Days:</span>
+          <span class="calc-value" id="calc_days">—</span>
+        </div>
+        
+        <div class="calc-row">
+          <span class="calc-label">Deposit Amount:</span>
+          <span class="calc-value" id="calc_deposit">—</span>
+        </div>
+        
+        <div class="calc-row">
+          <span class="calc-label">Accrued Interest:</span>
+          <span class="calc-value" id="calc_interest">—</span>
+        </div>
+        
+        <div class="calc-row">
+          <span class="calc-label">Penalty (-):</span>
+          <span class="calc-value" id="calc_penalty">—</span>
+        </div>
+        
+        <div class="calc-row">
+          <span class="calc-label">FINAL SETTLEMENT:</span>
+          <span class="calc-value" id="calc_settlement">—</span>
+        </div>
+        
+        <div class="formula-box">
+          <strong>Formula:</strong><br>
+          Interest = Principal × Rate × Days ÷ (365 × 100)<br>
+          Settlement = Deposit + Interest - Penalty
+        </div>
+      </div>
+
+      {# Buttons #}
+      <div class="mt-4 d-flex gap-2">
+        <button type="submit" class="btn btn-danger btn-lg">
+          <i class="bi bi-x-circle"></i> Pre-Close FD
+        </button>
+        <a href="{{ url_for('fixeddeposit_bp.fd_view', fd_id=fd[0]) }}" 
+           class="btn btn-secondary btn-lg">
+          <i class="bi bi-arrow-left"></i> Cancel
+        </a>
+      </div>
+
+    </form>
+  </div>
+
+  {% else %}
+  <div class="alert alert-warning">
+    <i class="bi bi-exclamation-triangle"></i> FD record not found
+  </div>
+  {% endif %}
+
+</div>
+
+<script>
+// Format currency
+function formatCurrency(amount) {
+  return '₹' + parseFloat(amount).toLocaleString('en-IN', {
+    minimumFractionDigits: 2,
+    maximumFractionDigits: 2
+  });
+}
+
+// Format date
+function formatDate(dateStr) {
+  const date = new Date(dateStr);
+  const options = { day: '2-digit', month: 'short', year: 'numeric' };
+  return date.toLocaleDateString('en-GB', options);
+}
+
+// Calculate days between dates
+function daysBetween(date1Str, date2Str) {
+  const date1 = new Date(date1Str);
+  const date2 = new Date(date2Str);
+  const diffTime = Math.abs(date2 - date1);
+  const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
+  return diffDays;
+}
+
+// Calculate settlement
+function calculateSettlement() {
+  const depositAmount = parseFloat(document.getElementById('deposit_amount').value);
+  const roiRate = parseFloat(document.getElementById('roi_rate').value);
+  const depositDate = document.getElementById('deposit_date').value;
+  const lastPaidDate = document.getElementById('last_paid_date').value;
+  const precloseDate = document.getElementById('preclose_date').value;
+  const penaltyAmount = parseFloat(document.getElementById('penalty_amount').value || 0);
+  
+  if (!precloseDate) {
+    document.getElementById('calc_preview').style.display = 'none';
+    return;
+  }
+  
+  // Determine interest start date = MAX(Last Paid Date, Deposit Date)
+  let interestStartDate;
+  if (lastPaidDate && lastPaidDate !== '') {
+    // Compare dates
+    interestStartDate = (new Date(lastPaidDate) > new Date(depositDate)) ? lastPaidDate : depositDate;
+  } else {
+    interestStartDate = depositDate;
+  }
+  
+  // Calculate days
+  const days = daysBetween(interestStartDate, precloseDate);
+  
+  // Calculate pro-rata interest
+  // Formula: Principal × Rate × Days ÷ (365 × 100)
+  const accruedInterest = (depositAmount * roiRate * days) / (365 * 100);
+  
+  // Final settlement
+  const settlement = depositAmount + accruedInterest - penaltyAmount;
+  
+  // Update UI
+  document.getElementById('calc_period').textContent = 
+    formatDate(interestStartDate) + ' to ' + formatDate(precloseDate);
+  
+  document.getElementById('calc_days').textContent = days + ' days';
+  document.getElementById('calc_deposit').textContent = formatCurrency(depositAmount);
+  document.getElementById('calc_interest').textContent = formatCurrency(accruedInterest);
+  document.getElementById('calc_penalty').textContent = formatCurrency(penaltyAmount);
+  document.getElementById('calc_settlement').textContent = formatCurrency(settlement);
+  
+  // Show preview
+  document.getElementById('calc_preview').style.display = 'block';
+}
+
+// Confirm before submitting
+function confirmPreClose() {
+  const settlement = document.getElementById('calc_settlement').textContent;
+  const days = document.getElementById('calc_days').textContent;
+  
+  return confirm(
+    'Pre-close this FD?\n\n' +
+    'Interest Period: ' + days + '\n' +
+    'Final Settlement: ' + settlement + '\n\n' +
+    'This action cannot be undone!'
+  );
+}
+
+// Calculate on page load
+document.addEventListener('DOMContentLoaded', function() {
+  calculateSettlement();
+});
+</script>
+
+{% endblock %}

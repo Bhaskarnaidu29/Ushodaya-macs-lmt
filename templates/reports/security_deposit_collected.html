@@ -1,0 +1,46 @@
+{% extends "base.html" %}
+{% block content %}
+
+<div class="container mt-4">
+<h3>Security Deposit Collected</h3>
+
+<form method="POST" class="card p-3 mb-3">
+    <div class="row">
+        <div class="col-md-3">
+            <label>From Date</label>
+            <input type="date" name="from_date" class="form-control" value="{{ from_date }}">
+        </div>
+        <div class="col-md-3">
+            <label>To Date</label>
+            <input type="date" name="to_date" class="form-control" value="{{ to_date }}">
+        </div>
+        <div class="col-md-2 mt-4">
+            <button class="btn btn-primary">Generate</button>
+        </div>
+    </div>
+</form>
+
+<table class="table table-bordered">
+<thead class="table-dark">
+<tr>
+<th>Date</th>
+<th>Member</th>
+<th>Loan ID</th>
+<th>Amount</th>
+</tr>
+</thead>
+
+<tbody>
+{% for r in rows %}
+<tr>
+<td>{{r.disbursementdate}}</td>
+<td>{{r.full_name}}</td>
+<td>{{r.loanid}}</td>
+<td>{{r.amount}}</td>
+</tr>
+{% endfor %}
+</tbody>
+</table>
+
+</div>
+{% endblock %}

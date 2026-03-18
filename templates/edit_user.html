@@ -1,0 +1,104 @@
+{% extends "base.html" %}
+{% block title %}Edit User{% endblock %}
+
+{% block content %}
+<div class="container mt-4" style="max-width: 700px;">
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <h2><i class="bi bi-pencil-square"></i> Edit User</h2>
+        <a href="{{ url_for('user_mgmt.user_list') }}" class="btn btn-secondary">
+            <i class="bi bi-arrow-left"></i> Back to List
+        </a>
+    </div>
+
+    <div class="card">
+        <div class="card-body">
+            <form method="POST">
+                <div class="mb-3">
+                    <label class="form-label"><strong>Username (Login) <span class="text-danger">*</span></strong></label>
+                    <input type="text" class="form-control" name="username" value="{{ user[1] }}" required>
+                </div>
+
+                <div class="mb-3">
+                    <label class="form-label"><strong>Employee Name</strong></label>
+                    <input type="text" class="form-control" name="emp_name" value="{{ user[3] or user[1] }}">
+                    <small class="text-muted">Display name for the user</small>
+                </div>
+
+                <div class="mb-3">
+                    <label class="form-label"><strong>Password</strong></label>
+                    <input type="password" class="form-control" name="password" 
+                           placeholder="Leave blank to keep current password">
+                    <small class="text-muted">Only fill if you want to change the password</small>
+                </div>
+
+                <div class="mb-3">
+                    <label class="form-label"><strong>Role <span class="text-danger">*</span></strong></label>
+                    <select class="form-select" name="role_id" id="roleSelect" required onchange="checkSuperAdmin()">
+                        <option value="">-- Select Role --</option>
+                        {% for role in roles %}
+                        <option value="{{ role[0] }}" {% if user[4] == role[0] %}selected{% endif %}>
+                            {{ role[1] }}
+                        </option>
+                        {% endfor %}
+                    </select>
+                </div>
+
+                <div class="mb-3" id="branchField">
+                    <label class="form-label"><strong>Branch</strong></label>
+                    <select class="form-select" name="branch_id" id="branchSelect">
+                        <option value="">-- Select Branch --</option>
+                        {% for branch in branches %}
+                        <option value="{{ branch[0] }}" {% if user[5] == branch[0] %}selected{% endif %}>
+                            {{ branch[1] }} - {{ branch[2] }}
+                        </option>
+                        {% endfor %}
+                    </select>
+                </div>
+
+                <div class="mb-3">
+                    <label class="form-label"><strong>Status <span class="text-danger">*</span></strong></label>
+                    <select class="form-select" name="active" required>
+                        <option value="1" {% if user[6] %}selected{% endif %}>Active</option>
+                        <option value="0" {% if not user[6] %}selected{% endif %}>Inactive</option>
+                    </select>
+                </div>
+
+                <div class="alert alert-info" id="superAdminNote" style="display:none;">
+                    <i class="bi bi-info-circle"></i> <strong>SuperAdmin users</strong> can access all branches.
+                </div>
+
+                <div class="text-center mt-4">
+                    <button type="submit" class="btn btn-success btn-lg px-5">
+                        <i class="bi bi-check-circle"></i> Update User
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+<script>
+function checkSuperAdmin() {
+    const roleSelect = document.getElementById('roleSelect');
+    const selectedOption = roleSelect.options[roleSelect.selectedIndex];
+    const roleName = selectedOption.text;
+    
+    const branchField = document.getElementById('branchField');
+    const branchSelect = document.getElementById('branchSelect');
+    const superAdminNote = document.getElementById('superAdminNote');
+    
+    if (roleName === 'SuperAdmin') {
+        branchField.style.display = 'none';
+        branchSelect.required = false;
+        branchSelect.value = '';
+        superAdminNote.style.display = 'block';
+    } else {
+        branchField.style.display = 'block';
+        superAdminNote.style.display = 'none';
+    }
+}
+
+// Run on page load
+checkSuperAdmin();
+</script>
+{% endblock %}

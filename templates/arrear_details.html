@@ -1,0 +1,89 @@
+{% extends "base.html" %}
+{% block title %}Arrear Details Report{% endblock %}
+
+{% block extra_css %}
+<style>
+  .page-header{background:linear-gradient(135deg,#dc2626,#b91c1c);color:#fff;border-radius:14px;padding:22px 28px;margin-bottom:20px}
+  .form-card{background:#fff;border-radius:12px;padding:24px;box-shadow:0 2px 10px rgba(0,0,0,.06);margin-bottom:20px}
+  .report-table{width:100%;border-collapse:collapse;margin-top:20px}
+  .report-table thead th{background:#dc2626;color:#fff;padding:12px;font-size:.85rem;font-weight:600}
+  .report-table tbody td{padding:10px;border:1px solid #e5e7eb;font-size:.88rem}
+  .report-table tbody tr:hover{background:#fef2f2}
+  .report-table tfoot{background:#fee2e2;font-weight:700;color:#dc2626}
+  .text-right{text-align:right}
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="container-fluid">
+  <div class="page-header">
+    <h4 class="fw-bold mb-1"><i class="bi bi-exclamation-triangle me-2"></i>Arrear Details Report</h4>
+    <small style="opacity:.85">All overdue payments and arrears</small>
+  </div>
+
+  <!-- Data Display -->
+  <div class="form-card">
+    <h5 class="mb-3">
+      <i class="bi bi-table"></i> Overdue Payments
+    </h5>
+    
+    {% if data %}
+    <div class="alert alert-danger">
+      <i class="bi bi-exclamation-circle"></i> 
+      <strong>{{ data|length }}</strong> overdue payments found
+    </div>
+    
+    <div class="table-responsive">
+      <table class="report-table">
+        <thead>
+          <tr>
+            <th>S.No</th>
+            <th>Member Code</th>
+            <th>Member Name</th>
+            <th>Center</th>
+            <th>Loan ID</th>
+            <th>Due Date</th>
+            <th>Days Overdue</th>
+            <th class="text-right">Principal Arrear</th>
+            <th class="text-right">Interest Arrear</th>
+            <th class="text-right">Total Arrear</th>
+          </tr>
+        </thead>
+        <tbody>
+          {% for row in data %}
+          <tr>
+            <td>{{ loop.index }}</td>
+            <td>{{ row.MemberCode }}</td>
+            <td>{{ row.MemberName }}</td>
+            <td>{{ row.Center or '-' }}</td>
+            <td>{{ row.LoanID }}</td>
+            <td>{{ row.DueDate.strftime('%d-%m-%Y') if row.DueDate else '-' }}</td>
+            <td>
+              <span class="badge bg-danger">{{ row.DaysOverdue }} days</span>
+            </td>
+            <td class="text-right">₹{{ "{:,.0f}".format(row.PrincipalArrear) }}</td>
+            <td class="text-right">₹{{ "{:,.0f}".format(row.InterestArrear) }}</td>
+            <td class="text-right">₹{{ "{:,.0f}".format(row.TotalArrear) }}</td>
+          </tr>
+          {% endfor %}
+        </tbody>
+        <tfoot>
+          <tr>
+            <td colspan="7" class="text-right"><strong>TOTAL ARREARS:</strong></td>
+            <td class="text-right"><strong>₹{{ "{:,.0f}".format(total_principal) }}</strong></td>
+            <td class="text-right"><strong>₹{{ "{:,.0f}".format(total_interest) }}</strong></td>
+            <td class="text-right"><strong>₹{{ "{:,.0f}".format(total_arrear) }}</strong></td>
+          </tr>
+        </tfoot>
+      </table>
+    </div>
+    {% else %}
+    <div class="text-center py-5">
+      <i class="bi bi-check-circle" style="font-size:3rem;color:#10b981"></i>
+      <h5 class="mt-3 text-success">No Arrears Found!</h5>
+      <p class="text-muted">All payments are up to date</p>
+    </div>
+    {% endif %}
+  </div>
+</div>
+{% endblock %}

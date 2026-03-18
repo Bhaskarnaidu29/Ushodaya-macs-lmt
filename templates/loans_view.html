@@ -1,0 +1,346 @@
+{% extends "base.html" %}
+
+{% block title %}Loan Details - Ushodaya MACS Ltd{% endblock %}
+{% block page_title %}Loan Details{% endblock %}
+
+{% block extra_css %}
+<style>
+    .page-header {
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        color: white;
+        border-radius: 16px;
+        padding: 30px;
+        margin-bottom: 30px;
+        box-shadow: 0 4px 20px rgba(102, 126, 234, 0.3);
+    }
+
+    .info-card {
+        background: white;
+        border-radius: 12px;
+        padding: 25px;
+        margin-bottom: 20px;
+        box-shadow: 0 2px 10px rgba(0,0,0,0.05);
+    }
+
+    .section-title {
+        font-size: 1.2rem;
+        font-weight: 700;
+        color: #2c3e50;
+        margin-bottom: 20px;
+        padding-bottom: 10px;
+        border-bottom: 3px solid #667eea;
+    }
+
+    .stats-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+        gap: 15px;
+        margin: 20px 0;
+    }
+
+    .stat-card {
+        background: linear-gradient(135deg, #f8f9fa, #e9ecef);
+        border-radius: 12px;
+        padding: 20px;
+        text-align: center;
+        border-left: 4px solid #667eea;
+    }
+
+    .stat-label {
+        font-size: 0.85rem;
+        color: #6c757d;
+        font-weight: 600;
+        margin-bottom: 8px;
+    }
+
+    .stat-value {
+        font-size: 1.5rem;
+        font-weight: 700;
+        color: #2c3e50;
+    }
+
+    .schedule-table {
+        width: 100%;
+        border-collapse: separate;
+        border-spacing: 0;
+        margin-top: 20px;
+    }
+
+    .schedule-table th {
+        background: linear-gradient(135deg, #667eea, #764ba2);
+        color: white;
+        padding: 12px;
+        font-weight: 700;
+        text-align: left;
+        font-size: 0.9rem;
+    }
+
+    .schedule-table th:first-child {
+        border-top-left-radius: 8px;
+    }
+
+    .schedule-table th:last-child {
+        border-top-right-radius: 8px;
+    }
+
+    .schedule-table td {
+        padding: 12px;
+        border-bottom: 1px solid #e9ecef;
+        font-size: 0.9rem;
+    }
+
+    .schedule-table tr:hover {
+        background: #f8f9fa;
+    }
+
+    .emi-paid {
+        background: #d4edda !important;
+    }
+
+    .emi-pending {
+        background: white;
+    }
+
+    .badge-paid {
+        background: #28a745;
+        color: white;
+        padding: 4px 10px;
+        border-radius: 10px;
+        font-size: 0.75rem;
+        font-weight: 700;
+    }
+
+    .badge-pending {
+        background: #ffc107;
+        color: #000;
+        padding: 4px 10px;
+        border-radius: 10px;
+        font-size: 0.75rem;
+        font-weight: 700;
+    }
+
+    .charges-card {
+        background: #fff3cd;
+        border-radius: 12px;
+        padding: 20px;
+        margin: 20px 0;
+    }
+
+    .charge-item {
+        display: flex;
+        justify-content: space-between;
+        padding: 8px 0;
+        border-bottom: 1px solid rgba(0,0,0,0.1);
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="container-fluid">
+    <div class="row justify-content-center">
+        <div class="col-lg-11">
+            <div class="page-header">
+                <div class="d-flex justify-content-between align-items-center">
+                    <div>
+                        <h3><i class="bi bi-wallet2"></i> Loan Details</h3>
+                        <p class="mb-0" style="opacity: 0.9;">Loan ID: #{{ loan[0] }}</p>
+                    </div>
+                    <div>
+                        <a href="{{ url_for('loans.index') }}" class="btn btn-light">
+                            <i class="bi bi-arrow-left"></i> Back to Loans
+                        </a>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Member & Loan Info -->
+            <div class="info-card">
+                <div class="section-title">
+                    <i class="bi bi-person-circle"></i> Member Information
+                </div>
+
+                <div class="row">
+                    <div class="col-md-3">
+                        <strong>Member Code:</strong><br>
+                        {{ loan[1] }}
+                    </div>
+                    <div class="col-md-3">
+                        <strong>Member Name:</strong><br>
+                        {{ loan[2] }}
+                    </div>
+                    <div class="col-md-3">
+                        <strong>Phone:</strong><br>
+                        {{ loan[3] or 'N/A' }}
+                    </div>
+                    <div class="col-md-3">
+                        <strong>Center:</strong><br>
+                        {{ loan[4] }}
+                    </div>
+                </div>
+            </div>
+
+            <!-- Loan Statistics -->
+            <div class="stats-grid">
+                <div class="stat-card" style="border-left-color: #28a745;">
+                    <div class="stat-label">Loan Amount</div>
+                    <div class="stat-value" style="color: #28a745;">
+                        {% if loan[5] %}
+                        ₹{{ "{:,.2f}".format(loan[5]|float) }}
+                        {% else %}
+                        ₹0.00
+                        {% endif %}
+                    </div>
+                </div>
+
+                <div class="stat-card" style="border-left-color: #667eea;">
+                    <div class="stat-label">EMI Amount</div>
+                    <div class="stat-value" style="color: #667eea;">
+                        {% if loan[8] %}
+                        ₹{{ "{:,.2f}".format(loan[8]|float) }}
+                        {% else %}
+                        ₹0.00
+                        {% endif %}
+                    </div>
+                </div>
+
+                <div class="stat-card" style="border-left-color: #dc3545;">
+                    <div class="stat-label">Principal Outstanding</div>
+                    <div class="stat-value" style="color: #dc3545;">
+                        {% if loan[9] %}
+                        ₹{{ "{:,.2f}".format(loan[9]|float) }}
+                        {% else %}
+                        ₹0.00
+                        {% endif %}
+                    </div>
+                </div>
+
+                <div class="stat-card" style="border-left-color: #ffc107;">
+                    <div class="stat-label">Interest Outstanding</div>
+                    <div class="stat-value" style="color: #ffc107;">
+                        {% if loan[10] %}
+                        ₹{{ "{:,.2f}".format(loan[10]|float) }}
+                        {% else %}
+                        ₹0.00
+                        {% endif %}
+                    </div>
+                </div>
+
+                <div class="stat-card" style="border-left-color: #17a2b8;">
+                    <div class="stat-label">Interest Rate</div>
+                    <div class="stat-value" style="color: #17a2b8;">
+                        {{ loan[6] or '0' }}%
+                    </div>
+                </div>
+
+                <div class="stat-card" style="border-left-color: #6c757d;">
+                    <div class="stat-label">Tenure</div>
+                    <div class="stat-value" style="color: #6c757d;">
+                        {{ loan[7] or '0' }} 
+                        {% if loan[14] and 'weekly' in loan[14]|lower %}weeks{% else %}months{% endif %}
+                    </div>
+                </div>
+            </div>
+
+            <!-- Loan Charges -->
+            <div class="charges-card">
+                <h5 style="color: #856404; margin-bottom: 15px;">
+                    <i class="bi bi-calculator"></i> Loan Charges
+                </h5>
+                <div class="row">
+                    <div class="col-md-4">
+                        <div class="charge-item">
+                            <span>Processing Fee:</span>
+                            <strong>₹{{ "{:,.2f}".format(loan[15]|float) if loan[15] else '0.00' }}</strong>
+                        </div>
+                    </div>
+                    <div class="col-md-4">
+                        <div class="charge-item">
+                            <span>Member Insurance:</span>
+                            <strong>₹{{ "{:,.2f}".format(loan[16]|float) if loan[16] else '0.00' }}</strong>
+                        </div>
+                    </div>
+                    <div class="col-md-4">
+                        <div class="charge-item">
+                            <span>Nominee Insurance:</span>
+                            <strong>₹{{ "{:,.2f}".format(loan[17]|float) if loan[17] else '0.00' }}</strong>
+                        </div>
+                    </div>
+                    <div class="col-md-4">
+                        <div class="charge-item">
+                            <span>Savings (per EMI):</span>
+                            <strong>₹{{ "{:,.2f}".format(loan[18]|float) if loan[18] else '0.00' }}</strong>
+                        </div>
+                    </div>
+                    <div class="col-md-4">
+                        <div class="charge-item">
+                            <span>Security Deposit:</span>
+                            <strong>₹{{ "{:,.2f}".format(loan[19]|float) if loan[19] else '0.00' }}</strong>
+                        </div>
+                    </div>
+                    <div class="col-md-4">
+                        <div class="charge-item">
+                            <span>Disbursement Date:</span>
+                            <strong>{{ loan[12].strftime('%d %b %Y') if loan[12] else 'N/A' }}</strong>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- EMI Schedule -->
+            <div class="info-card">
+                <div class="section-title">
+                    <i class="bi bi-calendar3"></i> EMI Repayment Schedule
+                </div>
+
+                <div class="table-responsive">
+                    <table class="schedule-table">
+                        <thead>
+                            <tr>
+                                <th>EMI #</th>
+                                <th>Due Date</th>
+                                <th>Principal</th>
+                                <th>Interest</th>
+                                <th>Total EMI</th>
+                                <th>Savings</th>
+                                <th>Principal Paid</th>
+                                <th>Interest Paid</th>
+                                <th>Status</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for emi in schedule %}
+                            <tr class="{% if emi[8] %}emi-paid{% else %}emi-pending{% endif %}">
+                                <td><strong>#{{ emi[9] if emi[9] else loop.index }}</strong></td>
+                                <td>{{ emi[1].strftime('%d %b %Y') if emi[1] else 'N/A' }}</td>
+                                <td>₹{{ "{:,.2f}".format(emi[2]|float) if emi[2] else '0.00' }}</td>
+                                <td>₹{{ "{:,.2f}".format(emi[3]|float) if emi[3] else '0.00' }}</td>
+                                <td style="font-weight: 700;">
+                                    ₹{{ "{:,.2f}".format((emi[2]|float if emi[2] else 0) + (emi[3]|float if emi[3] else 0)) }}
+                                </td>
+                                <td>₹{{ "{:,.2f}".format(emi[6]|float) if emi[6] else '0.00' }}</td>
+                                <td>₹{{ "{:,.2f}".format(emi[4]|float) if emi[4] else '0.00' }}</td>
+                                <td>₹{{ "{:,.2f}".format(emi[5]|float) if emi[5] else '0.00' }}</td>
+                                <td>
+                                    {% if emi[8] %}
+                                    <span class="badge-paid">PAID</span>
+                                    {% else %}
+                                    <span class="badge-pending">PENDING</span>
+                                    {% endif %}
+                                </td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+
+                {% if not schedule %}
+                <div class="text-center py-4" style="color: #6c757d;">
+                    <i class="bi bi-inbox" style="font-size: 3rem;"></i>
+                    <p class="mt-2">No EMI schedule found</p>
+                </div>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

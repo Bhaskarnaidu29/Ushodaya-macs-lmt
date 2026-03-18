@@ -1,0 +1,317 @@
+{% extends "base.html" %}
+{% block title %}Member-wise Arrears Recovery{% endblock %}
+
+{% block extra_css %}
+<style>
+    .nav-tabs { border-bottom: 2px solid #667eea; }
+    .nav-tabs .nav-link { color: #667eea; font-weight: 600; }
+    .nav-tabs .nav-link.active { color: white; background: #667eea; }
+    
+    .member-card {
+        background: linear-gradient(135deg, #dc3545 0%, #fd7e14 100%);
+        color: white;
+        padding: 20px;
+        border-radius: 10px;
+        margin-bottom: 20px;
+    }
+    .arrears-item {
+        background: #fff3cd;
+        padding: 20px;
+        border-radius: 8px;
+        margin-bottom: 15px;
+        border-left: 4px solid #dc3545;
+    }
+    .priority-badge {
+        padding: 3px 10px;
+        border-radius: 12px;
+        font-size: 0.75rem;
+        font-weight: 600;
+    }
+    .priority-1 { background: #dc3545; color: white; }
+    .priority-2 { background: #ffc107; color: #000; }
+    .priority-3 { background: #17a2b8; color: white; }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="container-fluid mt-4">
+    <!-- Tabs -->
+    <ul class="nav nav-tabs mb-4">
+        <li class="nav-item">
+            <a class="nav-link" href="{{ url_for('rec_member.member_recovery') }}">
+                <i class="bi bi-wallet2"></i> Regular Recovery
+            </a>
+        </li>
+        <li class="nav-item">
+            <a class="nav-link" href="{{ url_for('rec_member.member_prepaid') }}">
+                <i class="bi bi-check-circle"></i> Prepaid/Closure
+            </a>
+        </li>
+        <li class="nav-item">
+            <a class="nav-link active" href="{{ url_for('rec_member.member_arrears') }}">
+                <i class="bi bi-exclamation-triangle-fill"></i> Arrears Recovery
+            </a>
+        </li>
+    </ul>
+
+    <h2><i class="bi bi-exclamation-triangle-fill text-danger"></i> Member-wise Arrears Recovery</h2>
+    <p class="text-muted">Priority: Interest → Principal → Savings | {{ today }}</p>
+
+    <!-- Important Info -->
+    <div class="alert alert-warning mb-4">
+        <h6><i class="bi bi-info-circle-fill"></i> <strong>Arrears Recovery Priority:</strong></h6>
+        <p class="mb-0">
+            <span class="priority-badge priority-1">1️⃣ Interest First</span>
+            <span class="priority-badge priority-2">2️⃣ Principal Second</span>
+            <span class="priority-badge priority-3">3️⃣ Savings Third</span>
+        </p>
+    </div>
+
+    <!-- Member Selection -->
+    <div class="card mb-4">
+        <div class="card-body">
+            <form method="GET">
+                <div class="row">
+                    <div class="col-md-6">
+                        <label><strong>Select Member:</strong></label>
+                        <select class="form-control" name="member_code" onchange="this.form.submit()" required>
+                            <option value="">-- Select Member --</option>
+                            {% for member in members %}
+                            <option value="{{ member[0] }}" {% if selected_member == member[0] %}selected{% endif %}>
+                                {{ member[1] }} ({{ member[0] }})
+                            </option>
+                            {% endfor %}
+                        </select>
+                    </div>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- Member Info & Arrears EMIs -->
+    {% if selected_member and member_info %}
+    <div class="member-card">
+        <div class="row">
+            <div class="col-md-6">
+                <h4><i class="bi bi-person-badge"></i> {{ member_info[1] }}</h4>
+                <p class="mb-0">Code: {{ member_info[0] }} | Center: {{ member_info[2] }}</p>
+            </div>
+            <div class="col-md-6 text-end">
+                <h5>Arrears EMIs: {{ arrears_emis|length }}</h5>
+            </div>
+        </div>
+    </div>
+
+    {% if arrears_emis %}
+    <form method="POST" id="arrearsForm">
+        <div class="card">
+            <div class="card-header bg-danger text-white">
+                <strong>Overdue EMIs - Arrears Recovery</strong>
+            </div>
+            <div class="card-body">
+                <div class="mb-3">
+                    <input type="checkbox" id="selectAll" onchange="toggleAll()">
+                    <strong> Select All</strong>
+                </div>
+
+                {% for emi in arrears_emis %}
+                {% set i_pending = (emi[5] or 0) - (emi[8] or 0) %}
+                {% set p_pending = (emi[4] or 0) - (emi[7] or 0) %}
+                {% set s_pending = (emi[6] or 0) - (emi[9] or 0) %}
+                {% set total_pending = i_pending + p_pending + s_pending %}
+                
+                <div class="arrears-item">
+                    <div class="row align-items-center">
+                        <div class="col-md-1">
+                            <input type="checkbox" class="form-check-input arrear-check" 
+                                   name="selected_arrear" value="{{ emi[1] }}"
+                                   onchange="updateTotal()">
+                        </div>
+                        <div class="col-md-2">
+                            <strong>EMI #{{ emi[2] }}</strong><br>
+                            <small class="text-muted">{{ emi[3].strftime('%d-%b-%Y') if emi[3] else 'N/A' }}</small><br>
+                            <span class="badge bg-danger">{{ emi[10] }} days overdue</span><br>
+                            <small class="text-primary">{{ emi[11] }}</small>
+                        </div>
+                        
+                        <!-- Priority 1: Interest (Red) -->
+                        <div class="col-md-2">
+                            <label class="small">
+                                <span class="priority-badge priority-1">1️⃣ Interest</span>
+                            </label>
+                            <input type="number" class="form-control input-sm" 
+                                   name="i_{{ emi[1] }}" id="i_{{ emi[1] }}"
+                                   value="{{ "%.2f"|format(i_pending) }}" step="0.01" min="0"
+                                   max="{{ "%.2f"|format(i_pending) }}"
+                                   onchange="calcArrTotal({{ emi[1] }}, {{ i_pending }}, {{ p_pending }}, {{ s_pending }})">
+                            <small class="text-danger">Pending: ₹{{ "%.2f"|format(i_pending) }}</small>
+                        </div>
+                        
+                        <!-- Priority 2: Principal (Yellow) -->
+                        <div class="col-md-2">
+                            <label class="small">
+                                <span class="priority-badge priority-2">2️⃣ Principal</span>
+                            </label>
+                            <input type="number" class="form-control input-sm" 
+                                   name="p_{{ emi[1] }}" id="p_{{ emi[1] }}"
+                                   value="0" step="0.01" min="0"
+                                   max="{{ "%.2f"|format(p_pending) }}"
+                                   onchange="calcArrTotal({{ emi[1] }}, {{ i_pending }}, {{ p_pending }}, {{ s_pending }})">
+                            <small class="text-warning">Pending: ₹{{ "%.2f"|format(p_pending) }}</small>
+                        </div>
+                        
+                        <!-- Priority 3: Savings (Blue) -->
+                        <div class="col-md-2">
+                            <label class="small">
+                                <span class="priority-badge priority-3">3️⃣ Savings</span>
+                            </label>
+                            <input type="number" class="form-control input-sm" 
+                                   name="s_{{ emi[1] }}" id="s_{{ emi[1] }}"
+                                   value="0" step="0.01" min="0"
+                                   max="{{ "%.2f"|format(s_pending) }}"
+                                   onchange="calcArrTotal({{ emi[1] }}, {{ i_pending }}, {{ p_pending }}, {{ s_pending }})">
+                            <small class="text-info">Pending: ₹{{ "%.2f"|format(s_pending) }}</small>
+                        </div>
+                        
+                        <!-- Total -->
+                        <div class="col-md-2">
+                            <label class="small">Recovery Amount</label>
+                            <h5 id="total_{{ emi[1] }}" class="text-success">₹{{ "%.2f"|format(i_pending) }}</h5>
+                            <small class="text-muted">Total Pending: ₹{{ "%.2f"|format(total_pending) }}</small>
+                        </div>
+                        
+                        <!-- Quick Fill Button -->
+                        <div class="col-md-1">
+                            <button type="button" class="btn btn-sm btn-outline-primary" 
+                                    onclick="fillPriority({{ emi[1] }}, {{ i_pending }}, {{ p_pending }}, {{ s_pending }})">
+                                <i class="bi bi-lightning-fill"></i> Fill
+                            </button>
+                        </div>
+                    </div>
+
+                    <!-- Allocation Display -->
+                    <div class="row mt-3">
+                        <div class="col-md-12">
+                            <small class="text-muted" id="alloc_{{ emi[1] }}">
+                                Allocation: Interest first, then Principal, then Savings
+                            </small>
+                        </div>
+                    </div>
+                </div>
+                {% endfor %}
+
+                <!-- Summary -->
+                <div class="card mt-4" style="background: linear-gradient(135deg, #dc3545 0%, #fd7e14 100%); color: white;">
+                    <div class="card-body">
+                        <h5>Arrears Recovery Summary</h5>
+                        <div class="row text-center">
+                            <div class="col-md-3">
+                                <div>Selected EMIs</div>
+                                <h4 id="selectedCount">0</h4>
+                            </div>
+                            <div class="col-md-2">
+                                <div>Interest</div>
+                                <h4 id="sumInterest">₹0</h4>
+                            </div>
+                            <div class="col-md-2">
+                                <div>Principal</div>
+                                <h4 id="sumPrincipal">₹0</h4>
+                            </div>
+                            <div class="col-md-2">
+                                <div>Savings</div>
+                                <h4 id="sumSavings">₹0</h4>
+                            </div>
+                            <div class="col-md-3">
+                                <div>TOTAL RECOVERY</div>
+                                <h3 id="grandTotal">₹0</h3>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="text-center mt-4">
+                    <button type="submit" class="btn btn-danger btn-lg">
+                        <i class="bi bi-cash-coin"></i> POST ARREARS RECOVERY
+                    </button>
+                </div>
+            </div>
+        </div>
+    </form>
+    {% else %}
+    <div class="alert alert-success">
+        <i class="bi bi-check-circle"></i> No arrears for this member - All payments up to date!
+    </div>
+    {% endif %}
+    {% endif %}
+</div>
+
+<script>
+function toggleAll() {
+    const checked = document.getElementById('selectAll').checked;
+    document.querySelectorAll('.arrear-check').forEach(cb => cb.checked = checked);
+    updateTotal();
+}
+
+function fillPriority(id, iPending, pPending, sPending) {
+    // Fill with priority: Interest → Principal → Savings
+    document.getElementById('i_' + id).value = iPending.toFixed(2);
+    document.getElementById('p_' + id).value = pPending.toFixed(2);
+    document.getElementById('s_' + id).value = sPending.toFixed(2);
+    calcArrTotal(id, iPending, pPending, sPending);
+}
+
+function calcArrTotal(id, iPending, pPending, sPending) {
+    const i = parseFloat(document.getElementById('i_' + id)?.value || 0);
+    const p = parseFloat(document.getElementById('p_' + id)?.value || 0);
+    const s = parseFloat(document.getElementById('s_' + id)?.value || 0);
+    const total = i + p + s;
+    
+    document.getElementById('total_' + id).textContent = '₹' + total.toFixed(2);
+    
+    // Show allocation breakdown
+    let allocation = [];
+    if (i > 0) allocation.push(`Interest: ₹${i.toFixed(2)}`);
+    if (p > 0) allocation.push(`Principal: ₹${p.toFixed(2)}`);
+    if (s > 0) allocation.push(`Savings: ₹${s.toFixed(2)}`);
+    
+    if (allocation.length > 0) {
+        document.getElementById('alloc_' + id).textContent = 
+            'Allocation: ' + allocation.join(' | ');
+    }
+    
+    updateTotal();
+}
+
+function updateTotal() {
+    let count = 0, sumI = 0, sumP = 0, sumS = 0;
+    document.querySelectorAll('.arrear-check:checked').forEach(cb => {
+        const id = cb.value;
+        count++;
+        sumI += parseFloat(document.getElementById('i_' + id)?.value || 0);
+        sumP += parseFloat(document.getElementById('p_' + id)?.value || 0);
+        sumS += parseFloat(document.getElementById('s_' + id)?.value || 0);
+    });
+    const total = sumI + sumP + sumS;
+    
+    document.getElementById('selectedCount').textContent = count;
+    document.getElementById('sumInterest').textContent = '₹' + sumI.toFixed(2);
+    document.getElementById('sumPrincipal').textContent = '₹' + sumP.toFixed(2);
+    document.getElementById('sumSavings').textContent = '₹' + sumS.toFixed(2);
+    document.getElementById('grandTotal').textContent = '₹' + total.toFixed(2);
+}
+
+document.getElementById('arrearsForm')?.addEventListener('submit', function(e) {
+    const checked = document.querySelectorAll('.arrear-check:checked').length;
+    if (checked === 0) {
+        e.preventDefault();
+        alert('Please select at least one arrears EMI');
+        return false;
+    }
+    const total = document.getElementById('grandTotal').textContent;
+    if (!confirm('Post arrears recovery?\nTotal: ' + total)) {
+        e.preventDefault();
+        return false;
+    }
+});
+</script>
+{% endblock %}

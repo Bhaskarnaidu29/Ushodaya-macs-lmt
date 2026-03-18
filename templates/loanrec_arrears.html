@@ -1,0 +1,314 @@
+{% extends "base.html" %}
+{% block title %}Arrears Recovery - Admin Authorization{% endblock %}
+
+{% block extra_css %}
+<style>
+    .nav-tabs { border-bottom: 2px solid #667eea; }
+    .nav-tabs .nav-link { color: #667eea; font-weight: 600; }
+    .nav-tabs .nav-link.active { color: white; background: #667eea; }
+    
+    .arrears-card {
+        border-left: 4px solid #dc3545;
+        margin-bottom: 15px;
+        transition: all 0.3s;
+    }
+    .arrears-card:hover {
+        box-shadow: 0 4px 12px rgba(220, 53, 69, 0.3);
+    }
+    .auth-required {
+        background: #fff3cd;
+        border: 2px solid #ffc107;
+        padding: 15px;
+        border-radius: 8px;
+        margin-bottom: 15px;
+    }
+    .auth-badge {
+        background: #dc3545;
+        color: white;
+        padding: 5px 15px;
+        border-radius: 20px;
+        font-size: 0.85rem;
+        font-weight: 600;
+    }
+    .priority-badge {
+        padding: 3px 10px;
+        border-radius: 12px;
+        font-size: 0.75rem;
+        font-weight: 600;
+    }
+    .priority-1 { background: #dc3545; color: white; }
+    .priority-2 { background: #ffc107; color: #000; }
+    .priority-3 { background: #17a2b8; color: white; }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="container-fluid mt-4">
+    <!-- Tabs -->
+    <ul class="nav nav-tabs mb-4">
+        <li class="nav-item">
+            <a class="nav-link" href="{{ url_for('loanrec.recovery_posting') }}">
+                <i class="bi bi-wallet2"></i> Regular Recovery
+            </a>
+        </li>
+        <li class="nav-item">
+            <a class="nav-link" href="{{ url_for('loanrec.prepaid_posting') }}">
+                <i class="bi bi-check-circle"></i> Prepaid/Closure
+            </a>
+        </li>
+        <li class="nav-item">
+            <a class="nav-link active" href="{{ url_for('loanrec.arrears_posting') }}">
+                <i class="bi bi-exclamation-triangle-fill"></i> Arrears Recovery
+            </a>
+        </li>
+    </ul>
+
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <div>
+            <h2><i class="bi bi-exclamation-triangle-fill text-danger"></i> Arrears Recovery Posting</h2>
+            <small class="text-muted">Admin Authorization Required for First Posting | {{ today }}</small>
+        </div>
+    </div>
+
+    <!-- Important Information -->
+    <div class="alert alert-warning mb-4">
+        <h6><i class="bi bi-info-circle-fill"></i> <strong>Arrears Recovery Workflow:</strong></h6>
+        <ol class="mb-0">
+            <li><strong>First Time:</strong> Admin must authorize with password (all amounts = ₹0)</li>
+            <li><strong>Password Format:</strong> <code>SYSTEMDATE + BRANCHCODE + MEMBERNAME + MEMBERCODE</code></li>
+            <li><strong>Recovery Priority:</strong> 
+                <span class="priority-badge priority-1">1️⃣ Interest</span>
+                <span class="priority-badge priority-2">2️⃣ Principal</span>
+                <span class="priority-badge priority-3">3️⃣ Savings</span>
+            </li>
+            <li><strong>After Clearance:</strong> Automatically switches to regular recovery</li>
+        </ol>
+    </div>
+
+    <!-- Center Selection -->
+    <div class="card mb-4">
+        <div class="card-body">
+            <form method="GET">
+                <div class="row">
+                    <div class="col-md-6">
+                        <label><strong>Select Center:</strong></label>
+                        <select class="form-control" name="center_id" onchange="this.form.submit()" required>
+                            <option value="">-- Select Center --</option>
+                            {% for c in centers %}
+                            <option value="{{ c[0] }}" {% if selected_center == c[0]|string %}selected{% endif %}>
+                                {{ c[1] }} ({{ c[2] }})
+                            </option>
+                            {% endfor %}
+                        </select>
+                    </div>
+                    {% if center_info %}
+                    <div class="col-md-6">
+                        <label class="text-muted">Selected Center:</label>
+                        <h5>{{ center_info[1] }}</h5>
+                    </div>
+                    {% endif %}
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- Arrears Members -->
+    {% if selected_center %}
+    {% if arrears_members %}
+    <div class="card">
+        <div class="card-header bg-danger text-white">
+            <h5 class="mb-0">
+                <i class="bi bi-exclamation-triangle-fill"></i> Arrears Members
+                <span class="float-end">Total: {{ arrears_members|length }}</span>
+            </h5>
+        </div>
+        <div class="card-body">
+            {% for arr in arrears_members %}
+            {% set interest_pending = (arr[7] or 0) - (arr[10] or 0) %}
+            {% set principal_pending = (arr[6] or 0) - (arr[9] or 0) %}
+            {% set savings_pending = (arr[8] or 0) - (arr[11] or 0) %}
+            {% set zero_posting_done = arr[13] %}
+            {% set total_pending = interest_pending + principal_pending + savings_pending %}
+            
+            <div class="card arrears-card">
+                <div class="card-body">
+                    <!-- Member Info Header -->
+                    <div class="row mb-3">
+                        <div class="col-md-3">
+                            <h6 class="mb-0"><strong>{{ arr[1] }}</strong></h6>
+                            <small class="text-muted">
+                                <i class="bi bi-person-badge"></i> {{ arr[0] }}<br>
+                                <i class="bi bi-tag"></i> {{ arr[14] }}
+                            </small>
+                        </div>
+                        <div class="col-md-2">
+                            <small class="text-muted">EMI Sequence</small><br>
+                            <span class="badge bg-primary">EMI #{{ arr[4] }}</span>
+                        </div>
+                        <div class="col-md-2">
+                            <small class="text-muted">Due Date</small><br>
+                            <strong>{{ arr[5].strftime('%d-%b-%Y') if arr[5] else 'N/A' }}</strong>
+                        </div>
+                        <div class="col-md-2">
+                            <small class="text-muted">Days Overdue</small><br>
+                            <span class="auth-badge">{{ arr[15] }} days</span>
+                        </div>
+                        <div class="col-md-3">
+                            <small class="text-muted">Status</small><br>
+                            {% if zero_posting_done %}
+                                <span class="badge bg-success">✓ Authorized</span>
+                            {% else %}
+                                <span class="badge bg-warning text-dark">⚠ Auth Required</span>
+                            {% endif %}
+                        </div>
+                    </div>
+
+                    <hr>
+
+                    <!-- Pending Amounts Display -->
+                    <div class="row mb-3">
+                        <div class="col-md-3">
+                            <label class="small text-muted">
+                                <span class="priority-badge priority-1">1️⃣ Interest</span>
+                            </label>
+                            <div class="fw-bold text-danger">₹{{ "%.2f"|format(interest_pending) }}</div>
+                        </div>
+                        <div class="col-md-3">
+                            <label class="small text-muted">
+                                <span class="priority-badge priority-2">2️⃣ Principal</span>
+                            </label>
+                            <div class="fw-bold text-warning">₹{{ "%.2f"|format(principal_pending) }}</div>
+                        </div>
+                        <div class="col-md-3">
+                            <label class="small text-muted">
+                                <span class="priority-badge priority-3">3️⃣ Savings</span>
+                            </label>
+                            <div class="fw-bold text-info">₹{{ "%.2f"|format(savings_pending) }}</div>
+                        </div>
+                        <div class="col-md-3">
+                            <label class="small text-muted">Total Pending</label>
+                            <div class="fw-bold text-primary fs-5">₹{{ "%.2f"|format(total_pending) }}</div>
+                        </div>
+                    </div>
+
+                    <!-- Authorization or Payment Form -->
+                    {% if not zero_posting_done %}
+                    <!-- FIRST TIME: Admin Authorization Required -->
+                    <div class="auth-required">
+                        <h6 class="text-danger"><i class="bi bi-shield-lock-fill"></i> Admin Authorization Required</h6>
+                        <p class="mb-2 small">First posting must be <strong>₹0</strong> with admin password authorization.</p>
+                        
+                        <form method="POST" class="row g-2" onsubmit="return confirm('Authorize zero posting for this member?')">
+                            <input type="hidden" name="action" value="zero_posting">
+                            <input type="hidden" name="loanrecid" value="{{ arr[3] }}">
+                            <input type="hidden" name="member_code" value="{{ arr[0] }}">
+                            <input type="hidden" name="member_name" value="{{ arr[1] }}">
+                            
+                            <div class="col-md-12 mb-2">
+                                <div class="alert alert-info small mb-0">
+                                    <strong>Password Formula:</strong> 
+                                    <code>SYSTEMDATE + BRANCHCODE + MEMBERNAME + MEMBERCODE</code>
+                                    <br>
+                                    Example: <code>20260305{{ branch_code }}{{ arr[1]|upper|replace(" ", "") }}{{ arr[0] }}</code>
+                                </div>
+                            </div>
+                            
+                            <div class="col-md-8">
+                                <label class="form-label small"><strong>Enter Authorization Password:</strong></label>
+                                <input type="text" class="form-control" name="auth_password" 
+                                       placeholder="Enter password" required style="text-transform:uppercase">
+                            </div>
+                            
+                            <div class="col-md-4">
+                                <label class="form-label small">&nbsp;</label>
+                                <button type="submit" class="btn btn-danger w-100">
+                                    <i class="bi bi-shield-check"></i> Authorize Zero Posting
+                                </button>
+                            </div>
+                        </form>
+                    </div>
+                    {% else %}
+                    <!-- AFTER AUTHORIZATION: Recovery Payment Form -->
+                    <form method="POST" class="recovery-form">
+                        <input type="hidden" name="action" value="recovery_payment">
+                        <input type="hidden" name="selected_arrear" value="{{ arr[3] }}">
+                        
+                        <div class="row g-2 align-items-end">
+                            <div class="col-md-6">
+                                <label class="form-label small"><strong>Recovery Amount:</strong></label>
+                                <input type="number" class="form-control form-control-lg" 
+                                       name="recovery_{{ arr[3] }}" 
+                                       id="recovery_{{ arr[3] }}"
+                                       step="0.01" min="0" max="{{ "%.2f"|format(total_pending) }}"
+                                       placeholder="Enter amount" 
+                                       onchange="showAllocation({{ arr[3] }}, {{ interest_pending }}, {{ principal_pending }}, {{ savings_pending }})">
+                            </div>
+                            
+                            <div class="col-md-4">
+                                <div id="allocation_{{ arr[3] }}" class="small text-muted" style="display:none;">
+                                    Allocation: <span id="alloc_text_{{ arr[3] }}"></span>
+                                </div>
+                            </div>
+                            
+                            <div class="col-md-2">
+                                <button type="submit" class="btn btn-success w-100" 
+                                        onclick="return confirm('Post recovery for {{ arr[1] }}?')">
+                                    <i class="bi bi-cash-coin"></i> Post
+                                </button>
+                            </div>
+                        </div>
+                    </form>
+                    {% endif %}
+                </div>
+            </div>
+            {% endfor %}
+        </div>
+    </div>
+    {% else %}
+    <div class="alert alert-success">
+        <i class="bi bi-check-circle-fill"></i> <strong>No arrears in this center!</strong>
+        All EMIs are up to date or already posted.
+    </div>
+    {% endif %}
+    {% endif %}
+</div>
+
+<script>
+function showAllocation(id, interestPending, principalPending, savingsPending) {
+    const amount = parseFloat(document.getElementById('recovery_' + id).value || 0);
+    
+    if (amount <= 0) {
+        document.getElementById('allocation_' + id).style.display = 'none';
+        return;
+    }
+    
+    let remaining = amount;
+    let allocText = [];
+    
+    // Priority 1: Interest
+    if (remaining > 0 && interestPending > 0) {
+        const intAlloc = Math.min(remaining, interestPending);
+        allocText.push('Int: ₹' + intAlloc.toFixed(2));
+        remaining -= intAlloc;
+    }
+    
+    // Priority 2: Principal
+    if (remaining > 0 && principalPending > 0) {
+        const prinAlloc = Math.min(remaining, principalPending);
+        allocText.push('Prin: ₹' + prinAlloc.toFixed(2));
+        remaining -= prinAlloc;
+    }
+    
+    // Priority 3: Savings
+    if (remaining > 0 && savingsPending > 0) {
+        const savAlloc = Math.min(remaining, savingsPending);
+        allocText.push('Sav: ₹' + savAlloc.toFixed(2));
+        remaining -= savAlloc;
+    }
+    
+    document.getElementById('alloc_text_' + id).textContent = allocText.join(' | ');
+    document.getElementById('allocation_' + id).style.display = 'block';
+}
+</script>
+
+{% endblock %}

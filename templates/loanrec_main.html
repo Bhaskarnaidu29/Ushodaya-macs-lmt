@@ -1,0 +1,439 @@
+{% extends "base.html" %}
+{% block title %}Loan Recovery{% endblock %}
+
+{% block extra_css %}
+<style>
+  .recovery-table { width:100%; border-collapse:collapse; margin-top:20px; font-size:.88rem; }
+  .recovery-table th { background:#0c2a78; color:white; padding:10px 8px; text-align:left; position:sticky; top:0; white-space:nowrap; }
+  .recovery-table td { padding:7px 8px; border-bottom:1px solid #e5e7eb; vertical-align:middle; }
+  .recovery-table tr:hover { background:#f0f7ff; }
+  .input-sm { width:85px; padding:5px 6px; border:1.5px solid #d1d5db; border-radius:5px; text-align:right; font-size:.85rem; }
+  .input-sm:focus { border-color:#0c2a78; outline:none; }
+  .auto-field  { background:#e8f5e9 !important; border-color:#4caf50 !important; }
+  .manual-field{ background:#fff3e0 !important; border-color:#f59e0b !important; }
+  .addl-field  { background:#ede9fe !important; border-color:#8b5cf6 !important; }
+  .due-small   { font-size:.72rem; color:#6b7280; display:block; margin-top:2px; }
+  .btn-post { background:#10b981; color:white; padding:12px 32px; border:none; border-radius:8px; font-size:.95rem; font-weight:700; cursor:pointer; }
+  .btn-post:hover { background:#059669; }
+  .nav-tabs { border-bottom:2px solid #0c2a78; }
+  .nav-tabs .nav-link { color:#0c2a78; font-weight:600; }
+  .nav-tabs .nav-link.active { color:white; background:#0c2a78; border-radius:6px 6px 0 0; }
+  .summary-bar { background:linear-gradient(135deg,#0c2a78,#1857c9); color:white; border-radius:10px; padding:16px 20px; margin-top:16px; }
+  .sum-item { text-align:center; }
+  .sum-item .lbl { font-size:.72rem; opacity:.8; }
+  .sum-item .val { font-size:1rem; font-weight:800; }
+  
+  /* Advance Payment Mode Selector */
+  .payment-mode-select {
+    width: 100px;
+    padding: 4px 6px;
+    border: 1.5px solid #10b981;
+    border-radius: 5px;
+    font-size: .8rem;
+    font-weight: 600;
+    background: white;
+  }
+  .payment-mode-select.has-advance {
+    background: linear-gradient(135deg, #d1fae5, #a7f3d0);
+    color: #065f46;
+  }
+  .advance-badge {
+    display: inline-block;
+    background: #10b981;
+    color: white;
+    padding: 2px 8px;
+    border-radius: 10px;
+    font-size: .7rem;
+    font-weight: 600;
+    margin-top: 2px;
+  }
+  .advance-mode-row {
+    background: #d1fae5 !important;
+  }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="container-fluid mt-3">
+
+  <!-- Tabs with ALL LINKS -->
+  <ul class="nav nav-tabs mb-4">
+    <li class="nav-item">
+      <a class="nav-link active" href="{{ url_for('loanrec.recovery_posting') }}">
+        <i class="bi bi-wallet2"></i> Regular Recovery
+      </a>
+    </li>
+    <li class="nav-item">
+      <a class="nav-link" href="{{ url_for('loanrec.prepaid_posting') }}">
+        <i class="bi bi-check-circle"></i> Prepaid
+      </a>
+    </li>
+    <li class="nav-item">
+      <a class="nav-link" href="{{ url_for('loanrec.arrears_posting') }}">
+        <i class="bi bi-exclamation-triangle"></i> Arrears
+      </a>
+    </li>
+  </ul>
+
+  <h5 class="fw-bold mb-1"><i class="bi bi-wallet2 me-2"></i>Loan Recovery Posting</h5>
+  <p class="text-muted mb-3">Center-wise Collection — {{ today }}</p>
+
+  <!-- Center Selection -->
+  <div class="card mb-4 shadow-sm">
+    <div class="card-body py-3">
+      <form method="GET">
+        <div class="row align-items-end g-2">
+          <div class="col-md-5">
+            <label class="form-label fw-bold mb-1">Select Center</label>
+            <select class="form-select" name="center_id" onchange="this.form.submit()" required>
+              <option value="">— Select Center —</option>
+              {% for center in centers %}
+              <option value="{{ center[0] }}"
+                {% if selected_center and selected_center == center[0]|string %}selected{% endif %}>
+                {{ center[1] }}{% if center[2] %} ({{ center[2] }}){% endif %}
+              </option>
+              {% endfor %}
+            </select>
+          </div>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  {% if selected_center %}
+  {% if members %}
+  <form method="POST" id="recoveryForm">
+    <!-- Pass center_id so the POST handler knows which center was selected -->
+    <input type="hidden" name="center_id" value="{{ selected_center }}">
+    <div class="card shadow-sm">
+      <div class="card-header bg-primary text-white d-flex justify-content-between align-items-center">
+        <strong><i class="bi bi-people me-1"></i> Pending EMIs — {{ center_info[1] if center_info else '' }}</strong>
+        <span class="badge bg-light text-dark">{{ members|length }} member(s)</span>
+      </div>
+      <div class="card-body pb-2">
+
+        <!-- Toolbar -->
+        <div class="d-flex align-items-center gap-3 mb-3 flex-wrap">
+          <label class="mb-0 d-flex align-items-center gap-2 fw-bold">
+            <input type="checkbox" id="selectAll" onchange="toggleAll()"> Select All
+          </label>
+          <button type="button" class="btn btn-sm btn-info text-white" onclick="autoFillAll()">
+            <i class="bi bi-lightning-fill"></i> Auto-Fill Selected
+          </button>
+          <button type="button" class="btn btn-sm btn-outline-secondary" onclick="clearAll()">
+            <i class="bi bi-x-circle"></i> Clear
+          </button>
+        </div>
+
+        <!-- Table -->
+        <div class="table-responsive" style="max-height:580px;overflow-y:auto;">
+          <table class="recovery-table">
+            <thead>
+              <tr>
+                <th width="40">☑</th>
+                <th>Member</th>
+                <th>EMI#</th>
+                <th>Due Date</th>
+                <th>Payment Mode</th>
+                <th>Principal</th>
+                <th>Interest</th>
+                <th>Savings<br><small style="font-weight:400">(Auto)</small></th>
+                <th>Add. Savings<br><small style="font-weight:400">(Due)</small></th>
+                <th>Extra Savings<br><small style="font-weight:400">(Manual)</small></th>
+                <th>Total</th>
+              </tr>
+            </thead>
+            <tbody>
+              {% for m in members %}
+              {% set p_due   = (m[6] or 0) - (m[9]  or 0) %}
+              {% set i_due   = (m[7] or 0) - (m[10] or 0) %}
+              {% set s_due   = (m[8] or 0) - (m[11] or 0) %}
+              {% set as_due  = (m[12] or 0) - (m[13] or 0) %}
+              {% set advance_bal = advance_balances.get(m[0], {}).get(m[2], 0) if advance_enabled else 0 %}
+              {% set has_advance = advance_bal > 0 %}
+              <tr id="row_{{ m[3] }}">
+                <td>
+                  <input type="checkbox" class="member-check" name="selected_member"
+                         value="{{ m[3] }}" onchange="updateSummary()">
+                </td>
+                <td>
+                  <strong>{{ m[1] }}</strong>
+                  <span class="due-small"><i class="bi bi-person-badge"></i> {{ m[0] }}</span>
+                  <span class="due-small text-primary"><i class="bi bi-tag"></i> {{ m[15] }}</span>
+                </td>
+                <td>
+                  <span class="badge bg-primary">EMI #{{ m[4] }}</span>
+                </td>
+                <td style="white-space:nowrap">
+                  {{ m[5].strftime('%d-%b-%Y') if m[5] else 'N/A' }}
+                </td>
+                <td>
+                  {# Payment Mode Dropdown: Cash or Advance #}
+                  {% if has_advance %}
+                    <select class="payment-mode-select has-advance" 
+                            id="payment_mode_{{ m[3] }}"
+                            name="payment_mode_{{ m[3] }}"
+                            onchange="handlePaymentModeChange({{ m[3] }}, {{ p_due }}, {{ i_due }}, {{ s_due }}, {{ as_due }}, {{ advance_bal }})">
+                      <option value="cash">💵 Cash</option>
+                      <option value="advance">💰 Advance</option>
+                    </select>
+                    <span class="advance-badge">
+                      ₹{{ "{:,.0f}".format(advance_bal) }}
+                    </span>
+                  {% else %}
+                    <select class="payment-mode-select" 
+                            id="payment_mode_{{ m[3] }}"
+                            name="payment_mode_{{ m[3] }}"
+                            disabled>
+                      <option value="cash">💵 Cash</option>
+                    </select>
+                    <input type="hidden" name="payment_mode_{{ m[3] }}" value="cash">
+                    <span class="due-small">Cash Only</span>
+                  {% endif %}
+                </td>
+                <td>
+                  <input type="number" class="input-sm principal"
+                         name="principal_{{ m[3] }}" id="principal_{{ m[3] }}"
+                         data-due="{{ p_due }}" value="0" step="0.01" min="0"
+                         onchange="calcTotal({{ m[3] }})">
+                  <span class="due-small">Due: ₹{{ "%.2f"|format(p_due) }}</span>
+                </td>
+                <td>
+                  <input type="number" class="input-sm interest"
+                         name="interest_{{ m[3] }}" id="interest_{{ m[3] }}"
+                         data-due="{{ i_due }}" value="0" step="0.01" min="0"
+                         onchange="calcTotal({{ m[3] }})">
+                  <span class="due-small">Due: ₹{{ "%.2f"|format(i_due) }}</span>
+                </td>
+                <td>
+                  <input type="number" class="input-sm auto-field savings"
+                         name="savings_{{ m[3] }}" id="savings_{{ m[3] }}"
+                         data-due="{{ s_due }}" value="0" step="0.01" min="0"
+                         onchange="calcTotal({{ m[3] }})">
+                  <span class="due-small">Due: ₹{{ "%.2f"|format(s_due) }}</span>
+                </td>
+                <td>
+                  <input type="number" class="input-sm addl-field addl_due"
+                         name="addl_due_{{ m[3] }}" id="addl_due_{{ m[3] }}"
+                         data-due="{{ as_due }}" value="0" step="0.01" min="0"
+                         onchange="calcTotal({{ m[3] }})">
+                  <span class="due-small">Due: ₹{{ "%.2f"|format(as_due) }}</span>
+                </td>
+                <td>
+                  <input type="number" class="input-sm manual-field extra_addl"
+                         name="extra_addl_{{ m[3] }}" id="extra_addl_{{ m[3] }}"
+                         value="0" step="0.01" min="0"
+                         onchange="calcTotal({{ m[3] }})">
+                  <span class="due-small">Optional</span>
+                </td>
+                <td>
+                  <strong id="total_{{ m[3] }}" style="color:#0c2a78">₹0.00</strong>
+                </td>
+              </tr>
+              {% endfor %}
+            </tbody>
+          </table>
+        </div>
+
+        <!-- Summary Bar -->
+        <div class="summary-bar mt-3">
+          <div class="row g-2 text-center">
+            <div class="col sum-item">
+              <div class="lbl">Selected</div>
+              <div class="val" id="selectedCount">0</div>
+            </div>
+            <div class="col sum-item">
+              <div class="lbl">Principal</div>
+              <div class="val" id="sumPrincipal">₹0</div>
+            </div>
+            <div class="col sum-item">
+              <div class="lbl">Interest</div>
+              <div class="val" id="sumInterest">₹0</div>
+            </div>
+            <div class="col sum-item">
+              <div class="lbl">Savings</div>
+              <div class="val" id="sumSavings">₹0</div>
+            </div>
+            <div class="col sum-item">
+              <div class="lbl">Addl. Sav.</div>
+              <div class="val" id="sumAddl">₹0</div>
+            </div>
+            <div class="col sum-item" style="border-left:2px solid rgba(255,255,255,.3)">
+              <div class="lbl">GRAND TOTAL</div>
+              <div class="val fs-5" id="grandTotal">₹0</div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Submit -->
+        <div class="text-center mt-4 mb-2">
+          <button type="submit" class="btn-post">
+            <i class="bi bi-check-circle-fill me-1"></i> POST RECOVERY
+          </button>
+        </div>
+
+      </div>
+    </div>
+  </form>
+
+  {% else %}
+  <div class="alert alert-info">
+    <i class="bi bi-info-circle me-1"></i> No pending EMIs for this center today.
+  </div>
+  {% endif %}
+  {% endif %}
+
+</div>
+
+<script>
+function handlePaymentModeChange(id, pDue, iDue, sDue, asDue, advanceBal) {
+  const mode = document.getElementById('payment_mode_' + id).value;
+  const row = document.getElementById('row_' + id);
+  
+  const pEl = document.getElementById('principal_' + id);
+  const iEl = document.getElementById('interest_' + id);
+  const sEl = document.getElementById('savings_' + id);
+  const aEl = document.getElementById('addl_due_' + id);
+  const exEl = document.getElementById('extra_addl_' + id);
+  
+  if (mode === 'advance') {
+    // AUTO-FILL amounts to DUE amounts when advance selected
+    if (pEl) pEl.value = pDue.toFixed(2);
+    if (iEl) iEl.value = iDue.toFixed(2);
+    if (sEl) sEl.value = sDue.toFixed(2);
+    if (aEl) aEl.value = asDue.toFixed(2);
+    if (exEl) exEl.value = '0';
+    
+    // Green background for advance mode
+    [pEl, iEl, sEl, aEl].forEach(el => {
+      if (el) {
+        el.style.background = '#d1fae5';
+        el.style.borderColor = '#10b981';
+        el.readOnly = true; // Make read-only when using advance
+      }
+    });
+    
+    // Highlight row
+    row.classList.add('advance-mode-row');
+  } else {
+    // Reset to 0 for cash mode - user will manually fill
+    if (pEl) { pEl.value = '0'; pEl.readOnly = false; }
+    if (iEl) { iEl.value = '0'; iEl.readOnly = false; }
+    if (sEl) { sEl.value = '0'; sEl.readOnly = false; }
+    if (aEl) { aEl.value = '0'; aEl.readOnly = false; }
+    
+    // Remove styling
+    [pEl, iEl, sEl, aEl].forEach(el => {
+      if (el) {
+        el.style.background = '';
+        el.style.borderColor = '';
+      }
+    });
+    
+    // Remove row highlight
+    row.classList.remove('advance-mode-row');
+  }
+  
+  calcTotal(id);
+}
+
+function toggleAll() {
+  const checked = document.getElementById('selectAll').checked;
+  document.querySelectorAll('.member-check').forEach(cb => cb.checked = checked);
+  updateSummary();
+}
+
+function autoFillAll() {
+  document.querySelectorAll('.member-check:checked').forEach(cb => {
+    const id = cb.value;
+    const modeEl = document.getElementById('payment_mode_' + id);
+    const mode = modeEl ? modeEl.value : 'cash';
+    
+    if (mode === 'cash') {
+      // Auto-fill DUE amounts for cash mode
+      const pEl = document.getElementById('principal_' + id);
+      const iEl = document.getElementById('interest_'  + id);
+      const sEl = document.getElementById('savings_'   + id);
+      const aEl = document.getElementById('addl_due_'  + id);
+      if (pEl) pEl.value = parseFloat(pEl.dataset.due || 0).toFixed(2);
+      if (iEl) iEl.value = parseFloat(iEl.dataset.due || 0).toFixed(2);
+      if (sEl) sEl.value = parseFloat(sEl.dataset.due || 0).toFixed(2);
+      if (aEl) aEl.value = parseFloat(aEl.dataset.due || 0).toFixed(2);
+    }
+    // For advance mode, amounts are already filled
+    
+    calcTotal(id);
+  });
+}
+
+function clearAll() {
+  document.querySelectorAll('.member-check').forEach(cb => cb.checked = false);
+  document.querySelectorAll('.input-sm').forEach(inp => { 
+    inp.value = 0;
+    inp.readOnly = false;
+    inp.style.background = '';
+    inp.style.borderColor = '';
+  });
+  document.querySelectorAll('[id^="total_"]').forEach(el => el.textContent = '₹0.00');
+  document.querySelectorAll('[id^="row_"]').forEach(row => row.classList.remove('advance-mode-row'));
+  document.getElementById('selectAll').checked = false;
+  updateSummary();
+}
+
+function calcTotal(id) {
+  const p  = parseFloat(document.getElementById('principal_' + id)?.value || 0);
+  const i  = parseFloat(document.getElementById('interest_'  + id)?.value || 0);
+  const s  = parseFloat(document.getElementById('savings_'   + id)?.value || 0);
+  const a  = parseFloat(document.getElementById('addl_due_'  + id)?.value || 0);
+  const ex = parseFloat(document.getElementById('extra_addl_'+ id)?.value || 0);
+  const total = p + i + s + a + ex;
+  const el = document.getElementById('total_' + id);
+  if (el) el.textContent = '₹' + total.toFixed(2);
+  updateSummary();
+}
+
+function updateSummary() {
+  let count=0, sumP=0, sumI=0, sumS=0, sumA=0;
+  document.querySelectorAll('.member-check:checked').forEach(cb => {
+    const id = cb.value;
+    count++;
+    sumP += parseFloat(document.getElementById('principal_' + id)?.value || 0);
+    sumI += parseFloat(document.getElementById('interest_'  + id)?.value || 0);
+    sumS += parseFloat(document.getElementById('savings_'   + id)?.value || 0);
+    sumA += parseFloat(document.getElementById('addl_due_'  + id)?.value || 0)
+          + parseFloat(document.getElementById('extra_addl_'+ id)?.value || 0);
+  });
+  const tot = sumP + sumI + sumS + sumA;
+  document.getElementById('selectedCount').textContent = count;
+  document.getElementById('sumPrincipal').textContent  = '₹' + sumP.toFixed(2);
+  document.getElementById('sumInterest').textContent   = '₹' + sumI.toFixed(2);
+  document.getElementById('sumSavings').textContent    = '₹' + sumS.toFixed(2);
+  document.getElementById('sumAddl').textContent       = '₹' + sumA.toFixed(2);
+  document.getElementById('grandTotal').textContent    = '₹' + tot.toFixed(2);
+}
+
+document.getElementById('recoveryForm').addEventListener('submit', function(e) {
+  const checked = document.querySelectorAll('.member-check:checked').length;
+  if (checked === 0) {
+    e.preventDefault();
+    alert('Please select at least one member.');
+    return false;
+  }
+  const total = document.getElementById('grandTotal').textContent;
+  if (!confirm(`Post recovery for ${checked} member(s)?\nTotal: ${total}`)) {
+    e.preventDefault();
+    return false;
+  }
+  // Show a simple disabled state on the button to prevent double-submit
+  const btn = this.querySelector('.btn-post');
+  if (btn) { btn.disabled = true; btn.textContent = 'Posting…'; }
+});
+
+window.addEventListener('load', function() {
+  const btn = document.querySelector('.btn-post');
+  if (btn) btn.disabled = false;
+});
+
+</script>
+
+{% endblock %}

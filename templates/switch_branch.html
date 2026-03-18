@@ -1,0 +1,178 @@
+{% extends "base.html" %}
+{% block title %}Switch Branch{% endblock %}
+
+{% block extra_css %}
+<style>
+    .switch-container {
+        max-width: 900px;
+        margin: 40px auto;
+    }
+    .current-branch {
+        background: linear-gradient(135deg, #11998e 0%, #38ef7d 100%);
+        color: white;
+        padding: 25px;
+        border-radius: 12px;
+        margin-bottom: 30px;
+    }
+    .branch-list {
+        display: grid;
+        grid-template-columns: repeat(auto-fill, minmax(250px, 1fr));
+        gap: 15px;
+    }
+    .branch-option {
+        background: white;
+        border: 2px solid #e0e0e0;
+        border-radius: 10px;
+        padding: 20px;
+        cursor: pointer;
+        transition: all 0.3s;
+    }
+    .branch-option:hover {
+        border-color: #667eea;
+        transform: translateY(-3px);
+        box-shadow: 0 5px 20px rgba(102, 126, 234, 0.3);
+    }
+    .branch-option.current {
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        color: white;
+        border-color: #667eea;
+    }
+    .branch-option.selected {
+        border-color: #11998e;
+        border-width: 3px;
+        background: #f0fff4;
+    }
+    .branch-option input[type="radio"] {
+        display: none;
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="switch-container">
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <div>
+            <h2><i class="bi bi-arrow-left-right"></i> Switch Branch</h2>
+            <p class="text-muted mb-0">Change your working branch</p>
+        </div>
+        <a href="{{ url_for('home') }}" class="btn btn-secondary">
+            <i class="bi bi-x-circle"></i> Cancel
+        </a>
+    </div>
+
+    <!-- Current Branch -->
+    <div class="current-branch">
+        <div class="row align-items-center">
+            <div class="col-md-8">
+                <h5><i class="bi bi-geo-alt-fill"></i> Currently Working On:</h5>
+                <h3 class="mb-0">{{ session.get('branch_name', 'No Branch Selected') }}</h3>
+            </div>
+            <div class="col-md-4 text-end">
+                <i class="bi bi-building" style="font-size: 3rem; opacity: 0.5;"></i>
+            </div>
+        </div>
+    </div>
+
+    <!-- Branch Selection -->
+    <div class="card">
+        <div class="card-header bg-primary text-white">
+            <h5 class="mb-0"><i class="bi bi-list"></i> Available Branches</h5>
+        </div>
+        <div class="card-body">
+            <form method="POST" id="switchForm">
+                <div class="branch-list">
+                    {% for branch in branches %}
+                    <div class="branch-option {% if current_branch == branch[0] %}current{% endif %}" 
+                         onclick="selectBranch({{ branch[0] }})">
+                        <input type="radio" name="branch_id" value="{{ branch[0] }}" id="branch_{{ branch[0] }}"
+                               {% if current_branch == branch[0] %}checked{% endif %}>
+                        <div>
+                            <h6 class="mb-1">
+                                <strong>{{ branch[1] }}</strong>
+                                {% if current_branch == branch[0] %}
+                                <span class="badge bg-light text-dark float-end">Current</span>
+                                {% endif %}
+                            </h6>
+                            <div class="{% if current_branch == branch[0] %}text-white{% else %}text-muted{% endif %}">
+                                {{ branch[2] }}
+                            </div>
+                            {% if branch[3] %}
+                            <small class="{% if current_branch == branch[0] %}text-white-50{% else %}text-muted{% endif %}">
+                                <i class="bi bi-geo-alt"></i> {{ branch[3][:50] }}{% if branch[3]|length > 50 %}...{% endif %}
+                            </small>
+                            {% endif %}
+                        </div>
+                    </div>
+                    {% endfor %}
+                </div>
+
+                {% if branches|length == 0 %}
+                <div class="alert alert-warning">
+                    <i class="bi bi-exclamation-triangle"></i> No branches available.
+                </div>
+                {% else %}
+                <div class="text-center mt-4">
+                    <button type="submit" class="btn btn-success btn-lg px-5" id="submitBtn">
+                        <i class="bi bi-check-circle"></i> Switch Branch
+                    </button>
+                </div>
+                {% endif %}
+            </form>
+        </div>
+    </div>
+
+    <!-- Branch Stats (Optional) -->
+    <div class="row mt-4">
+        <div class="col-md-12">
+            <div class="card">
+                <div class="card-body">
+                    <h6><i class="bi bi-info-circle"></i> Information:</h6>
+                    <ul class="mb-0">
+                        <li>Switching branches will change your working context</li>
+                        <li>All data shown will be from the selected branch</li>
+                        <li>Your session will continue with the new branch</li>
+                    </ul>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+function selectBranch(branchId) {
+    // Skip if it's the current branch
+    const currentBranch = {{ current_branch|default(0) }};
+    if (branchId === currentBranch) {
+        alert('This is already your current branch.');
+        return;
+    }
+    
+    // Remove selected class from all
+    document.querySelectorAll('.branch-option').forEach(item => {
+        item.classList.remove('selected');
+    });
+    
+    // Add selected class to clicked (if not current)
+    if (branchId !== currentBranch) {
+        event.currentTarget.classList.add('selected');
+    }
+    
+    // Check the radio button
+    document.getElementById('branch_' + branchId).checked = true;
+}
+
+// Prevent form submit if selecting current branch
+document.getElementById('switchForm').addEventListener('submit', function(e) {
+    const selectedBranch = parseInt(document.querySelector('input[name="branch_id"]:checked').value);
+    const currentBranch = {{ current_branch|default(0) }};
+    
+    if (selectedBranch === currentBranch) {
+        e.preventDefault();
+        alert('You are already working on this branch.');
+        return false;
+    }
+    
+    return confirm('Switch to the selected branch?');
+});
+</script>
+{% endblock %}

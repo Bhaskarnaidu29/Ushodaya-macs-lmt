@@ -1,0 +1,151 @@
+{% extends "base.html" %}
+{% block content %}
+
+<div class="container mt-4">
+<h2 class="mb-4">Reports Center</h2>
+
+<!-- MEMBER REPORTS -->
+<div class="card mb-4">
+    <div class="card-header bg-primary text-white">
+        <h5 class="mb-0">📋 Member Reports</h5>
+    </div>
+    <div class="card-body">
+        <div class="row">
+            <div class="col-md-4 mb-2">
+                <a href="/reports/member-joining" class="btn btn-outline-primary btn-block w-100">Member Joining</a>
+            </div>
+            <div class="col-md-4 mb-2">
+                <a href="/reports/member-withdraw" class="btn btn-outline-primary btn-block w-100">Member Withdraw</a>
+            </div>
+            <div class="col-md-4 mb-2">
+                <a href="/reports/member-details" class="btn btn-outline-primary btn-block w-100">Member Details</a>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- LOAN REPORTS -->
+<div class="card mb-4">
+    <div class="card-header bg-success text-white">
+        <h5 class="mb-0">💰 Loan Reports</h5>
+    </div>
+    <div class="card-body">
+        <div class="row">
+            <div class="col-md-4 mb-2">
+                <a href="/reports/loan-ledger" class="btn btn-outline-success btn-block w-100">Loan Ledger</a>
+            </div>
+            <div class="col-md-4 mb-2">
+                <a href="/reports/member-loan-ledger" class="btn btn-outline-success btn-block w-100">Member Loan Ledger</a>
+            </div>
+            <div class="col-md-4 mb-2">
+                <a href="/reports/arrear-details" class="btn btn-outline-success btn-block w-100">Arrear Details</a>
+            </div>
+            <div class="col-md-4 mb-2">
+                <a href="/reports/member-outstanding" class="btn btn-outline-success btn-block w-100">Member Outstanding</a>
+            </div>
+            <div class="col-md-4 mb-2">
+                <a href="/reports/center-outstanding" class="btn btn-outline-success btn-block w-100">Center Outstanding</a>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- COLLECTION REPORTS -->
+<div class="card mb-4">
+    <div class="card-header bg-info text-white">
+        <h5 class="mb-0">📊 Collection Reports</h5>
+    </div>
+    <div class="card-body">
+        <div class="row">
+            <div class="col-md-4 mb-2">
+                <a href="/reports/daily-collection" class="btn btn-outline-info btn-block w-100">Daily Collection</a>
+            </div>
+            <div class="col-md-4 mb-2">
+                <a href="/reports/weekly-collection" class="btn btn-outline-info btn-block w-100">Weekly Collection</a>
+            </div>
+            <div class="col-md-4 mb-2">
+                <a href="/reports/monthly-collection" class="btn btn-outline-info btn-block w-100">Monthly Collection</a>
+            </div>
+            <div class="col-md-4 mb-2">
+                <a href="/reports/arrears-collected" class="btn btn-outline-info btn-block w-100">Arrears Collected</a>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- ADVANCE REPORTS -->
+<div class="card mb-4">
+    <div class="card-header bg-warning text-white">
+        <h5 class="mb-0">⚡ Advance Reports</h5>
+    </div>
+    <div class="card-body">
+        <div class="row">
+            <div class="col-md-4 mb-2">
+                <a href="/reports/advance-collected" class="btn btn-outline-warning btn-block w-100">Advance Collected</a>
+            </div>
+            <div class="col-md-4 mb-2">
+                <a href="/reports/advance-withdraw" class="btn btn-outline-warning btn-block w-100">Advance Withdraw</a>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- DEPOSIT REPORTS -->
+<div class="card mb-4">
+    <div class="card-header bg-secondary text-white">
+        <h5 class="mb-0">🏦 Deposit Reports</h5>
+    </div>
+    <div class="card-body">
+        <div class="row">
+            <div class="col-md-4 mb-2">
+                <a href="/reports/security-deposit-collected" class="btn btn-outline-secondary btn-block w-100">Security Deposit Collected</a>
+            </div>
+            <div class="col-md-4 mb-2">
+                <a href="/reports/security-deposit-withdraw" class="btn btn-outline-secondary btn-block w-100">Security Deposit Withdraw</a>
+            </div>
+            <div class="col-md-4 mb-2">
+                <a href="/reports/sd-withdraw-receipt" class="btn btn-outline-secondary btn-block w-100">SD Withdraw Receipt</a>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- FINANCIAL REPORTS -->
+<div class="card mb-4">
+    <div class="card-header bg-danger text-white">
+        <h5 class="mb-0">📈 Financial Reports</h5>
+    </div>
+    <div class="card-body">
+        <div class="row">
+            <div class="col-md-4 mb-2">
+                <a href="/reports/center-summary" class="btn btn-outline-danger btn-block w-100">Center Summary</a>
+            </div>
+            <div class="col-md-4 mb-2">
+                <a href="/reports/member-summary" class="btn btn-outline-danger btn-block w-100">Member Summary</a>
+            </div>
+            <div class="col-md-4 mb-2">
+                <a href="/reports/glance-report" class="btn btn-outline-danger btn-block w-100">At a Glance</a>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- PASSBOOKS -->
+<div class="card mb-4">
+    <div class="card-header bg-dark text-white">
+        <h5 class="mb-0">📖 Passbooks</h5>
+    </div>
+    <div class="card-body">
+        <div class="row">
+            <div class="col-md-4 mb-2">
+                <a href="/reports/loan-passbook" class="btn btn-outline-dark btn-block w-100">Loan Passbook</a>
+            </div>
+            <div class="col-md-4 mb-2">
+                <a href="/reports/savings-passbook" class="btn btn-outline-dark btn-block w-100">Savings Passbook</a>
+            </div>
+        </div>
+    </div>
+</div>
+
+</div>
+{% endblock %}

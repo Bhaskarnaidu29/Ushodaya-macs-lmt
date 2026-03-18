@@ -1,0 +1,537 @@
+{% extends "base.html" %}
+
+{% block title %}New Loan Application - Ushodaya MACS Ltd{% endblock %}
+{% block page_title %}New Loan Application{% endblock %}
+
+{% block extra_css %}
+<style>
+    .form-header {
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        color: white;
+        border-radius: 12px;
+        padding: 25px;
+        margin-bottom: 30px;
+    }
+
+    .form-card {
+        background: white;
+        border-radius: 12px;
+        padding: 30px;
+        margin-bottom: 25px;
+        box-shadow: 0 2px 10px rgba(0,0,0,0.05);
+    }
+
+    .section-title {
+        font-size: 1.2rem;
+        font-weight: 700;
+        color: #2c3e50;
+        margin-bottom: 20px;
+        padding-bottom: 10px;
+        border-bottom: 3px solid #667eea;
+        display: flex;
+        align-items: center;
+        gap: 10px;
+    }
+
+    .form-label {
+        font-weight: 700;
+        color: #2c3e50;
+        margin-bottom: 8px;
+    }
+
+    .form-control, .form-select {
+        border: 2px solid #e9ecef;
+        border-radius: 8px;
+        padding: 10px 15px;
+    }
+
+    .form-control:focus, .form-select:focus {
+        border-color: #667eea;
+        box-shadow: 0 0 0 0.2rem rgba(102, 126, 234, 0.1);
+    }
+
+    .product-details {
+        background: linear-gradient(135deg, #f8f9fa, #e9ecef);
+        border: 2px solid #667eea;
+        border-radius: 12px;
+        padding: 20px;
+        margin: 20px 0;
+        display: none;
+    }
+
+    .product-details.show {
+        display: block;
+    }
+
+    .detail-row {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 15px;
+        margin-bottom: 10px;
+    }
+
+    .detail-item {
+        background: white;
+        padding: 12px;
+        border-radius: 8px;
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+    }
+
+    .detail-label {
+        font-weight: 600;
+        color: #6c757d;
+    }
+
+    .detail-value {
+        font-weight: 700;
+        color: #667eea;
+        font-size: 1.1rem;
+    }
+
+    .charges-breakdown {
+        background: #fff3cd;
+        border: 2px solid #ffc107;
+        border-radius: 12px;
+        padding: 20px;
+        margin: 20px 0;
+    }
+
+    .charge-item {
+        display: flex;
+        justify-content: space-between;
+        padding: 10px 0;
+        border-bottom: 1px solid #e9ecef;
+    }
+
+    .charge-item:last-child {
+        border-bottom: none;
+        font-size: 1.2rem;
+        font-weight: 700;
+        padding-top: 15px;
+        margin-top: 10px;
+        border-top: 3px solid #ffc107;
+    }
+
+    .net-disbursement {
+        background: linear-gradient(135deg, #28a745, #20c997);
+        color: white;
+        padding: 20px;
+        border-radius: 12px;
+        text-align: center;
+        margin: 20px 0;
+    }
+
+    .net-disbursement .amount {
+        font-size: 2.5rem;
+        font-weight: 700;
+        margin: 10px 0;
+    }
+
+    .btn-submit {
+        background: linear-gradient(135deg, #667eea, #764ba2);
+        color: white;
+        padding: 12px 30px;
+        border-radius: 8px;
+        font-weight: 700;
+        border: none;
+    }
+
+    .btn-cancel {
+        background: #6c757d;
+        color: white;
+        padding: 12px 30px;
+        border-radius: 8px;
+        font-weight: 700;
+        text-decoration: none;
+    }
+
+    .required::after {
+        content: " *";
+        color: #dc3545;
+    }
+
+    .member-info {
+        background: #e3f2fd;
+        border-left: 4px solid #2196f3;
+        padding: 15px;
+        border-radius: 8px;
+        margin: 15px 0;
+        display: none;
+    }
+
+    .member-info.show {
+        display: block;
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="container-fluid">
+    <div class="row justify-content-center">
+        <div class="col-lg-10">
+            <div class="form-header">
+                <h3><i class="bi bi-file-earmark-plus"></i> New Loan Application</h3>
+                <p class="mb-0" style="opacity: 0.9;">Submit a new loan application for member</p>
+            </div>
+
+            <form method="POST" id="loanForm">
+                <!-- Member Selection -->
+                <div class="form-card">
+                    <div class="section-title">
+                        <i class="bi bi-person-check"></i> Member Selection
+                    </div>
+                    
+                    <div class="row">
+                        <div class="col-md-12 mb-3">
+                            <label class="form-label required">Select Member</label>
+                            <select class="form-select" name="member_code" id="memberSelect" required onchange="loadMemberDetails()">
+                                <option value="">Choose a member...</option>
+                                {% for member in members %}
+                                <option value="{{ member.member_code }}" 
+                                        data-name="{{ member.full_name }}"
+                                        data-phone="{{ member.phone1 }}"
+                                        data-center="{{ member.center_name }}"
+                                        data-center-no="{{ member.center_no }}"
+                                        data-nominee="{{ member.nominee_name }}"
+                                        data-nominee-relation="{{ member.nominee_relation }}">
+                                    {{ member.member_code }} - {{ member.full_name }} ({{ member.center_name }})
+                                </option>
+                                {% endfor %}
+                            </select>
+                        </div>
+                    </div>
+
+                    <!-- Member Info Display -->
+                    <div class="member-info" id="memberInfo">
+                        <div class="row">
+                            <div class="col-md-6">
+                                <strong>Member:</strong> <span id="displayName"></span><br>
+                                <strong>Phone:</strong> <span id="displayPhone"></span>
+                            </div>
+                            <div class="col-md-6">
+                                <strong>Center:</strong> <span id="displayCenter"></span><br>
+                                <strong>Nominee:</strong> <span id="displayNominee"></span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Loan Product Selection -->
+                <div class="form-card">
+                    <div class="section-title">
+                        <i class="bi bi-box"></i> Loan Product Selection
+                    </div>
+                    
+                    <div class="row">
+                        <div class="col-md-12 mb-3">
+                            <label class="form-label required">Select Loan Product</label>
+                            <select class="form-select" name="loan_product_id" id="productSelect" required onchange="loadProductDetails()">
+                                <option value="">Choose a loan product...</option>
+                                {% for product in products %}
+                                <option value="{{ product.ProductID }}"
+                                        data-name="{{ product.ProductName }}"
+                                        data-code="{{ product.ProductCode }}"
+                                        data-min="{{ product.MinAmount }}"
+                                        data-max="{{ product.MaxAmount }}"
+                                        data-rate="{{ product.InterestRate }}"
+                                        data-min-tenure="{{ product.MinTenure }}"
+                                        data-max-tenure="{{ product.MaxTenure }}"
+                                        data-fixed-tenure="{{ product.FixedTenure }}"
+                                        data-processing-fee="{{ product.ProcessingFee }}"
+                                        data-savings="{{ product.Savings }}"
+                                        data-additional-savings="{{ product.AdditionalSavings }}"
+                                        data-member-insurance="{{ product.MemberInsurance }}"
+                                        data-nominee-insurance="{{ product.NomineeInsurance }}"
+                                        data-security-deposit="{{ product.SecurityDeposit }}">
+                                    {{ product.ProductName }} ({{ product.ProductCode }})
+                                </option>
+                                {% endfor %}
+                            </select>
+                        </div>
+                    </div>
+
+                    <!-- Product Details Display -->
+                    <div class="product-details" id="productDetails">
+                        <h5 style="color: #667eea; margin-bottom: 15px;">
+                            <i class="bi bi-info-circle"></i> Product Details
+                        </h5>
+                        <div class="detail-row">
+                            <div class="detail-item">
+                                <span class="detail-label">Min Amount:</span>
+                                <span class="detail-value">₹<span id="minAmount">0</span></span>
+                            </div>
+                            <div class="detail-item">
+                                <span class="detail-label">Max Amount:</span>
+                                <span class="detail-value">₹<span id="maxAmount">0</span></span>
+                            </div>
+                        </div>
+                        <div class="detail-row">
+                            <div class="detail-item">
+                                <span class="detail-label">Savings:</span>
+                                <span class="detail-value">₹<span id="productSavings">0</span></span>
+                            </div>
+                            <div class="detail-item">
+                                <span class="detail-label">Tenure Range:</span>
+                                <span class="detail-value"><span id="tenureRange">0</span> months</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Loan Amount & Details -->
+                <div class="form-card">
+                    <div class="section-title">
+                        <i class="bi bi-currency-rupee"></i> Loan Amount & Details
+                    </div>
+                    
+                    <div class="row">
+                        <div class="col-md-6 mb-3">
+                            <label class="form-label required">Loan Amount Requested</label>
+                            <input type="number" class="form-control" name="loan_amount_requested" 
+                                   id="loanAmount" required min="1000" step="100" 
+                                   oninput="calculateCharges()">
+                            <small class="text-muted" id="amountHint">Enter amount between min and max</small>
+                        </div>
+
+                        <div class="col-md-6 mb-3">
+                            <label class="form-label required">Loan Purpose</label>
+                            <select class="form-select" name="loan_purpose_id" required>
+                                <option value="">Select purpose...</option>
+                                {% for purpose in purposes %}
+                                <option value="{{ purpose.LoanPurposeID }}">{{ purpose.PurposeName }}</option>
+                                {% endfor %}
+                            </select>
+                        </div>
+                    </div>
+
+                    <div class="row">
+                        <div class="col-md-6 mb-3">
+                            <label class="form-label required">Tenure (Months)</label>
+                            <input type="number" class="form-control" name="tenure" 
+                                   id="tenure" required min="1">
+                            <small class="text-muted" id="tenureHint">Enter tenure in months</small>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Charges Breakdown
+                <div class="charges-breakdown" id="chargesSection" style="display: none;">
+                    <h5 style="color: #856404; margin-bottom: 15px;">
+                        <i class="bi bi-calculator"></i> Charges Breakdown
+                    </h5>
+                    
+                    <div class="charge-item">
+                        <span>Processing Fee:</span>
+                        <span>₹<span id="processingFee">0.00</span></span>
+                    </div>
+                    <div class="charge-item">
+                        <span>Savings:</span>
+                        <span>₹<span id="savings">0.00</span></span>
+                    </div>
+                    <div class="charge-item">
+                        <span>Additional Savings:</span>
+                        <span>₹<span id="additionalSavings">0.00</span></span>
+                    </div>
+                    <div class="charge-item">
+                        <span>Member Insurance:</span>
+                        <span>₹<span id="memberInsurance">0.00</span></span>
+                    </div>
+                    <div class="charge-item">
+                        <span>Nominee Insurance:</span>
+                        <span>₹<span id="nomineeInsurance">0.00</span></span>
+                    </div>
+                    <div class="charge-item">
+                        <span>Security Deposit:</span>
+                        <span>₹<span id="securityDeposit">0.00</span></span>
+                    </div>
+                    <div class="charge-item">
+                        <span>Total Deductions:</span>
+                        <span>₹<span id="totalDeductions">0.00</span></span>
+                    </div>
+                </div> -->
+
+                <!-- Net Disbursement -->
+                <div class="net-disbursement" id="netSection" style="display: none;">
+                    <div style="font-size: 1.2rem; opacity: 0.9;">Net Disbursement Amount</div>
+                    <div class="amount">₹<span id="netDisbursement">0.00</span></div>
+                    <div style="opacity: 0.8; font-size: 0.9rem;">
+                        This is the amount member will receive after all deductions
+                    </div>
+                </div>
+
+                <!-- Action Buttons -->
+                <div class="form-card">
+                    <div class="d-flex gap-3">
+                        <button type="submit" class="btn-submit">
+                            <i class="bi bi-check-circle"></i> Submit Application
+                        </button>
+                        <a href="{{ url_for('loanapplication.index') }}" class="btn-cancel">
+                            <i class="bi bi-x-circle"></i> Cancel
+                        </a>
+                    </div>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+    // Store product charges globally
+    let productCharges = {};
+    
+    // Load member details when selected
+    function loadMemberDetails() {
+        const select = document.getElementById('memberSelect');
+        const option = select.options[select.selectedIndex];
+        
+        if (option.value) {
+            document.getElementById('displayName').textContent = option.dataset.name;
+            document.getElementById('displayPhone').textContent = option.dataset.phone || 'N/A';
+            document.getElementById('displayCenter').textContent = 
+                option.dataset.center + ' (' + option.dataset.centerNo + ')';
+            document.getElementById('displayNominee').textContent = 
+                (option.dataset.nominee || 'N/A') + 
+                (option.dataset.nomineeRelation ? ' (' + option.dataset.nomineeRelation + ')' : '');
+            
+            document.getElementById('memberInfo').classList.add('show');
+        } else {
+            document.getElementById('memberInfo').classList.remove('show');
+        }
+    }
+    
+    // Load product details when selected
+    function loadProductDetails() {
+        const select = document.getElementById('productSelect');
+        const option = select.options[select.selectedIndex];
+        
+        if (option.value) {
+            // Update product details display
+            document.getElementById('minAmount').textContent = 
+                parseFloat(option.dataset.min || 0).toLocaleString('en-IN');
+            document.getElementById('maxAmount').textContent = 
+                parseFloat(option.dataset.max || 0).toLocaleString('en-IN');
+           document.getElementById('productSavings').textContent =
+              parseFloat(option.dataset.savings || 0).toLocaleString('en-IN');
+            
+            const minTenure = option.dataset.minTenure || 0;
+            const maxTenure = option.dataset.maxTenure || 0;
+            const fixedTenure = option.dataset.fixedTenure === '1';
+            
+            if (fixedTenure) {
+                document.getElementById('tenureRange').textContent = maxTenure + ' (Fixed)';
+                document.getElementById('tenure').value = maxTenure;
+                document.getElementById('tenure').readOnly = true;
+                document.getElementById('tenure').style.background = '#f8f9fa';
+                document.getElementById('tenureHint').textContent = 'Fixed tenure for this product';
+            } else {
+                document.getElementById('tenureRange').textContent = minTenure + ' - ' + maxTenure;
+                document.getElementById('tenure').readOnly = false;
+                document.getElementById('tenure').style.background = 'white';
+                document.getElementById('tenure').min = minTenure;
+                document.getElementById('tenure').max = maxTenure;
+                document.getElementById('tenureHint').textContent = 
+                    'Enter tenure between ' + minTenure + ' and ' + maxTenure + ' months';
+            }
+            
+            // Update amount input constraints
+            document.getElementById('loanAmount').min = option.dataset.min || 1000;
+            document.getElementById('loanAmount').max = option.dataset.max || 1000000;
+            document.getElementById('amountHint').textContent = 
+                'Enter amount between ₹' + 
+                parseFloat(option.dataset.min || 0).toLocaleString('en-IN') + 
+                ' and ₹' + 
+                parseFloat(option.dataset.max || 0).toLocaleString('en-IN');
+            
+            // Store charges for calculation
+            productCharges = {
+                processingFee: parseFloat(option.dataset.processingFee || 0),
+                savings: parseFloat(option.dataset.savings || 0),
+                additionalSavings: parseFloat(option.dataset.additionalSavings || 0),
+                memberInsurance: parseFloat(option.dataset.memberInsurance || 0),
+                nomineeInsurance: parseFloat(option.dataset.nomineeInsurance || 0),
+                securityDeposit: parseFloat(option.dataset.securityDeposit || 0)
+            };
+            
+            document.getElementById('productDetails').classList.add('show');
+            
+            // Calculate charges if amount is already entered
+            calculateCharges();
+        } else {
+            document.getElementById('productDetails').classList.remove('show');
+            document.getElementById('chargesSection').style.display = 'none';
+            document.getElementById('netSection').style.display = 'none';
+        }
+    }
+    
+    // Calculate charges and net disbursement
+    function calculateCharges() {
+        const loanAmount = parseFloat(document.getElementById('loanAmount').value) || 0;
+        
+        if (loanAmount > 0 && Object.keys(productCharges).length > 0) {
+            // Update charge displays
+            document.getElementById('processingFee').textContent = 
+                productCharges.processingFee.toFixed(2);
+            document.getElementById('savings').textContent = 
+                productCharges.savings.toFixed(2);
+            document.getElementById('additionalSavings').textContent = 
+                productCharges.additionalSavings.toFixed(2);
+            document.getElementById('memberInsurance').textContent = 
+                productCharges.memberInsurance.toFixed(2);
+            document.getElementById('nomineeInsurance').textContent = 
+                productCharges.nomineeInsurance.toFixed(2);
+            document.getElementById('securityDeposit').textContent = 
+                productCharges.securityDeposit.toFixed(2);
+            
+            // Calculate totals
+            const totalDeductions = 
+                productCharges.processingFee +
+                productCharges.savings +
+                productCharges.additionalSavings +
+                productCharges.memberInsurance +
+                productCharges.nomineeInsurance +
+                productCharges.securityDeposit;
+            
+            const netDisbursement = loanAmount - totalDeductions;
+            
+            document.getElementById('totalDeductions').textContent = totalDeductions.toFixed(2);
+            document.getElementById('netDisbursement').textContent = 
+                netDisbursement.toLocaleString('en-IN', {minimumFractionDigits: 2, maximumFractionDigits: 2});
+            
+            // Show sections
+            document.getElementById('chargesSection').style.display = 'block';
+            document.getElementById('netSection').style.display = 'block';
+        } else {
+            document.getElementById('chargesSection').style.display = 'none';
+            document.getElementById('netSection').style.display = 'none';
+        }
+    }
+    
+    // Form validation
+    document.getElementById('loanForm').addEventListener('submit', function(e) {
+        const loanAmount = parseFloat(document.getElementById('loanAmount').value);
+        const minAmount = parseFloat(document.getElementById('loanAmount').min);
+        const maxAmount = parseFloat(document.getElementById('loanAmount').max);
+        
+        if (loanAmount < minAmount || loanAmount > maxAmount) {
+            e.preventDefault();
+            alert('Loan amount must be between ₹' + minAmount.toLocaleString('en-IN') + 
+                  ' and ₹' + maxAmount.toLocaleString('en-IN'));
+            return false;
+        }
+        
+        const tenure = parseInt(document.getElementById('tenure').value);
+        const minTenure = parseInt(document.getElementById('tenure').min);
+        const maxTenure = parseInt(document.getElementById('tenure').max);
+        
+        if (tenure < minTenure || tenure > maxTenure) {
+            e.preventDefault();
+            alert('Tenure must be between ' + minTenure + ' and ' + maxTenure + ' months');
+            return false;
+        }
+    });
+</script>
+{% endblock %}

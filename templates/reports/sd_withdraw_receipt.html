@@ -1,0 +1,35 @@
+{% extends "base.html" %}
+{% block content %}
+
+<div class="container mt-4">
+<h3>SD Withdraw Receipt</h3>
+
+{% if receipt %}
+<div class="card p-4">
+    <h4>Receipt Details</h4>
+    <table class="table table-bordered mt-3">
+        <tr>
+            <th>Member Name</th>
+            <td>{{receipt.full_name}}</td>
+        </tr>
+        <tr>
+            <th>Loan ID</th>
+            <td>{{receipt.loanid}}</td>
+        </tr>
+        <tr>
+            <th>Amount</th>
+            <td>₹ {{receipt.amount}}</td>
+        </tr>
+        <tr>
+            <th>Date</th>
+            <td>{{receipt.date}}</td>
+        </tr>
+    </table>
+    <button onclick="window.print()" class="btn btn-primary mt-3">Print Receipt</button>
+</div>
+{% else %}
+<div class="alert alert-info">No receipt data available</div>
+{% endif %}
+
+</div>
+{% endblock %}

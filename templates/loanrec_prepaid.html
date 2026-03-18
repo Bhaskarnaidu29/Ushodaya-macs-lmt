@@ -1,0 +1,328 @@
+{% extends "base.html" %}
+{% block title %}Prepaid Loan Closure{% endblock %}
+
+{% block extra_css %}
+<style>
+    .loan-card {
+        border-left: 4px solid #667eea;
+        transition: transform 0.2s;
+    }
+    .loan-card:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+    }
+    .calculation-box {
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        color: white;
+        padding: 20px;
+        border-radius: 10px;
+        margin-top: 20px;
+    }
+    .amount-display {
+        font-size: 1.8rem;
+        font-weight: bold;
+        margin: 10px 0;
+    }
+    .info-badge {
+        background: rgba(255,255,255,0.2);
+        padding: 5px 15px;
+        border-radius: 20px;
+        font-size: 0.85rem;
+        margin: 5px;
+        display: inline-block;
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="container-fluid mt-4">
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <div>
+            <h2><i class="bi bi-cash-coin"></i> Prepaid Loan Closure</h2>
+            <small class="text-muted">Early closure with prepaid type calculation</small>
+        </div>
+        <div>
+            <a href="{{ url_for('loanrec.recovery_posting') }}" class="btn btn-secondary">
+                <i class="bi bi-arrow-left"></i> Back to Recovery
+            </a>
+        </div>
+    </div>
+
+    <!-- Center Selection -->
+    <div class="card mb-4">
+        <div class="card-body">
+            <form method="GET" class="row g-3">
+                <div class="col-md-6">
+                    <label class="form-label"><i class="bi bi-building"></i> Select Center</label>
+                    <select class="form-select" name="center_id" onchange="this.form.submit()">
+                        <option value="">-- Choose Center --</option>
+                        {% for c in centers %}
+                        <option value="{{ c[0] }}" {% if selected_center == c[0]|string %}selected{% endif %}>
+                            {{ c[1] }} ({{ c[2] }})
+                        </option>
+                        {% endfor %}
+                    </select>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    {% if selected_center %}
+    
+    <!-- Prepaid Type Information -->
+    <div class="alert alert-info">
+        <h5><i class="bi bi-info-circle"></i> Prepaid Type Guide:</h5>
+        <ul class="mb-0">
+            {% for pt in prepaid_types %}
+            <li>
+                <strong>{{ pt[1] }}:</strong>
+                {% if pt[1] == 'Death' %}
+                    Only principal collected, no interest
+                {% elif pt[1] == 'Prepaid' %}
+                    Principal + Interest + Charges ({{ pt[3] }}%)
+                {% elif pt[1] == 'SpecialPrepaid' %}
+                    Principal + Interest, no charges
+                {% else %}
+                    {{ 'With charges' if pt[2] else 'No charges' }}
+                {% endif %}
+            </li>
+            {% endfor %}
+        </ul>
+    </div>
+
+    <!-- Active Loans -->
+    {% if active_loans %}
+    <div class="card">
+        <div class="card-header bg-primary text-white">
+            <h5 class="mb-0">Active Loans ({{ active_loans|length }})</h5>
+        </div>
+        <div class="card-body">
+            <form method="POST" id="prepaidForm">
+                <div class="row mb-4">
+                    <!-- Loan Selection -->
+                    <div class="col-md-6">
+                        <label class="form-label"><strong>Select Loan</strong></label>
+                        <select class="form-select" name="loanid" id="loanSelect" required onchange="calculatePrepaid()">
+                            <option value="">-- Choose Loan --</option>
+                            {% for loan in active_loans %}
+                            <option value="{{ loan[0] }}" 
+                                    data-principal="{{ loan[4] }}"
+                                    data-interest="{{ loan[5] }}"
+                                    data-savings="{{ loan[10] }}"
+                                    data-member="{{ loan[2] }}"
+                                    data-product="{{ loan[8] }}">
+                                {{ loan[1] }} - {{ loan[2] }} | ₹{{ "%.2f"|format(loan[4]) }} outstanding
+                            </option>
+                            {% endfor %}
+                        </select>
+                    </div>
+
+                    <!-- Prepaid Type Selection -->
+                    <div class="col-md-6">
+                        <label class="form-label"><strong>Prepaid Type</strong></label>
+                        <select class="form-select" name="prepaid_type" id="prepaidTypeSelect" required onchange="calculatePrepaid()">
+                            <option value="">-- Choose Type --</option>
+                            {% for pt in prepaid_types %}
+                            <option value="{{ pt[0] }}"
+                                    data-charges="{{ pt[2] }}"
+                                    data-percent="{{ pt[3] }}"
+                                    data-fullint="{{ pt[4] }}"
+                                    data-fullsav="{{ pt[5] }}"
+                                    data-name="{{ pt[1] }}">
+                                {{ pt[1] }}
+                                {% if pt[2] %} ({{ pt[3] }}% charges){% endif %}
+                            </option>
+                            {% endfor %}
+                        </select>
+                    </div>
+                </div>
+
+                <!-- Loan Details (Dynamic) -->
+                <div id="loanDetails" style="display:none;" class="mb-4">
+                    <div class="row">
+                        <div class="col-md-3">
+                            <label class="text-muted small">Member</label>
+                            <p id="memberName" class="fw-bold">-</p>
+                        </div>
+                        <div class="col-md-3">
+                            <label class="text-muted small">Product</label>
+                            <p id="productName" class="fw-bold">-</p>
+                        </div>
+                        <div class="col-md-2">
+                            <label class="text-muted small">Principal Outstanding</label>
+                            <p id="principalAmt" class="text-danger fw-bold">₹0.00</p>
+                        </div>
+                        <div class="col-md-2">
+                            <label class="text-muted small">Interest Outstanding</label>
+                            <p id="interestAmt" class="text-warning fw-bold">₹0.00</p>
+                        </div>
+                        <div class="col-md-2">
+                            <label class="text-muted small">Savings Due</label>
+                            <p id="savingsAmt" class="text-info fw-bold">₹0.00</p>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Calculation Display -->
+                <div id="calculationBox" style="display:none;" class="calculation-box">
+                    <div class="row text-center">
+                        <div class="col-md-4">
+                            <h6>Principal Collection</h6>
+                            <div class="amount-display" id="calcPrincipal">₹0.00</div>
+                            <span class="info-badge">Always collected</span>
+                        </div>
+                        <div class="col-md-4">
+                            <h6>Interest Collection</h6>
+                            <div class="amount-display" id="calcInterest">₹0.00</div>
+                            <span class="info-badge" id="intBadge">-</span>
+                        </div>
+                        <div class="col-md-4">
+                            <h6>Preclosure Charges</h6>
+                            <div class="amount-display" id="calcCharges">₹0.00</div>
+                            <span class="info-badge" id="chargeBadge">-</span>
+                        </div>
+                    </div>
+                    <hr style="border-color:rgba(255,255,255,0.3);">
+                    <div class="row">
+                        <div class="col-md-6">
+                            <h5>Total Prepaid Amount</h5>
+                            <div class="amount-display" style="font-size:2.5rem;" id="totalPrepaid">₹0.00</div>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="d-grid gap-2">
+                                <button type="submit" class="btn btn-light btn-lg" onclick="return confirm('Close this loan with prepaid amount?')">
+                                    <i class="bi bi-check-circle"></i> Close Loan
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Hidden fields for calculated values -->
+                <input type="hidden" name="prepaid_amount" id="hiddenPrepaidAmt">
+                <input type="hidden" name="preclosure_charges" id="hiddenCharges">
+            </form>
+        </div>
+    </div>
+
+    <!-- Loan List Table -->
+    <div class="mt-4">
+        <h5>All Active Loans in this Center:</h5>
+        <table class="table table-hover table-sm">
+            <thead class="table-light">
+                <tr>
+                    <th>Member</th>
+                    <th>Product</th>
+                    <th class="text-end">Loan Amount</th>
+                    <th class="text-end">Principal O/S</th>
+                    <th class="text-end">Interest O/S</th>
+                    <th class="text-center">EMI</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for loan in active_loans %}
+                <tr>
+                    <td><strong>{{ loan[2] }}</strong><br><small class="text-muted">{{ loan[1] }}</small></td>
+                    <td>{{ loan[8] }}</td>
+                    <td class="text-end">₹{{ "%.2f"|format(loan[3]) }}</td>
+                    <td class="text-end text-danger">₹{{ "%.2f"|format(loan[4]) }}</td>
+                    <td class="text-end text-warning">₹{{ "%.2f"|format(loan[5]) }}</td>
+                    <td class="text-center">₹{{ "%.2f"|format(loan[9]) }}</td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+
+    {% else %}
+    <div class="alert alert-warning">
+        <i class="bi bi-exclamation-triangle"></i> No active loans found in this center.
+    </div>
+    {% endif %}
+
+    {% endif %}
+</div>
+
+<script>
+function calculatePrepaid() {
+    const loanSelect = document.getElementById('loanSelect');
+    const typeSelect = document.getElementById('prepaidTypeSelect');
+    
+    if (!loanSelect.value || !typeSelect.value) {
+        document.getElementById('loanDetails').style.display = 'none';
+        document.getElementById('calculationBox').style.display = 'none';
+        return;
+    }
+
+    // Get selected loan data
+    const selectedOption = loanSelect.options[loanSelect.selectedIndex];
+    const principal = parseFloat(selectedOption.dataset.principal);
+    const interest = parseFloat(selectedOption.dataset.interest);
+    const savings = parseFloat(selectedOption.dataset.savings);
+    const member = selectedOption.dataset.member;
+    const product = selectedOption.dataset.product;
+
+    // Get prepaid type configuration
+    const typeOption = typeSelect.options[typeSelect.selectedIndex];
+    const hasCharges = typeOption.dataset.charges === 'True';
+    const chargesPercent = parseFloat(typeOption.dataset.percent);
+    const fullInterest = typeOption.dataset.fullint === 'True';
+    const fullSavings = typeOption.dataset.fullsav === 'True';
+    const typeName = typeOption.dataset.name;
+
+    // Show loan details
+    document.getElementById('memberName').textContent = member;
+    document.getElementById('productName').textContent = product;
+    document.getElementById('principalAmt').textContent = '₹' + principal.toFixed(2);
+    document.getElementById('interestAmt').textContent = '₹' + interest.toFixed(2);
+    document.getElementById('savingsAmt').textContent = '₹' + savings.toFixed(2);
+    document.getElementById('loanDetails').style.display = 'block';
+
+    // Calculate prepaid amount
+    let prepaidAmount = principal;  // Always collect principal
+    let interestCollection = 0;
+    let chargesAmount = 0;
+
+    // Add interest if fullinterest=True
+    if (fullInterest) {
+        interestCollection = interest;
+        prepaidAmount += interest;
+        document.getElementById('intBadge').textContent = 'Full interest';
+        document.getElementById('intBadge').style.background = 'rgba(255,255,255,0.3)';
+    } else {
+        document.getElementById('intBadge').textContent = 'Waived';
+        document.getElementById('intBadge').style.background = 'rgba(255,255,255,0.1)';
+    }
+
+    // Add savings if fullsavings=True
+    if (fullSavings) {
+        prepaidAmount += savings;
+    }
+
+    // Calculate charges if applicable
+    if (hasCharges && chargesPercent > 0) {
+        chargesAmount = principal * (chargesPercent / 100);
+        prepaidAmount += chargesAmount;
+        document.getElementById('chargeBadge').textContent = chargesPercent + '% of principal';
+        document.getElementById('chargeBadge').style.background = 'rgba(255,255,255,0.3)';
+    } else {
+        document.getElementById('chargeBadge').textContent = 'No charges';
+        document.getElementById('chargeBadge').style.background = 'rgba(255,255,255,0.1)';
+    }
+
+    // Display calculations
+    document.getElementById('calcPrincipal').textContent = '₹' + principal.toFixed(2);
+    document.getElementById('calcInterest').textContent = '₹' + interestCollection.toFixed(2);
+    document.getElementById('calcCharges').textContent = '₹' + chargesAmount.toFixed(2);
+    document.getElementById('totalPrepaid').textContent = '₹' + prepaidAmount.toFixed(2);
+
+    // Set hidden fields
+    document.getElementById('hiddenPrepaidAmt').value = prepaidAmount.toFixed(2);
+    document.getElementById('hiddenCharges').value = chargesAmount.toFixed(2);
+
+    // Show calculation box
+    document.getElementById('calculationBox').style.display = 'block';
+}
+</script>
+
+{% endblock %}

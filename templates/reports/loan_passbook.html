@@ -1,0 +1,52 @@
+{% extends "base.html" %}
+{% block content %}
+
+<div class="container mt-4">
+<h3>Loan Passbook</h3>
+
+<form method="POST" class="card p-3 mb-3">
+    <div class="row">
+        <div class="col-md-4">
+            <label>Loan ID</label>
+            <input type="text" name="loanid" class="form-control" value="{{ loanid }}" placeholder="Enter Loan ID">
+        </div>
+        <div class="col-md-2 mt-4">
+            <button class="btn btn-success">Search</button>
+        </div>
+    </div>
+</form>
+
+<table class="table table-bordered">
+<thead class="table-dark">
+<tr>
+<th>Due Date</th>
+<th>Principal Due</th>
+<th>Principal Paid</th>
+<th>Interest Due</th>
+<th>Interest Paid</th>
+<th>Savings Due</th>
+<th>Savings Paid</th>
+<th>Total Paid</th>
+<th>Status</th>
+</tr>
+</thead>
+
+<tbody>
+{% for r in rows %}
+<tr>
+<td>{{r.duedate}}</td>
+<td>{{r.principaldueamount}}</td>
+<td>{{r.principalpaidamount}}</td>
+<td>{{r.interestdueamount}}</td>
+<td>{{r.interestpaidamount}}</td>
+<td>{{r.savingsdueamount}}</td>
+<td>{{r.savingspaidamount}}</td>
+<td>{{r.total_paid}}</td>
+<td>{{r.status}}</td>
+</tr>
+{% endfor %}
+</tbody>
+</table>
+
+</div>
+{% endblock %}

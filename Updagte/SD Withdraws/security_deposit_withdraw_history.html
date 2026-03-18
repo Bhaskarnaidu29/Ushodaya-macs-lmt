@@ -1,0 +1,165 @@
+{% extends "base.html" %}
+{% block title %}Security Deposit Withdrawal History{% endblock %}
+
+{% block extra_css %}
+<style>
+  .sd-header {
+    background: linear-gradient(135deg, #0c2a78 0%, #1857c9 100%);
+    color: #fff;
+    border-radius: 12px;
+    padding: 22px 28px;
+    margin-bottom: 22px;
+  }
+  .sd-card {
+    background: #fff;
+    border-radius: 12px;
+    padding: 22px 24px;
+    box-shadow: 0 2px 10px rgba(0,0,0,.07);
+  }
+  .table th {
+    background: #0c2a78;
+    color: #fff;
+    font-size: .82rem;
+    font-weight: 600;
+    white-space: nowrap;
+    padding: 10px 12px;
+  }
+  .table td { font-size: .88rem; vertical-align: middle; padding: 9px 12px; }
+  .table tbody tr:hover { background: #f0f7ff; }
+  .badge-credit { background: #dcfce7; color: #166534; }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="container-fluid mt-3">
+
+  {% with msgs = get_flashed_messages(with_categories=true) %}
+    {% if msgs %}{% for cat, msg in msgs %}
+    <div class="alert alert-{{ cat }} alert-dismissible fade show">
+      {{ msg }}<button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+    </div>
+    {% endfor %}{% endif %}
+  {% endwith %}
+
+  <div class="sd-header d-flex justify-content-between align-items-center flex-wrap gap-2">
+    <div>
+      <h4 class="mb-1 fw-bold">
+        <i class="bi bi-clock-history me-2"></i>Security Deposit Withdrawal History
+      </h4>
+      <small style="opacity:.85;">All completed security deposit payouts</small>
+    </div>
+    <a href="{{ url_for('sd_withdraw.sd_withdraw') }}" class="btn btn-sm btn-light">
+      <i class="bi bi-arrow-left me-1"></i>Back to Withdrawal
+    </a>
+  </div>
+
+  <div class="sd-card">
+
+    {% if records %}
+
+    {# Quick summary #}
+    <div class="row g-3 mb-4">
+      <div class="col-md-3">
+        <div class="p-3 rounded-3" style="background:#f0f7ff;border:1px solid #bfdbfe;">
+          <div class="text-muted small">Total Transactions</div>
+          <div class="fw-bold fs-4 text-primary">{{ records|length }}</div>
+        </div>
+      </div>
+      <div class="col-md-3">
+        <div class="p-3 rounded-3" style="background:#f0fdf4;border:1px solid #bbf7d0;">
+          <div class="text-muted small">Total Principal Paid</div>
+          <div class="fw-bold fs-5 text-success">
+            ₹{{ "{:,.2f}".format(records | sum(attribute=4)) }}
+          </div>
+        </div>
+      </div>
+      <div class="col-md-3">
+        <div class="p-3 rounded-3" style="background:#fefce8;border:1px solid #fde68a;">
+          <div class="text-muted small">Total Interest Paid</div>
+          <div class="fw-bold fs-5" style="color:#92400e;">
+            ₹{{ "{:,.2f}".format(records | sum(attribute=5)) }}
+          </div>
+        </div>
+      </div>
+      <div class="col-md-3">
+        <div class="p-3 rounded-3" style="background:#f5f3ff;border:1px solid #ddd6fe;">
+          <div class="text-muted small">Total Payout</div>
+          <div class="fw-bold fs-5" style="color:#5b21b6;">
+            ₹{{ "{:,.2f}".format(records | sum(attribute=6)) }}
+          </div>
+        </div>
+      </div>
+    </div>
+
+    {# Search #}
+    <div class="mb-3">
+      <input type="text" id="histSearch" class="form-control w-auto"
+             placeholder="Search member / loan..." style="min-width:240px;">
+    </div>
+
+    <div class="table-responsive">
+      <table class="table table-bordered table-hover align-middle" id="histTable">
+        <thead>
+          <tr>
+            <th>#</th>
+            <th>Loan ID</th>
+            <th>Member Code</th>
+            <th>Member Name</th>
+            <th>SD Principal (₹)</th>
+            <th>SD Interest (₹)</th>
+            <th>Total Paid (₹)</th>
+            <th>Rate %</th>
+            <th>Withdrawal Date</th>
+            <th>Remarks</th>
+          </tr>
+        </thead>
+        <tbody>
+          {% for r in records %}
+          {# r: id, loanid, member_code, full_name, sd_principal, sd_interest,
+                   total_paid, int_rate, withdrawal_date, remarks #}
+          <tr>
+            <td>{{ r[0] }}</td>
+            <td><span class="badge bg-primary">{{ r[1] }}</span></td>
+            <td><strong>{{ r[2] }}</strong></td>
+            <td>{{ r[3] or '—' }}</td>
+            <td class="text-end">₹{{ "{:,.2f}".format(r[4] or 0) }}</td>
+            <td class="text-end" style="color:#0891b2;">₹{{ "{:,.2f}".format(r[5] or 0) }}</td>
+            <td class="text-end fw-bold text-success">₹{{ "{:,.2f}".format(r[6] or 0) }}</td>
+            <td class="text-center">{{ "%.2f"|format(r[7] or 0) }}%</td>
+            <td>
+              {% if r[8] %}
+                {{ r[8].strftime('%d %b %Y') if r[8] else '—' }}
+              {% else %}—{% endif %}
+            </td>
+            <td><small class="text-muted">{{ r[9] or '—' }}</small></td>
+          </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+
+    {% else %}
+    <div class="text-center py-5 text-muted">
+      <i class="bi bi-inbox fs-1 d-block mb-3 opacity-50"></i>
+      <h5>No Withdrawal Records Found</h5>
+      <p>Security deposit withdrawals will appear here after processing.</p>
+      <a href="{{ url_for('sd_withdraw.sd_withdraw') }}" class="btn btn-primary mt-2">
+        <i class="bi bi-arrow-left me-1"></i>Go to Withdrawal
+      </a>
+    </div>
+    {% endif %}
+
+  </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+document.getElementById('histSearch')?.addEventListener('keyup', function () {
+  const term = this.value.toLowerCase();
+  document.querySelectorAll('#histTable tbody tr').forEach(row => {
+    row.style.display = row.textContent.toLowerCase().includes(term) ? '' : 'none';
+  });
+});
+</script>
+{% endblock %}

@@ -1,0 +1,448 @@
+{% extends "base.html" %}
+{% block title %}Post Advance - Ushodaya MACS Ltd{% endblock %}
+{% block page_title %}Post Advance{% endblock %}
+
+{% block extra_css %}
+<style>
+    .form-header {
+        background: linear-gradient(135deg, #0c2a78 0%, #1857c9 100%);
+        color: white;
+        border-radius: 12px;
+        padding: 25px 30px;
+        margin-bottom: 25px;
+    }
+    .form-card {
+        background: white;
+        border-radius: 12px;
+        padding: 30px;
+        box-shadow: 0 2px 10px rgba(0,0,0,0.07);
+        margin-bottom: 20px;
+    }
+    .section-title {
+        font-size: 1rem;
+        font-weight: 700;
+        color: #0c2a78;
+        border-bottom: 2px solid #0c2a78;
+        padding-bottom: 8px;
+        margin-bottom: 20px;
+    }
+    .form-label { font-weight: 600; color: #374151; }
+    .form-control, .form-select {
+        border: 2px solid #e5e7eb;
+        border-radius: 8px;
+        padding: 10px 14px;
+    }
+    .form-control:focus, .form-select:focus {
+        border-color: #0c2a78;
+        box-shadow: 0 0 0 3px rgba(12,42,120,0.1);
+    }
+    .info-box {
+        background: linear-gradient(135deg, #eff6ff, #dbeafe);
+        border: 1px solid #bfdbfe;
+        border-radius: 10px;
+        padding: 16px;
+    }
+    .info-row {
+        display: flex;
+        justify-content: space-between;
+        padding: 5px 0;
+        border-bottom: 1px dashed #bfdbfe;
+        font-size: 0.9rem;
+    }
+    .info-row:last-child { border-bottom: none; }
+    .info-label { color: #6b7280; }
+    .info-value { font-weight: 700; color: #1e40af; }
+    .priority-legend {
+        background: #f9fafb;
+        border-radius: 8px;
+        padding: 12px 16px;
+        font-size: 0.82rem;
+    }
+    .priority-step {
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        padding: 3px 0;
+    }
+    .priority-num {
+        background: #0c2a78;
+        color: white;
+        border-radius: 50%;
+        width: 20px; height: 20px;
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 0.7rem;
+        font-weight: 700;
+        flex-shrink: 0;
+    }
+    .btn-submit {
+        background: linear-gradient(135deg, #0c2a78, #1857c9);
+        color: white; border: none;
+        border-radius: 8px; padding: 12px 30px;
+        font-weight: 700; font-size: 1rem;
+        width: 100%; cursor: pointer;
+    }
+    .btn-submit:hover { opacity: 0.9; }
+    .btn-submit:disabled { opacity: 0.5; cursor: not-allowed; }
+    .suggestion-box {
+        position: absolute; z-index: 1000;
+        background: white; border-radius: 8px;
+        box-shadow: 0 8px 24px rgba(0,0,0,0.15);
+        width: 100%; max-height: 250px;
+        overflow-y: auto; display: none;
+    }
+    .suggestion-item {
+        padding: 12px 15px; cursor: pointer;
+        border-bottom: 1px solid #f3f4f6;
+        transition: background 0.15s;
+    }
+    .suggestion-item:hover { background: #eff6ff; }
+    .suggestion-item:last-child { border-bottom: none; }
+    .member-info-display {
+        background: #f0fdf4;
+        border: 1px solid #bbf7d0;
+        border-radius: 8px;
+        padding: 12px 16px;
+        display: none;
+    }
+    .loan-option-detail {
+        font-size: 0.85rem;
+        color: #6b7280;
+        margin-top: 2px;
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="container-fluid">
+
+    {% with messages = get_flashed_messages(with_categories=true) %}
+        {% if messages %}
+            {% for category, message in messages %}
+            <div class="alert alert-{{ category }} alert-dismissible fade show">
+                <i class="bi bi-info-circle me-2"></i>{{ message }}
+                <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+            </div>
+            {% endfor %}
+        {% endif %}
+    {% endwith %}
+
+    <!-- Header -->
+    <div class="form-header d-flex justify-content-between align-items-center flex-wrap gap-2">
+        <div>
+            <h4 class="mb-1 fw-bold"><i class="bi bi-cash-coin me-2"></i>Post Advance Deposit</h4>
+            <small style="opacity:.85;">Record an advance payment from a member for their loan</small>
+        </div>
+        <a href="{{ url_for('advance.list_advances') }}" class="btn btn-light btn-sm">
+            <i class="bi bi-arrow-left"></i> Back to List
+        </a>
+    </div>
+
+    <div class="row">
+
+        <!-- Left: Form -->
+        <div class="col-lg-7">
+            <div class="form-card">
+                <div class="section-title"><i class="bi bi-person-fill me-2"></i>Member & Loan Details</div>
+
+                <form method="POST" action="{{ url_for('advance.add_advance') }}" id="advanceForm">
+
+                    <!-- Member Code Search -->
+                    <div class="mb-3">
+                        <label class="form-label">Member Code / Name <span class="text-danger">*</span></label>
+                        <div class="position-relative">
+                            <div class="input-group">
+                                <span class="input-group-text"><i class="bi bi-search"></i></span>
+                                <input type="text" id="memberSearch" class="form-control"
+                                       placeholder="Type member code or name..." autocomplete="off">
+                            </div>
+                            <input type="hidden" name="member_code" id="member_code" required>
+                            <div class="suggestion-box" id="memberSuggestions"></div>
+                        </div>
+                        <div class="member-info-display mt-2" id="memberInfoDisplay">
+                            <i class="bi bi-check-circle-fill text-success me-2"></i>
+                            <span id="selectedMemberInfo" class="fw-semibold"></span>
+                        </div>
+                    </div>
+
+                    <!-- Loan ID -->
+                    <div class="mb-3">
+                        <label class="form-label">Select Loan <span class="text-danger">*</span></label>
+                        <select name="loanid" id="loanid" class="form-select" required disabled>
+                            <option value="">— Select member first —</option>
+                        </select>
+                        <small class="text-muted">Only active loans are shown</small>
+                    </div>
+
+                    <!-- Amount -->
+                    <div class="mb-3">
+                        <label class="form-label">Advance Amount (₹) <span class="text-danger">*</span></label>
+                        <div class="input-group">
+                            <span class="input-group-text"><i class="bi bi-currency-rupee"></i></span>
+                            <input type="number" name="amount" id="amount" class="form-control"
+                                   step="0.01" min="1" placeholder="0.00" required>
+                        </div>
+                        <small class="text-muted">Amount member is paying in advance</small>
+                    </div>
+
+                    <!-- Transaction Date -->
+                    <div class="mb-3">
+                        <label class="form-label">Transaction Date & Time</label>
+                        <input type="datetime-local" name="transactiondate" id="transactiondate"
+                               class="form-control" value="{{ now }}">
+                        <small class="text-muted">When the payment was received</small>
+                    </div>
+
+                    <!-- Payment ID (optional) -->
+                    <div class="mb-4">
+                        <label class="form-label">Payment Reference <span class="text-muted">(Optional)</span></label>
+                        <div class="input-group">
+                            <span class="input-group-text"><i class="bi bi-receipt"></i></span>
+                            <input type="text" name="paymentid" class="form-control"
+                                   placeholder="e.g. UPI/Cheque/Receipt number">
+                        </div>
+                    </div>
+
+                    <button type="submit" class="btn-submit" id="submitBtn" disabled>
+                        <i class="bi bi-check-circle me-2"></i>Post Advance Deposit
+                    </button>
+                </form>
+            </div>
+        </div>
+
+        <!-- Right: Info -->
+        <div class="col-lg-5">
+
+            <!-- Current Balance (if loan selected) -->
+            <div class="form-card" id="balanceCard" style="display:none;">
+                <div class="section-title"><i class="bi bi-wallet2 me-2"></i>Current Advance Balance</div>
+                <div class="info-box">
+                    <div class="info-row">
+                        <span class="info-label">Available Balance</span>
+                        <span class="info-value" id="currentBalance">₹0.00</span>
+                    </div>
+                    <div class="info-row">
+                        <span class="info-label">After This Deposit</span>
+                        <span class="info-value text-success" id="newBalance">₹0.00</span>
+                    </div>
+                </div>
+            </div>
+
+            <!-- How Advance Works -->
+            <div class="form-card">
+                <div class="section-title"><i class="bi bi-info-circle me-2"></i>How Advance Works</div>
+                
+                <div class="alert alert-info mb-3">
+                    <strong><i class="bi bi-lightbulb me-1"></i>What is Advance Deposit?</strong>
+                    <p class="mb-0 mt-2 small">
+                        When a member pays in advance, the amount is stored and automatically 
+                        applied during their next recovery posting (EMI collection).
+                    </p>
+                </div>
+
+                <div class="priority-legend">
+                    <p class="mb-2 text-muted small"><strong>Application Priority:</strong></p>
+                    <div class="priority-step"><span class="priority-num">1</span> Arrear Principal</div>
+                    <div class="priority-step"><span class="priority-num">2</span> Arrear Interest</div>
+                    <div class="priority-step"><span class="priority-num">3</span> Current Principal Due</div>
+                    <div class="priority-step"><span class="priority-num">4</span> Current Interest Due</div>
+                    <div class="priority-step"><span class="priority-num">5</span> Savings Due</div>
+                    <div class="priority-step"><span class="priority-num">6</span> Remaining → Additional Savings</div>
+                </div>
+
+                <div class="alert alert-success mt-3 mb-0 small">
+                    <i class="bi bi-check-circle me-1"></i>
+                    Advance is automatically applied during the next recovery posting for this loan.
+                </div>
+            </div>
+
+            <!-- Important Notes -->
+            <div class="form-card">
+                <div class="section-title"><i class="bi bi-exclamation-triangle me-2"></i>Important Notes</div>
+                <ul class="small mb-0" style="padding-left: 20px;">
+                    <li class="mb-2">Advance amount is stored in <code>AdvanceRecovery</code> table</li>
+                    <li class="mb-2">Not applied to <code>LoanRec</code> immediately</li>
+                    <li class="mb-2">Auto-applied during next week's recovery posting</li>
+                    <li class="mb-2">Balance can be checked anytime</li>
+                    <li>Multiple advances can be posted for same loan</li>
+                </ul>
+            </div>
+
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+const SEARCH_URL  = "{{ url_for('advance.search_member') }}";
+const LOANS_URL   = "{{ url_for('advance.get_loans', member_code='PLACEHOLDER') }}".replace('PLACEHOLDER', '');
+const BALANCE_URL = "{{ url_for('advance.check_balance', member_code='MEMBER', loanid=0) }}".replace('MEMBER/', '').replace('/0', '/');
+
+let debounceTimer;
+let selectedMemberCode = null;
+let selectedLoanId = null;
+let currentBalance = 0;
+
+// ═══════════════════════════════════════════════════════════════════════
+// Member Search with Autocomplete
+// ═══════════════════════════════════════════════════════════════════════
+
+document.getElementById('memberSearch').addEventListener('input', function () {
+    clearTimeout(debounceTimer);
+    const q = this.value.trim();
+    const box = document.getElementById('memberSuggestions');
+    
+    if (q.length < 2) { 
+        box.style.display = 'none'; 
+        return; 
+    }
+    
+    debounceTimer = setTimeout(async () => {
+        try {
+            const res = await fetch(`${SEARCH_URL}?q=${encodeURIComponent(q)}`);
+            const members = await res.json();
+            
+            box.innerHTML = '';
+            
+            if (!members.length) { 
+                box.style.display = 'none'; 
+                return; 
+            }
+            
+            members.forEach(member => {
+                const div = document.createElement('div');
+                div.className = 'suggestion-item';
+                div.innerHTML = `
+                    <div>
+                        <i class="bi bi-person me-2 text-primary"></i>
+                        <strong>${member.member_code}</strong>
+                    </div>
+                    <div class="loan-option-detail">${member.full_name}</div>
+                `;
+                div.onclick = () => selectMember(member.member_code, member.full_name);
+                box.appendChild(div);
+            });
+            
+            box.style.display = 'block';
+        } catch (err) {
+            console.error('Search error:', err);
+        }
+    }, 300);
+});
+
+// ═══════════════════════════════════════════════════════════════════════
+// Select Member and Load Loans
+// ═══════════════════════════════════════════════════════════════════════
+
+async function selectMember(code, name) {
+    selectedMemberCode = code;
+    
+    document.getElementById('member_code').value = code;
+    document.getElementById('memberSearch').value = `${code} - ${name}`;
+    document.getElementById('memberSuggestions').style.display = 'none';
+    document.getElementById('selectedMemberInfo').textContent = `${code} - ${name}`;
+    document.getElementById('memberInfoDisplay').style.display = 'block';
+
+    // Load loans for this member
+    try {
+        const res = await fetch(LOANS_URL + code);
+        const loans = await res.json();
+        
+        const sel = document.getElementById('loanid');
+        
+        if (loans.length) {
+            sel.innerHTML = '<option value="">— Select a loan —</option>' + 
+                loans.map(loan => `
+                    <option value="${loan.loanid}">
+                        Loan #${loan.loanid} | ${loan.product} | 
+                        Amount: ₹${loan.loanamount.toLocaleString()} | 
+                        Outstanding: ₹${loan.outstanding.toLocaleString()}
+                    </option>
+                `).join('');
+            sel.disabled = false;
+        } else {
+            sel.innerHTML = '<option value="">No active loans found</option>';
+            sel.disabled = true;
+        }
+        
+        document.getElementById('submitBtn').disabled = loans.length === 0;
+        
+    } catch (err) {
+        console.error('Load loans error:', err);
+        alert('Error loading loans for this member');
+    }
+}
+
+// ═══════════════════════════════════════════════════════════════════════
+// Load Loan Balance when Loan Selected
+// ═══════════════════════════════════════════════════════════════════════
+
+document.getElementById('loanid').addEventListener('change', async function() {
+    const loanid = this.value;
+    
+    if (!loanid) {
+        document.getElementById('balanceCard').style.display = 'none';
+        document.getElementById('submitBtn').disabled = true;
+        return;
+    }
+    
+    selectedLoanId = loanid;
+    document.getElementById('submitBtn').disabled = false;
+    
+    // Load current balance
+    try {
+        const res = await fetch(BALANCE_URL + selectedMemberCode + '/' + loanid);
+        const data = await res.json();
+        
+        currentBalance = data.balance || 0;
+        
+        document.getElementById('currentBalance').textContent = 
+            `₹${currentBalance.toLocaleString('en-IN', {minimumFractionDigits: 2, maximumFractionDigits: 2})}`;
+        
+        document.getElementById('balanceCard').style.display = 'block';
+        
+        // Update new balance when amount changes
+        updateNewBalance();
+        
+    } catch (err) {
+        console.error('Load balance error:', err);
+    }
+});
+
+// ═══════════════════════════════════════════════════════════════════════
+// Update Balance Preview
+// ═══════════════════════════════════════════════════════════════════════
+
+document.getElementById('amount').addEventListener('input', updateNewBalance);
+
+function updateNewBalance() {
+    const amountInput = document.getElementById('amount').value;
+    const amount = parseFloat(amountInput) || 0;
+    const newBalance = currentBalance + amount;
+    
+    document.getElementById('newBalance').textContent = 
+        `₹${newBalance.toLocaleString('en-IN', {minimumFractionDigits: 2, maximumFractionDigits: 2})}`;
+}
+
+// ═══════════════════════════════════════════════════════════════════════
+// Hide Suggestions on Outside Click
+// ═══════════════════════════════════════════════════════════════════════
+
+document.addEventListener('click', e => {
+    if (!e.target.closest('#memberSearch') && !e.target.closest('#memberSuggestions')) {
+        document.getElementById('memberSuggestions').style.display = 'none';
+    }
+});
+
+// ═══════════════════════════════════════════════════════════════════════
+// Set Default DateTime to Now
+// ═══════════════════════════════════════════════════════════════════════
+
+const now = new Date();
+const pad = n => String(n).padStart(2, '0');
+document.getElementById('transactiondate').value =
+    `${now.getFullYear()}-${pad(now.getMonth()+1)}-${pad(now.getDate())}T${pad(now.getHours())}:${pad(now.getMinutes())}`;
+</script>
+{% endblock %}

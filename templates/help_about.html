@@ -1,0 +1,233 @@
+{% extends "base.html" %}
+
+{% block title %}About - Ushodaya MACS Ltd{% endblock %}
+{% block page_title %}About System{% endblock %}
+
+{% block extra_css %}
+<style>
+    .header-card {
+        background: linear-gradient(135deg, #0c2a78 0%, #1857c9 100%);
+        color: white;
+        border-radius: 14px;
+        padding: 30px;
+        margin-bottom: 30px;
+        text-align: center;
+    }
+
+    .header-card h1 {
+        font-size: 2rem;
+        font-weight: 700;
+        margin-bottom: 10px;
+    }
+
+    .info-card {
+        background: white;
+        border-radius: 14px;
+        padding: 28px;
+        margin-bottom: 24px;
+        box-shadow: 0 2px 10px rgba(0,0,0,0.06);
+        border-left: 5px solid #0c2a78;
+    }
+
+    .info-row {
+        display: flex;
+        justify-content: space-between;
+        padding: 15px 0;
+        border-bottom: 1px solid #e5e7eb;
+    }
+
+    .info-row:last-child {
+        border-bottom: none;
+    }
+
+    .info-label {
+        color: #6b7280;
+        font-weight: 600;
+    }
+
+    .info-value {
+        color: #1e293b;
+        font-weight: 700;
+        text-align: right;
+    }
+
+    .stat-card {
+        background: linear-gradient(135deg, #f0f9ff, #e0f2fe);
+        border-radius: 12px;
+        padding: 20px;
+        text-align: center;
+        border: 2px solid #0c2a78;
+    }
+
+    .stat-value {
+        font-size: 2rem;
+        font-weight: 700;
+        color: #0c2a78;
+        margin-bottom: 5px;
+    }
+
+    .stat-label {
+        color: #6b7280;
+        font-weight: 600;
+        font-size: .9rem;
+    }
+
+    .logo-container {
+        text-align: center;
+        margin: 30px 0;
+    }
+
+    .logo-icon {
+        font-size: 5rem;
+        color: white;
+    }
+
+    .contact-box {
+        background: #f9fafb;
+        border-radius: 10px;
+        padding: 20px;
+        margin-top: 20px;
+    }
+
+    .contact-item {
+        display: flex;
+        align-items: center;
+        gap: 15px;
+        padding: 10px 0;
+    }
+
+    .contact-item i {
+        font-size: 1.5rem;
+        color: #0c2a78;
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="container-fluid">
+    <div class="row justify-content-center">
+        <div class="col-lg-10">
+            <!-- Header -->
+            <div class="header-card">
+                <div class="logo-container">
+                    <i class="bi bi-bank2 logo-icon"></i>
+                </div>
+                <h1>{{ info.app_name }}</h1>
+                <p class="mb-0">Version {{ info.version }} | Released {{ info.release_date }}</p>
+            </div>
+
+            <!-- System Statistics -->
+            <div class="info-card">
+                <h4 class="mb-4"><i class="bi bi-graph-up me-2"></i>System Statistics</h4>
+                <div class="row">
+                    <div class="col-md-3 mb-3">
+                        <div class="stat-card">
+                            <div class="stat-value">{{ info.total_members }}</div>
+                            <div class="stat-label">Total Members</div>
+                        </div>
+                    </div>
+                    <div class="col-md-3 mb-3">
+                        <div class="stat-card">
+                            <div class="stat-value">{{ info.total_centers }}</div>
+                            <div class="stat-label">Centers</div>
+                        </div>
+                    </div>
+                    <div class="col-md-3 mb-3">
+                        <div class="stat-card">
+                            <div class="stat-value">{{ info.active_loans }}</div>
+                            <div class="stat-label">Active Loans</div>
+                        </div>
+                    </div>
+                    <div class="col-md-3 mb-3">
+                        <div class="stat-card">
+                            <div class="stat-value">{{ info.total_employees }}</div>
+                            <div class="stat-label">Employees</div>
+                        </div>
+                    </div>
+                </div>
+                <div class="row mt-3">
+                    <div class="col-12">
+                        <div class="stat-card" style="background: linear-gradient(135deg, #fef3c7, #fde68a);">
+                            <div class="stat-value">₹{{ "{:,.2f}".format(info.total_outstanding) }}</div>
+                            <div class="stat-label">Total Outstanding Loans</div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- System Information -->
+            <div class="info-card">
+                <h4 class="mb-4"><i class="bi bi-info-circle me-2"></i>System Information</h4>
+                <div class="info-row">
+                    <span class="info-label">Application Name:</span>
+                    <span class="info-value">{{ info.app_name }}</span>
+                </div>
+                <div class="info-row">
+                    <span class="info-label">Version:</span>
+                    <span class="info-value">{{ info.version }}</span>
+                </div>
+                <div class="info-row">
+                    <span class="info-label">Release Date:</span>
+                    <span class="info-value">{{ info.release_date }}</span>
+                </div>
+                <div class="info-row">
+                    <span class="info-label">License:</span>
+                    <span class="info-value">{{ info.license }}</span>
+                </div>
+                <div class="info-row">
+                    <span class="info-label">License Valid Until:</span>
+                    <span class="info-value">{{ info.license_expiry }}</span>
+                </div>
+            </div>
+
+            <!-- Database Information -->
+            <div class="info-card">
+                <h4 class="mb-4"><i class="bi bi-database me-2"></i>Database Information</h4>
+                <div class="info-row">
+                    <span class="info-label">SQL Server Version:</span>
+                    <span class="info-value">{{ info.sql_version }}</span>
+                </div>
+                <div class="info-row">
+                    <span class="info-label">Database Size:</span>
+                    <span class="info-value">{{ info.db_size }}</span>
+                </div>
+            </div>
+
+            <!-- Support Contact -->
+            <div class="info-card">
+                <h4 class="mb-4"><i class="bi bi-headset me-2"></i>Technical Support</h4>
+                <div class="contact-box">
+                    <div class="contact-item">
+                        <i class="bi bi-building"></i>
+                        <div>
+                            <strong>Developer:</strong> {{ info.developer }}
+                        </div>
+                    </div>
+                    <div class="contact-item">
+                        <i class="bi bi-envelope-fill"></i>
+                        <div>
+                            <strong>Email:</strong> <a href="mailto:{{ info.support_email }}">{{ info.support_email }}</a>
+                        </div>
+                    </div>
+                    <div class="contact-item">
+                        <i class="bi bi-telephone-fill"></i>
+                        <div>
+                            <strong>Phone:</strong> {{ info.support_phone }}
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Copyright -->
+            <div class="info-card text-center">
+                <p class="mb-0">
+                    <i class="bi bi-c-circle me-2"></i>
+                    {{ info.release_date.split('-')[2] }} Ushodaya MACS Ltd. All rights reserved.
+                    <br>
+                    <small class="text-muted">Developed by {{ info.developer }}</small>
+                </p>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

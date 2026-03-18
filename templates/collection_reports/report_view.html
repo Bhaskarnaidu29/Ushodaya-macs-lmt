@@ -1,0 +1,307 @@
+{% extends "base.html" %}
+{% block title %}{{ report_type|title if report_type else 'Reports' }} - Ushodaya MACS Ltd{% endblock %}
+{% block page_title %}Reports{% endblock %}
+
+{% block extra_css %}
+<style>
+    .report-header {
+        background: linear-gradient(135deg, #0c2a78 0%, #1857c9 100%);
+        color: white; border-radius: 12px;
+        padding: 25px 30px; margin-bottom: 25px;
+    }
+    .filter-card, .results-card {
+        background: white; border-radius: 12px;
+        padding: 25px; box-shadow: 0 2px 10px rgba(0,0,0,.07);
+        margin-bottom: 20px;
+    }
+    .section-title {
+        font-weight: 700; color: #0c2a78; font-size: .95rem;
+        border-bottom: 2px solid #0c2a78;
+        padding-bottom: 8px; margin-bottom: 18px;
+    }
+    .stat-pill {
+        background: #eff6ff; border: 1px solid #bfdbfe;
+        border-radius: 20px; padding: 5px 14px;
+        font-size: .82rem; font-weight: 600; color: #1e40af;
+        display: inline-flex; align-items: center; gap: 5px;
+    }
+    .table thead th { background: #0c2a78; color: white; font-weight: 600; white-space: nowrap; }
+    .btn-export {
+        background: linear-gradient(135deg, #dc2626, #b91c1c);
+        color: white; border: none; border-radius: 8px;
+        padding: 9px 18px; font-weight: 600; cursor: pointer;
+        display: inline-flex; align-items: center; gap: 6px;
+    }
+    .empty-state { text-align: center; padding: 50px; color: #9ca3af; }
+    .empty-state i { font-size: 3rem; display: block; margin-bottom: 12px; }
+    .total-row td { font-weight: 700; background: #f1f5f9; }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="container-fluid">
+
+    {% with messages = get_flashed_messages(with_categories=true) %}
+        {% if messages %}{% for cat, msg in messages %}
+        <div class="alert alert-{{ cat }} alert-dismissible fade show">
+            <i class="bi bi-info-circle me-2"></i>{{ msg }}
+            <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+        </div>
+        {% endfor %}{% endif %}
+    {% endwith %}
+
+    <!-- Header -->
+    <div class="report-header d-flex justify-content-between align-items-center flex-wrap gap-2">
+        <div>
+            {% set labels = {
+                'daily':'Daily Collection', 'memberwise':'Member-wise Report',
+                'fdcollections':'FD Collections', 'rd':'RD Collections',
+                'fdaccounts':'FD Accounts', 'rdaccounts':'RD Accounts',
+                'fdinterest':'FD Interest', 'glance':'At a Glance',
+                'monthly_collection':'Monthly Collection Sheet',
+                'weekly_collection':'Weekly Collection Sheet'
+            } %}
+            <h4 class="fw-bold mb-1">
+                <i class="bi bi-{% if report_type == 'monthly_collection' %}calendar-month{% elif report_type == 'weekly_collection' %}calendar-week{% else %}bar-chart-line{% endif %} me-2"></i>
+                {{ labels.get(report_type, 'Report Viewer') }}
+            </h4>
+            <small style="opacity:.85;">Generate and export report data</small>
+        </div>
+        <a href="{{ url_for('reports.reports_home') }}" class="btn btn-light btn-sm">
+            <i class="bi bi-grid me-1"></i> All Reports
+        </a>
+    </div>
+
+    {% if report_type %}
+
+    <!-- Filter Form -->
+    <div class="filter-card">
+        <div class="section-title"><i class="bi bi-funnel me-2"></i>Filter Options</div>
+        
+        {% if report_type in ['monthly_collection', 'weekly_collection'] %}
+        <!-- Single Date Form (Monthly/Weekly Collection) -->
+        <form method="POST" action="{{ url_for('reports.report_view') }}?type={{ report_type }}">
+            <div class="row g-3 align-items-end">
+                <div class="col-md-3">
+                    <label class="form-label fw-semibold">Due Date <span class="text-danger">*</span></label>
+                    <input type="date" name="due_date" class="form-control"
+                           value="{{ due_date }}" required>
+                    <small class="text-muted">Select the exact due date</small>
+                </div>
+
+                <div class="col-md-3">
+                    <label class="form-label fw-semibold">Center (Optional)</label>
+                    <select class="form-select" name="center_id">
+                        <option value="">All Centers</option>
+                        {% for center in centers %}
+                        <option value="{{ center[0] }}" {% if center_id and center_id == center[0]|string %}selected{% endif %}>
+                            {{ center[1] }}
+                        </option>
+                        {% endfor %}
+                    </select>
+                    <small class="text-muted">Filter by specific center</small>
+                </div>
+
+                <div class="col-md-6 d-flex gap-2 flex-wrap">
+                    <button type="submit" name="export_format" value="view" class="btn btn-primary">
+                        <i class="bi bi-eye me-1"></i> View
+                    </button>
+                    {% if pdf_available %}
+                    <button type="submit" name="export_format" value="pdf" class="btn-export">
+                        <i class="bi bi-file-earmark-pdf"></i> PDF
+                    </button>
+                    {% endif %}
+                    <button type="submit" name="export_format" value="excel" class="btn btn-success">
+                        <i class="bi bi-file-earmark-excel"></i> Excel
+                    </button>
+                </div>
+            </div>
+        </form>
+        
+        {% else %}
+        <!-- Date Range Form (FD/RD/Daily/etc) -->
+        <form method="POST" action="{{ url_for('reports.report_view') }}?type={{ report_type }}{% if member_id %}&member_id={{ member_id }}{% endif %}">
+            <div class="row g-3 align-items-end">
+
+                <div class="col-md-3">
+                    <label class="form-label fw-semibold">Start Date <span class="text-danger">*</span></label>
+                    <input type="date" name="StartDate" class="form-control"
+                           value="{{ start_date }}" required>
+                </div>
+
+                <div class="col-md-3">
+                    <label class="form-label fw-semibold">End Date <span class="text-danger">*</span></label>
+                    <input type="date" name="EndDate" class="form-control"
+                           value="{{ end_date }}" required>
+                </div>
+
+                {% if report_type == 'memberwise' %}
+                <div class="col-md-3">
+                    <label class="form-label fw-semibold">Member Code <span class="text-danger">*</span></label>
+                    <input type="text" name="member_id" class="form-control"
+                           value="{{ member_id or '' }}" placeholder="e.g. 10002" required>
+                </div>
+                {% endif %}
+
+                <div class="col-md-3 d-flex gap-2 flex-wrap">
+                    <button type="submit" class="btn btn-primary">
+                        <i class="bi bi-search me-1"></i> Generate
+                    </button>
+                    {% if data and pdf_available %}
+                    <button type="submit" name="export_pdf" value="1" class="btn-export">
+                        <i class="bi bi-file-earmark-pdf"></i> PDF
+                    </button>
+                    {% endif %}
+                </div>
+
+            </div>
+        </form>
+        {% endif %}
+    </div>
+
+    <!-- Results -->
+    <div class="results-card">
+        {% if data %}
+
+        <!-- Generation Time (for collection reports) -->
+        {% if generation_time and report_type in ['monthly_collection', 'weekly_collection'] %}
+        <div style="background:linear-gradient(135deg,#10b981,#059669);color:#fff;padding:8px 16px;border-radius:20px;font-size:.82rem;font-weight:600;display:inline-flex;align-items:center;gap:6px;margin-bottom:15px">
+            <i class="bi bi-stopwatch" style="font-size:1rem"></i>
+            Generated in {{ generation_time }} seconds
+        </div>
+        {% endif %}
+
+        <!-- Summary bar -->
+        <div class="d-flex justify-content-between align-items-center mb-3 flex-wrap gap-2">
+            <div class="section-title mb-0">
+                {% if report_type in ['monthly_collection', 'weekly_collection'] %}
+                    Collection Data - {{ due_date }}
+                    {% if center_name %} | {{ center_name }}{% endif %}
+                    {% if branch_name %} | {{ branch_name }}{% endif %}
+                {% else %}
+                    Results
+                {% endif %}
+            </div>
+            <div class="d-flex gap-2 flex-wrap">
+                <span class="stat-pill"><i class="bi bi-table"></i> {{ data|length }} records</span>
+                {% if due_date %}
+                <span class="stat-pill"><i class="bi bi-calendar"></i> {{ due_date }}</span>
+                {% elif start_date %}
+                <span class="stat-pill"><i class="bi bi-calendar"></i> {{ start_date }} → {{ end_date }}</span>
+                {% endif %}
+                {% if member_id %}
+                <span class="stat-pill"><i class="bi bi-person"></i> {{ member_id }}</span>
+                {% endif %}
+            </div>
+        </div>
+
+        <div class="table-responsive">
+            <table class="table table-hover table-bordered align-middle mb-0" id="reportTable">
+                <thead>
+                    <tr>
+                        {% if report_type not in ['monthly_collection', 'weekly_collection'] %}
+                        <th style="width:40px;">#</th>
+                        {% endif %}
+                        {% for col in columns %}
+                        <th {% if col in ['Principal Due', 'Interest Due', 'Savings Due', 'Total Due', 'Principal Paid', 'Interest Paid', 'Savings Paid', 'Total Paid'] %}style="text-align:right"{% endif %}>
+                            {{ col }}
+                        </th>
+                        {% endfor %}
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for row in data %}
+                    <tr>
+                        {% if report_type not in ['monthly_collection', 'weekly_collection'] %}
+                        <td class="text-muted small">{{ loop.index }}</td>
+                        {% endif %}
+                        {% for cell in row %}
+                        <td {% if loop.index0 >= 6 and loop.index0 <= 13 and report_type in ['monthly_collection', 'weekly_collection'] %}style="text-align:right"{% endif %}>
+                            {% if cell is none %}
+                                <span class="text-muted">—</span>
+                            {% elif cell is number and cell != cell|int and report_type in ['monthly_collection', 'weekly_collection'] %}
+                                ₹{{ "{:,.0f}".format(cell) }}
+                            {% elif cell is number and cell != cell|int %}
+                                ₹{{ "{:,.2f}".format(cell) }}
+                            {% elif cell is number %}
+                                {{ cell }}
+                            {% elif cell == 'Paid' %}
+                                <span class="badge bg-success">Paid</span>
+                            {% elif cell == 'Pending' %}
+                                <span class="badge bg-warning">Pending</span>
+                            {% else %}
+                                {{ cell or '-' }}
+                            {% endif %}
+                        </td>
+                        {% endfor %}
+                    </tr>
+                    {% endfor %}
+                </tbody>
+                
+                {% if report_type in ['monthly_collection', 'weekly_collection'] %}
+                <!-- Totals Footer for Collection Reports -->
+                <tfoot style="background:{% if report_type == 'weekly_collection' %}#d1fae5{% else %}#e8f4f8{% endif %};font-weight:700;color:{% if report_type == 'weekly_collection' %}#059669{% else %}#0c2a78{% endif %}">
+                    <tr>
+                        {% set ns = namespace(totals=[0,0,0,0,0,0,0,0]) %}
+                        {% for row in data %}
+                            {% for i in range(8) %}
+                                {% set _ = ns.totals.__setitem__(i, ns.totals[i] + row[6+i]) %}
+                            {% endfor %}
+                        {% endfor %}
+                        <td colspan="6" style="text-align:right"><strong>TOTAL:</strong></td>
+                        {% for total in ns.totals %}
+                        <td style="text-align:right"><strong>₹{{ "{:,.0f}".format(total) }}</strong></td>
+                        {% endfor %}
+                        <td></td>
+                    </tr>
+                </tfoot>
+                {% endif %}
+            </table>
+        </div>
+
+        {% elif start_date or due_date %}
+        <div class="empty-state">
+            <i class="bi bi-inbox text-muted"></i>
+            <h5>No Data Found</h5>
+            <p class="text-muted">No records found for the selected period.</p>
+        </div>
+        {% else %}
+        <div class="empty-state">
+            <i class="bi bi-calendar-range text-muted"></i>
+            <h5>{% if report_type in ['monthly_collection', 'weekly_collection'] %}Select a Due Date{% else %}Select a Date Range{% endif %}</h5>
+            <p class="text-muted">Choose {% if report_type in ['monthly_collection', 'weekly_collection'] %}a due date{% else %}start and end dates{% endif %} above, then click <strong>{% if report_type in ['monthly_collection', 'weekly_collection'] %}View{% else %}Generate{% endif %}</strong>.</p>
+        </div>
+        {% endif %}
+    </div>
+
+    {% else %}
+    <div class="results-card">
+        <div class="empty-state">
+            <i class="bi bi-bar-chart text-muted"></i>
+            <h5>No Report Type Selected</h5>
+            <p class="text-muted">
+                <a href="{{ url_for('reports.reports_home') }}">Go back to Reports</a> and choose a report type.
+            </p>
+        </div>
+    </div>
+    {% endif %}
+
+</div>
+{% endblock %}
+
+{% block extra_js %}
+{% if data and report_type not in ['monthly_collection', 'weekly_collection'] %}
+<script src="https://cdn.datatables.net/1.13.7/js/jquery.dataTables.min.js"></script>
+<script src="https://cdn.datatables.net/1.13.7/js/dataTables.bootstrap5.min.js"></script>
+<script>
+$(document).ready(function () {
+    $('#reportTable').DataTable({
+        pageLength: 25,
+        order: [],
+        language: { search: 'Filter:' },
+        dom: 'lfrtip'
+    });
+});
+</script>
+{% endif %}
+{% endblock %}

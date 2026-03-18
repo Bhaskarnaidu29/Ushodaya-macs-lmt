@@ -1,0 +1,251 @@
+{% extends "base.html" %}
+{% block title %}Edit Center - Ushodaya MACS Ltd{% endblock %}
+{% block page_title %}Edit Center{% endblock %}
+
+{% block extra_css %}
+<style>
+  /* SELECT * column map for Center table:
+     [0]=id            [1]=create_date      [2]=center_name    [3]=create_staff
+     [4]=address1      [5]=address2         [6]=city           [7]=district
+     [8]=state         [9]=pincode          [10]=landmark      [11]=handling_staff
+     [12]=max_members  [13]=note            [14]=loan_type     [15]=due_day
+     [16]=due_date     [17]=close_date      [18]=share_capital [19]=savings
+     [20]=joining_fee  [21]=branchid        [22]=center_no     [23]=collection_day
+     [24]=weekly_collection_day */
+
+  .page-header{background:linear-gradient(135deg,#0c2a78,#1857c9);color:#fff;border-radius:14px;padding:24px 28px;margin-bottom:22px}
+  .back-btn{background:#fff;color:#0c2a78;padding:8px 18px;border-radius:8px;font-weight:700;text-decoration:none;display:inline-flex;align-items:center;gap:6px;font-size:.9rem}
+  .back-btn:hover{color:#0c2a78;opacity:.9}
+  .form-card{background:#fff;border-radius:12px;padding:26px 28px;margin-bottom:18px;box-shadow:0 2px 10px rgba(0,0,0,.06)}
+  .sec-title{font-size:.95rem;font-weight:700;color:#0c2a78;border-bottom:2px solid #0c2a78;padding-bottom:8px;margin-bottom:18px;display:flex;align-items:center;gap:8px}
+  .form-label{font-weight:600;color:#374151;font-size:.88rem;margin-bottom:5px}
+  .form-label.req::after{content:" *";color:#dc2626}
+  .form-control,.form-select{border:2px solid #e5e7eb;border-radius:8px;padding:10px 14px;font-size:.93rem}
+  .form-control:focus,.form-select:focus{border-color:#0c2a78;box-shadow:0 0 0 3px rgba(12,42,120,.1);outline:none}
+  .readonly-box{background:linear-gradient(135deg,#eff6ff,#dbeafe);border:2px solid #0c2a78;border-radius:8px;padding:12px 16px;font-size:1.3rem;font-weight:800;color:#0c2a78;display:flex;align-items:center;justify-content:space-between}
+  .readonly-box small{font-size:.75rem;font-weight:400;color:#6b7280}
+  .btn-submit{background:linear-gradient(135deg,#0c2a78,#1857c9);color:#fff;padding:12px 32px;border-radius:9px;font-weight:700;font-size:.95rem;border:none;cursor:pointer;display:inline-flex;align-items:center;gap:7px;transition:all .2s}
+  .btn-submit:hover{transform:translateY(-1px);box-shadow:0 6px 18px rgba(12,42,120,.35)}
+  .btn-cancel{background:#f1f5f9;color:#475569;padding:12px 32px;border-radius:9px;font-weight:700;font-size:.95rem;text-decoration:none;display:inline-flex;align-items:center;gap:7px}
+  .btn-cancel:hover{background:#e2e8f0;color:#334155}
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="container-fluid">
+<div class="row justify-content-center">
+<div class="col-lg-10 col-xl-9">
+
+  {% with messages = get_flashed_messages(with_categories=true) %}
+    {% if messages %}{% for cat,msg in messages %}
+    <div class="alert alert-{{cat}} alert-dismissible fade show">
+      <i class="bi bi-info-circle me-2"></i>{{msg}}
+      <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+    </div>
+    {% endfor %}{% endif %}
+  {% endwith %}
+
+  <div class="page-header d-flex justify-content-between align-items-center flex-wrap gap-2">
+    <div>
+      <h4 class="fw-bold mb-1"><i class="bi bi-pencil-square me-2"></i>Edit Center</h4>
+      <small style="opacity:.85">Updating: <strong>{{ center[2] }}</strong> — Center #{{ center[22] }}</small>
+    </div>
+    <a href="{{ url_for('center.index') }}" class="back-btn">
+      <i class="bi bi-arrow-left"></i> Back to Centers
+    </a>
+  </div>
+
+  <form method="POST">
+
+    <!-- Center No (read-only) -->
+    <div class="form-card">
+      <div class="sec-title"><i class="bi bi-hash"></i> Center Number</div>
+      <div class="readonly-box">
+        <span><i class="bi bi-lock-fill me-2"></i>#{{ center[22] }}</span>
+        <small>Cannot be changed</small>
+      </div>
+    </div>
+
+    <!-- Basic Information -->
+    <div class="form-card">
+      <div class="sec-title"><i class="bi bi-info-circle"></i> Basic Information</div>
+      <div class="row g-3">
+        <div class="col-md-6">
+          <label class="form-label req">Center Name</label>
+          <input type="text" class="form-control" name="center_name"
+                 value="{{ center[2] }}" required>
+        </div>
+        <div class="col-md-6">
+          <label class="form-label req">Handling Staff</label>
+          <select class="form-select" name="handling_staff" required>
+            <option value="">— Select Staff —</option>
+            {% for s in staff_list %}
+            <option value="{{ s }}" {% if center[11] == s %}selected{% endif %}>{{ s }}</option>
+            {% endfor %}
+          </select>
+        </div>
+        <div class="col-md-6">
+          <label class="form-label">Maximum Members</label>
+          <input type="number" class="form-control" name="max_members"
+                 value="{{ center[12] or 50 }}" min="1">
+        </div>
+      </div>
+    </div>
+
+    <!-- Loan Configuration -->
+    <div class="form-card">
+      <div class="sec-title"><i class="bi bi-cash-stack"></i> Loan Configuration</div>
+      <div class="row g-3">
+        <div class="col-md-3">
+          <label class="form-label req">Loan Type</label>
+          <select class="form-select" name="loan_type" required id="loanTypeSelect">
+            <option value="Weekly"  {% if center[14] == 'Weekly'  %}selected{% endif %}>Weekly</option>
+            <option value="Monthly" {% if center[14] == 'Monthly' %}selected{% endif %}>Monthly</option>
+          </select>
+        </div>
+
+        <!-- Weekly collection day (day of week 0=Sun…6=Sat) -->
+        <div class="col-md-3" id="weeklyDayCol">
+          <label class="form-label">Weekly Collection Day</label>
+          <select class="form-select" name="weekly_collection_day">
+            <option value="">— Select Day —</option>
+            <option value="1" {% if center[24] == 1 %}selected{% endif %}>Monday</option>
+            <option value="2" {% if center[24] == 2 %}selected{% endif %}>Tuesday</option>
+            <option value="3" {% if center[24] == 3 %}selected{% endif %}>Wednesday</option>
+            <option value="4" {% if center[24] == 4 %}selected{% endif %}>Thursday</option>
+            <option value="5" {% if center[24] == 5 %}selected{% endif %}>Friday</option>
+            <option value="6" {% if center[24] == 6 %}selected{% endif %}>Saturday</option>
+            <option value="0" {% if center[24] == 0 %}selected{% endif %}>Sunday</option>
+          </select>
+        </div>
+
+        <!-- Monthly collection day (day of month 1–31) -->
+        <div class="col-md-3" id="monthlyDayCol" style="display:none">
+          <label class="form-label">Monthly Collection Day</label>
+          <input type="number" class="form-control" name="collection_day"
+                 value="{{ center[23] or '' }}" min="1" max="31" placeholder="e.g. 5">
+          <small class="text-muted">Day of month (1–31)</small>
+        </div>
+
+        <div class="col-md-3">
+          <label class="form-label">Due Day (text)</label>
+          <input type="text" class="form-control" name="due_day"
+                 value="{{ center[15] or '' }}" placeholder="e.g. Monday, 15th">
+        </div>
+        <div class="col-md-3">
+          <label class="form-label">Due Date</label>
+          <input type="date" class="form-control" name="due_date"
+                 value="{{ center[16].strftime('%Y-%m-%d') if center[16] else '' }}">
+        </div>
+      </div>
+    </div>
+
+    <!-- Address -->
+    <div class="form-card">
+      <div class="sec-title"><i class="bi bi-geo-alt"></i> Address Information</div>
+      <div class="row g-3">
+        <div class="col-md-6">
+          <label class="form-label">Address Line 1</label>
+          <input type="text" class="form-control" name="address1" value="{{ center[4] or '' }}">
+        </div>
+        <div class="col-md-6">
+          <label class="form-label">Address Line 2</label>
+          <input type="text" class="form-control" name="address2" value="{{ center[5] or '' }}">
+        </div>
+        <div class="col-md-4">
+          <label class="form-label">City</label>
+          <input type="text" class="form-control" name="city" value="{{ center[6] or '' }}">
+        </div>
+        <div class="col-md-4">
+          <label class="form-label">District</label>
+          <input type="text" class="form-control" name="district" value="{{ center[7] or '' }}">
+        </div>
+        <div class="col-md-4">
+          <label class="form-label">State</label>
+          <input type="text" class="form-control" name="state" value="{{ center[8] or '' }}">
+        </div>
+        <div class="col-md-6">
+          <label class="form-label">Pincode</label>
+          <input type="text" class="form-control" name="pincode" id="pincodeInput"
+                 value="{{ center[9] or '' }}" maxlength="6">
+        </div>
+        <div class="col-md-6">
+          <label class="form-label">Landmark</label>
+          <input type="text" class="form-control" name="landmark" value="{{ center[10] or '' }}">
+        </div>
+      </div>
+    </div>
+
+    <!-- Financial -->
+    <div class="form-card">
+      <div class="sec-title"><i class="bi bi-currency-rupee"></i> Financial Details</div>
+      <div class="row g-3">
+        <div class="col-md-4">
+          <label class="form-label">Share Capital (₹)</label>
+          <input type="number" class="form-control" name="share_capital"
+                 step="0.01" value="{{ center[18] or 0 }}" min="0">
+        </div>
+        <div class="col-md-4">
+          <label class="form-label">Savings (₹)</label>
+          <input type="number" class="form-control" name="savings"
+                 step="0.01" value="{{ center[19] or 0 }}" min="0">
+        </div>
+        <div class="col-md-4">
+          <label class="form-label">Joining Fee (₹)</label>
+          <input type="number" class="form-control" name="joining_fee"
+                 step="0.01" value="{{ center[20] or 0 }}" min="0">
+        </div>
+      </div>
+    </div>
+
+    <!-- Notes -->
+    <div class="form-card">
+      <div class="sec-title"><i class="bi bi-pencil-square"></i> Additional Notes</div>
+      <textarea class="form-control" name="note" rows="3">{{ center[13] or '' }}</textarea>
+    </div>
+
+    <!-- Center Status -->
+    <div class="form-card">
+      <div class="sec-title"><i class="bi bi-calendar-x"></i> Center Status</div>
+      <div class="row g-3">
+        <div class="col-md-4">
+          <label class="form-label">Close Date</label>
+          <input type="date" class="form-control" name="close_date"
+                 value="{{ center[17].strftime('%Y-%m-%d') if center[17] else '' }}">
+          <small class="text-muted">Leave blank to keep center active</small>
+        </div>
+      </div>
+    </div>
+
+    <!-- Buttons -->
+    <div class="form-card">
+      <div class="d-flex gap-3 flex-wrap">
+        <button type="submit" class="btn-submit">
+          <i class="bi bi-check-circle-fill"></i> Update Center
+        </button>
+        <a href="{{ url_for('center.index') }}" class="btn-cancel">
+          <i class="bi bi-x-circle"></i> Cancel
+        </a>
+      </div>
+    </div>
+
+  </form>
+</div></div></div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+  document.getElementById('pincodeInput').addEventListener('input', function(){
+    this.value = this.value.replace(/[^0-9]/g,'');
+  });
+
+  const loanType = document.getElementById('loanTypeSelect');
+  function toggleDay(){
+    const isW = loanType.value === 'Weekly';
+    document.getElementById('weeklyDayCol').style.display  = isW ? '' : 'none';
+    document.getElementById('monthlyDayCol').style.display = isW ? 'none' : '';
+  }
+  loanType.addEventListener('change', toggleDay);
+  toggleDay();
+</script>
+{% endblock %}

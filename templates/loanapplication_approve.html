@@ -1,0 +1,219 @@
+{% extends "base.html" %}
+{% block title %}Approve Loan Application - Ushodaya MACS Ltd{% endblock %}
+{% block page_title %}Approve Loan Application{% endblock %}
+
+{% block extra_css %}
+<style>
+    .page-header { background:linear-gradient(135deg,#10b981 0%,#059669 100%); color:white; border-radius:14px; padding:24px 28px; margin-bottom:22px; }
+    .info-card { background:white; border-radius:12px; padding:24px; margin-bottom:18px; box-shadow:0 2px 10px rgba(0,0,0,.06); }
+    .section-title { font-size:.95rem; font-weight:700; color:#0c2a78; border-bottom:2px solid #0c2a78; padding-bottom:8px; margin-bottom:18px; display:flex; align-items:center; gap:8px; }
+    .detail-grid { display:grid; grid-template-columns:repeat(2,1fr); gap:12px; }
+    @media(max-width:576px){ .detail-grid { grid-template-columns:1fr; } }
+    .detail-item { padding:11px 14px; background:#f8fafc; border-radius:8px; border-left:4px solid #10b981; }
+    .detail-label { font-size:.8rem; color:#6b7280; font-weight:600; margin-bottom:4px; }
+    .detail-value { font-size:1rem; font-weight:700; color:#1e293b; }
+    .charges-card { background:linear-gradient(135deg,#fffbeb,#fef3c7); border:2px solid #f59e0b; border-radius:12px; padding:22px; margin-bottom:18px; }
+    .charge-row { display:flex; justify-content:space-between; padding:8px 0; border-bottom:1px solid rgba(0,0,0,.07); font-size:.88rem; }
+    .charge-row:last-child { border-bottom:none; font-weight:700; font-size:.95rem; padding-top:12px; }
+    .net-card { background:linear-gradient(135deg,#10b981,#059669); color:white; border-radius:12px; padding:24px; text-align:center; margin-bottom:18px; }
+    .net-card .amount { font-size:2.5rem; font-weight:800; margin:10px 0; }
+    .approval-form { background:#eff6ff; border:2px solid #3b82f6; border-radius:12px; padding:24px; margin-bottom:18px; }
+    .form-label { font-weight:700; color:#374151; font-size:.88rem; margin-bottom:6px; }
+    .form-control, .form-select { border:2px solid #e5e7eb; border-radius:8px; padding:10px 14px; font-size:.93rem; }
+    .form-control:focus, .form-select:focus { border-color:#10b981; box-shadow:0 0 0 3px rgba(16,185,129,.1); outline:none; }
+    .btn-approve { background:linear-gradient(135deg,#10b981,#059669); color:white; padding:13px 30px; border-radius:9px; font-weight:700; font-size:.95rem; border:none; cursor:pointer; transition:all .2s; }
+    .btn-approve:hover { transform:translateY(-1px); box-shadow:0 6px 18px rgba(16,185,129,.35); }
+    .btn-reject-act { background:linear-gradient(135deg,#ef4444,#dc2626); color:white; padding:13px 30px; border-radius:9px; font-weight:700; font-size:.95rem; border:none; cursor:pointer; transition:all .2s; }
+    .btn-cancel { background:#6b7280; color:white; padding:13px 30px; border-radius:9px; font-weight:700; font-size:.95rem; text-decoration:none; }
+    .badge-cycle { background:#0ea5e9; color:white; padding:4px 12px; border-radius:14px; font-weight:700; font-size:.8rem; }
+    .app-id-badge { background:white; color:#059669; padding:8px 18px; border-radius:20px; font-weight:800; font-size:.95rem; }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="container-fluid">
+    <div class="row justify-content-center">
+    <div class="col-lg-10 col-xl-9">
+
+    {% with messages = get_flashed_messages(with_categories=true) %}
+        {% if messages %}{% for cat,msg in messages %}
+        <div class="alert alert-{{ cat }} alert-dismissible fade show">
+            <i class="bi bi-info-circle me-2"></i>{{ msg }}
+            <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+        </div>
+        {% endfor %}{% endif %}
+    {% endwith %}
+
+    <!-- Header -->
+    <div class="page-header d-flex justify-content-between align-items-center flex-wrap gap-2">
+        <div>
+            <h4 class="fw-bold mb-1"><i class="bi bi-check-circle me-2"></i>Approve Loan Application</h4>
+            <small style="opacity:.85;">Review and approve this loan application</small>
+        </div>
+        <span class="app-id-badge">ID: #{{ application.LoanApplicationID }}</span>
+    </div>
+
+    <!-- Member Info -->
+    <div class="info-card">
+        <div class="section-title"><i class="bi bi-person-circle"></i> Member Information</div>
+        <div class="detail-grid">
+            <div class="detail-item">
+                <div class="detail-label">Member Code</div>
+                <div class="detail-value">{{ application.MemberCode }}</div>
+            </div>
+            <div class="detail-item">
+                <div class="detail-label">Member Name</div>
+                <div class="detail-value">{{ application.MemberName }}</div>
+            </div>
+            <div class="detail-item">
+                <div class="detail-label">Phone Number</div>
+                <div class="detail-value">{{ application.phone1 or 'N/A' }}</div>
+            </div>
+            <div class="detail-item">
+                <div class="detail-label">Center</div>
+                <div class="detail-value">{{ application.CenterName }}</div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Loan Details -->
+    <div class="info-card">
+        <div class="section-title"><i class="bi bi-cash-stack"></i> Loan Details</div>
+        <div class="detail-grid">
+            <div class="detail-item">
+                <div class="detail-label">Product Name</div>
+                <div class="detail-value">{{ application.ProductName }}</div>
+            </div>
+            <div class="detail-item">
+                <div class="detail-label">Loan Purpose</div>
+                <div class="detail-value">{{ application.LoanPurpose }}</div>
+            </div>
+            <div class="detail-item">
+                <div class="detail-label">Amount Requested</div>
+                <div class="detail-value" style="color:#10b981;">₹{{ "{:,.2f}".format(application.LoanAmountRequested) }}</div>
+            </div>
+            <div class="detail-item">
+                <div class="detail-label">Interest Rate</div>
+                <div class="detail-value">{{ application.InterestRate }}% p.a.</div>
+            </div>
+            <div class="detail-item">
+                <div class="detail-label">Tenure</div>
+                <div class="detail-value">{{ application.Tenure }} months</div>
+            </div>
+            <div class="detail-item">
+                <div class="detail-label">Loan Cycle</div>
+                <div class="detail-value"><span class="badge-cycle">Cycle {{ application.LoanCycle }}</span></div>
+            </div>
+            <div class="detail-item">
+                <div class="detail-label">Application Date</div>
+                <div class="detail-value">{{ application.ApplicationDate.strftime('%d %b %Y') if application.ApplicationDate else 'N/A' }}</div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Charges Breakdown -->
+    <div class="charges-card">
+        <h6 class="fw-bold mb-3" style="color:#92400e;"><i class="bi bi-calculator me-2"></i>Charges Breakdown</h6>
+        <div class="charge-row"><span>Processing Fee</span><span>₹{{ "{:,.2f}".format(application.ProcessingFee or 0) }}</span></div>
+        <div class="charge-row"><span>Savings (per EMI)</span><span>₹{{ "{:,.2f}".format(application.Savings or 0) }}</span></div>
+        <div class="charge-row"><span>Additional Savings</span><span>₹{{ "{:,.2f}".format(application.AdditionalSavings or 0) }}</span></div>
+        <div class="charge-row"><span>Member Insurance</span><span>₹{{ "{:,.2f}".format(application.MemberInsurance or 0) }}</span></div>
+        <div class="charge-row"><span>Nominee Insurance</span><span>₹{{ "{:,.2f}".format(application.NomineeInsurance or 0) }}</span></div>
+        <div class="charge-row"><span>Security Deposit</span><span>₹{{ "{:,.2f}".format(application.SecurityDeposit or 0) }}</span></div>
+        {% set total_deductions = (application.ProcessingFee or 0) + (application.Savings or 0) + (application.AdditionalSavings or 0) + (application.MemberInsurance or 0) + (application.NomineeInsurance or 0) + (application.SecurityDeposit or 0) %}
+        <div class="charge-row"><span>Total Deductions</span><span style="color:#92400e;">₹{{ "{:,.2f}".format(total_deductions) }}</span></div>
+    </div>
+
+    <!-- Net Disbursement -->
+    <div class="net-card">
+        <div style="font-size:1rem;opacity:.9;">Net Disbursement Amount</div>
+        <div class="amount">₹{{ "{:,.2f}".format(application.LoanAmountRequested - total_deductions) }}</div>
+        <div style="opacity:.85;font-size:.88rem;"><i class="bi bi-info-circle me-1"></i>Amount member will receive after all deductions</div>
+    </div>
+
+    <!-- Approval Form -->
+    <div class="approval-form">
+        <h6 class="fw-bold mb-3" style="color:#1d4ed8;"><i class="bi bi-clipboard-check me-2"></i>Approval Details</h6>
+        <form method="POST" id="approveForm">
+            <div class="row g-3">
+                <div class="col-md-6">
+                    <label class="form-label"><i class="bi bi-currency-rupee me-1"></i>Approved Amount *</label>
+                    <input type="number" class="form-control" name="loan_amount_approved"
+                           required step="0.01" min="1"
+                           value="{{ application.LoanAmountRequested }}"
+                           placeholder="Enter approved amount">
+                    <small class="text-muted">Can differ from requested amount if needed</small>
+                </div>
+                <div class="col-md-6">
+                    <label class="form-label"><i class="bi bi-calendar-event me-1"></i>Disbursement Date *</label>
+                    <input type="date" class="form-control" name="disbursement_date" required value="{{ today }}">
+                    <small class="text-muted">Date when funds will be disbursed</small>
+                </div>
+            </div>
+            <div class="d-flex gap-3 justify-content-center flex-wrap mt-4">
+                <button type="submit" class="btn-approve">
+                    <i class="bi bi-check-circle-fill me-2"></i>Approve Application
+                </button>
+                <button type="button" class="btn-reject-act" onclick="showRejectModal()">
+                    <i class="bi bi-x-circle-fill me-2"></i>Reject Application
+                </button>
+                <a href="{{ url_for('loanapplication.pending_applications') }}" class="btn-cancel">
+                    <i class="bi bi-arrow-left me-2"></i>Back
+                </a>
+            </div>
+        </form>
+    </div>
+
+    </div>
+    </div>
+</div>
+
+<form id="rejectForm" method="POST" action="{{ url_for('loanapplication.reject_application', app_id=application.LoanApplicationID) }}" style="display:none;">
+    <input type="text" name="rejection_reason" id="rejection_reason">
+</form>
+{% endblock %}
+
+{% block extra_js %}
+<script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+<script>
+function showRejectModal() {
+    Swal.fire({
+        title: 'Reject Application?',
+        html: `<p>Reject loan for <strong style="color:#0c2a78;">{{ application.MemberName }}</strong></p>
+               <p style="color:#dc2626;font-weight:700;">₹{{ "{:,.2f}".format(application.LoanAmountRequested) }}</p>`,
+        input: 'textarea', inputLabel: 'Rejection Reason (Required)',
+        inputPlaceholder: 'Enter detailed reason for rejection...',
+        inputAttributes: { rows: 4 },
+        showCancelButton: true, confirmButtonColor: '#dc2626', cancelButtonColor: '#6c757d',
+        confirmButtonText: 'Confirm Rejection',
+        inputValidator: v => { if (!v || v.trim().length < 10) return 'Provide a detailed reason (min 10 chars)'; }
+    }).then(r => {
+        if (r.isConfirmed) {
+            document.getElementById('rejection_reason').value = r.value;
+            document.getElementById('rejectForm').submit();
+        }
+    });
+}
+
+document.getElementById('approveForm').addEventListener('submit', function(e) {
+    const approved  = parseFloat(document.querySelector('[name="loan_amount_approved"]').value);
+    const requested = {{ application.LoanAmountRequested }};
+    if (approved <= 0) {
+        e.preventDefault();
+        Swal.fire({ icon:'error', title:'Invalid Amount', text:'Approved amount must be greater than zero.' });
+        return;
+    }
+    if (approved !== requested) {
+        e.preventDefault();
+        Swal.fire({
+            icon:'question', title:'Different Amount?',
+            html:`<p>Requested: <strong>₹${requested.toLocaleString('en-IN')}</strong></p>
+                  <p>Approved: <strong style="color:#10b981;">₹${approved.toLocaleString('en-IN')}</strong></p>
+                  <p>Amounts differ. Proceed?</p>`,
+            showCancelButton:true, confirmButtonColor:'#10b981', cancelButtonColor:'#6c757d',
+            confirmButtonText:'Yes, Approve'
+        }).then(r => { if (r.isConfirmed) e.target.submit(); });
+    }
+});
+</script>
+{% endblock %}

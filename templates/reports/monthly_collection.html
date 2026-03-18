@@ -1,0 +1,209 @@
+{% extends "base.html" %}
+{% block title %}Monthly Collection Sheet{% endblock %}
+
+{% block extra_css %}
+<style>
+  .page-header{background:linear-gradient(135deg,#0c2a78,#1857c9);color:#fff;border-radius:14px;padding:22px 28px;margin-bottom:20px}
+  .form-card{background:#fff;border-radius:12px;padding:24px;box-shadow:0 2px 10px rgba(0,0,0,.06);margin-bottom:20px}
+  .btn-generate{background:linear-gradient(135deg,#0c2a78,#1857c9);color:#fff;padding:12px 32px;border-radius:9px;font-weight:700;font-size:.95rem;border:none;cursor:pointer;display:inline-flex;align-items:center;gap:7px}
+  .btn-generate:hover{transform:translateY(-1px);box-shadow:0 6px 18px rgba(12,42,120,.35)}
+  .report-table{width:100%;border-collapse:collapse;margin-top:20px}
+  .report-table thead th{background:#0c2a78;color:#fff;padding:12px;font-size:.85rem;font-weight:600}
+  .report-table tbody td{padding:10px;border:1px solid #e5e7eb;font-size:.88rem}
+  .report-table tbody tr:hover{background:#f0f7ff}
+  .report-table tfoot{background:#e8f4f8;font-weight:700;color:#0c2a78}
+  .text-right{text-align:right}
+  
+  /* Generation time badge */
+  .gen-time{background:linear-gradient(135deg,#10b981,#059669);color:#fff;padding:8px 16px;border-radius:20px;font-size:.82rem;font-weight:600;display:inline-flex;align-items:center;gap:6px;margin-bottom:15px}
+  .gen-time i{font-size:1rem}
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="container-fluid">
+  <div class="page-header">
+    <h4 class="fw-bold mb-1"><i class="bi bi-calendar-month me-2"></i>Monthly Collection Sheet</h4>
+    <small style="opacity:.85">Select due date to view collection data</small>
+  </div>
+
+  {% with messages = get_flashed_messages(with_categories=true) %}
+    {% if messages %}{% for cat,msg in messages %}
+    <div class="alert alert-{{cat}} alert-dismissible fade show">
+      <i class="bi bi-info-circle me-2"></i>{{msg}}
+      <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+    </div>
+    {% endfor %}{% endif %}
+  {% endwith %}
+
+  <!-- Form -->
+  <div class="form-card">
+    <form method="POST">
+      <div class="row g-3">
+        <div class="col-md-4">
+          <label class="form-label fw-bold">Due Date <span class="text-danger">*</span></label>
+          <input type="date" class="form-control" name="due_date" value="{{ due_date or '' }}" required>
+          <small class="text-muted">Select the exact due date for collection</small>
+        </div>
+        <div class="col-md-4">
+          <label class="form-label fw-bold">Center (Optional)</label>
+          <select class="form-select" name="center_id">
+            <option value="">All Centers</option>
+            {% for center in centers %}
+            <option value="{{ center[0] }}" {% if selected_center and selected_center == center[0]|string %}selected{% endif %}>
+              {{ center[1] }}
+            </option>
+            {% endfor %}
+          </select>
+          <small class="text-muted">Filter by specific center or leave blank for all</small>
+        </div>
+        <div class="col-md-4">
+          <label class="form-label fw-bold">Export Format</label>
+          <div class="d-flex gap-2 mt-2">
+            <button type="submit" name="export_format" value="view" class="btn btn-primary">
+              <i class="bi bi-eye"></i> View
+            </button>
+            <button type="submit" name="export_format" value="pdf" class="btn btn-danger">
+              <i class="bi bi-file-pdf"></i> PDF
+            </button>
+            <button type="submit" name="export_format" value="excel" class="btn btn-success">
+              <i class="bi bi-file-excel"></i> Excel
+            </button>
+          </div>
+        </div>
+      </div>
+    </form>
+  </div>
+
+  <!-- Data Display -->
+  {% if data %}
+  <div class="form-card">
+    
+    <!-- Generation Time Badge -->
+    {% if generation_time %}
+    <div class="gen-time">
+      <i class="bi bi-stopwatch"></i>
+      Generated in {{ generation_time }} seconds
+    </div>
+    {% endif %}
+    
+    <h5 class="mb-3">
+      <i class="bi bi-table"></i> Collection Data - 
+      {{ due_date }} | {{ center_name }} | {{ branch_name }}
+    </h5>
+    
+    <div class="alert alert-info">
+      <i class="bi bi-info-circle"></i> 
+      <strong>{{ data|length }}</strong> records found for due date <strong>{{ due_date }}</strong>
+    </div>
+    
+    <div class="table-responsive">
+      <table class="report-table">
+        <thead>
+          <tr>
+            <th>S.No</th>
+            <th>Center</th>
+            <th>Member Code</th>
+            <th>Member Name</th>
+            <th>Mobile</th>
+            <th>Loan ID</th>
+            <th class="text-right">Principal Due</th>
+            <th class="text-right">Interest Due</th>
+            <th class="text-right">Savings Due</th>
+            <th class="text-right">Total Due</th>
+            <th class="text-right">Principal Paid</th>
+            <th class="text-right">Interest Paid</th>
+            <th class="text-right">Savings Paid</th>
+            <th class="text-right">Total Paid</th>
+            <th>Status</th>
+          </tr>
+        </thead>
+        <tbody>
+          {% set ns = namespace(
+            total_principal_due=0,
+            total_interest_due=0,
+            total_savings_due=0,
+            total_due=0,
+            total_principal_paid=0,
+            total_interest_paid=0,
+            total_savings_paid=0,
+            total_paid=0
+          ) %}
+          
+          {% for row in data %}
+          <tr>
+            <td>{{ row[0] }}</td>
+            <td>{{ row[1] }}</td>
+            <td>{{ row[2] }}</td>
+            <td>{{ row[3] }}</td>
+            <td>{{ row[4] or '-' }}</td>
+            <td>{{ row[5] or '-' }}</td>
+            <td class="text-right">₹{{ "{:,.0f}".format(row[6]) }}</td>
+            <td class="text-right">₹{{ "{:,.0f}".format(row[7]) }}</td>
+            <td class="text-right">₹{{ "{:,.0f}".format(row[8]) }}</td>
+            <td class="text-right">₹{{ "{:,.0f}".format(row[9]) }}</td>
+            <td class="text-right">₹{{ "{:,.0f}".format(row[10]) }}</td>
+            <td class="text-right">₹{{ "{:,.0f}".format(row[11]) }}</td>
+            <td class="text-right">₹{{ "{:,.0f}".format(row[12]) }}</td>
+            <td class="text-right">₹{{ "{:,.0f}".format(row[13]) }}</td>
+            <td>
+              {% if row[14] == 'Paid' %}
+              <span class="badge bg-success">Paid</span>
+              {% else %}
+              <span class="badge bg-warning">Pending</span>
+              {% endif %}
+            </td>
+          </tr>
+          
+          {% set ns.total_principal_due = ns.total_principal_due + row[6] %}
+          {% set ns.total_interest_due = ns.total_interest_due + row[7] %}
+          {% set ns.total_savings_due = ns.total_savings_due + row[8] %}
+          {% set ns.total_due = ns.total_due + row[9] %}
+          {% set ns.total_principal_paid = ns.total_principal_paid + row[10] %}
+          {% set ns.total_interest_paid = ns.total_interest_paid + row[11] %}
+          {% set ns.total_savings_paid = ns.total_savings_paid + row[12] %}
+          {% set ns.total_paid = ns.total_paid + row[13] %}
+          {% endfor %}
+        </tbody>
+        <tfoot>
+          <tr>
+            <td colspan="6" class="text-right"><strong>TOTAL:</strong></td>
+            <td class="text-right"><strong>₹{{ "{:,.0f}".format(ns.total_principal_due) }}</strong></td>
+            <td class="text-right"><strong>₹{{ "{:,.0f}".format(ns.total_interest_due) }}</strong></td>
+            <td class="text-right"><strong>₹{{ "{:,.0f}".format(ns.total_savings_due) }}</strong></td>
+            <td class="text-right"><strong>₹{{ "{:,.0f}".format(ns.total_due) }}</strong></td>
+            <td class="text-right"><strong>₹{{ "{:,.0f}".format(ns.total_principal_paid) }}</strong></td>
+            <td class="text-right"><strong>₹{{ "{:,.0f}".format(ns.total_interest_paid) }}</strong></td>
+            <td class="text-right"><strong>₹{{ "{:,.0f}".format(ns.total_savings_paid) }}</strong></td>
+            <td class="text-right"><strong>₹{{ "{:,.0f}".format(ns.total_paid) }}</strong></td>
+            <td></td>
+          </tr>
+        </tfoot>
+      </table>
+    </div>
+    
+    <div class="mt-3 text-muted">
+      <small><i class="bi bi-calendar-check"></i> Due Date: {{ due_date }} | 
+      <i class="bi bi-building"></i> Center: {{ center_name }} | 
+      <i class="bi bi-list-ol"></i> Total Records: {{ data|length }}</small>
+    </div>
+  </div>
+  
+  {% elif request.method == 'POST' %}
+  <!-- No data found message -->
+  <div class="form-card">
+    <div class="alert alert-warning">
+      <i class="bi bi-exclamation-triangle"></i>
+      <strong>No records found</strong> for due date <strong>{{ due_date }}</strong>
+      {% if selected_center %} in center <strong>{{ center_name }}</strong>{% endif %}.
+      <hr>
+      <p class="mb-0">
+        <small>
+          <i class="bi bi-info-circle"></i> Try selecting a different date or check if loans have been created with this due date.
+        </small>
+      </p>
+    </div>
+  </div>
+  {% endif %}
+</div>
+{% endblock %}

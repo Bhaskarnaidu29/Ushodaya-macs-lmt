@@ -1,0 +1,90 @@
+{% extends "base.html" %}
+{% block title %}Day End Process{% endblock %}
+
+{% block content %}
+<div class="container-fluid mt-4">
+
+  <div class="card border-0 shadow-sm">
+    <div class="card-header text-white"
+         style="background:linear-gradient(135deg,#7c3aed,#4f46e5);">
+      <h4 class="mb-0"><i class="bi bi-calendar-check me-2"></i>Day End Process</h4>
+    </div>
+    <div class="card-body p-4">
+
+      <!-- Summary Cards -->
+      <div class="row g-3 mb-4">
+        <div class="col-md-3">
+          <div class="card text-center border-0 bg-primary bg-opacity-10">
+            <div class="card-body">
+              <i class="bi bi-cash-coin fs-2 text-primary"></i>
+              <h6 class="mt-2">Today's Collections</h6>
+              <h4 class="text-primary">₹{{ "{:,.2f}".format(stats.total_collections or 0) }}</h4>
+            </div>
+          </div>
+        </div>
+        <div class="col-md-3">
+          <div class="card text-center border-0 bg-success bg-opacity-10">
+            <div class="card-body">
+              <i class="bi bi-people fs-2 text-success"></i>
+              <h6 class="mt-2">Members Served</h6>
+              <h4 class="text-success">{{ stats.members_served or 0 }}</h4>
+            </div>
+          </div>
+        </div>
+        <div class="col-md-3">
+          <div class="card text-center border-0 bg-warning bg-opacity-10">
+            <div class="card-body">
+              <i class="bi bi-exclamation-triangle fs-2 text-warning"></i>
+              <h6 class="mt-2">Pending EMIs</h6>
+              <h4 class="text-warning">{{ stats.pending_emis or 0 }}</h4>
+            </div>
+          </div>
+        </div>
+        <div class="col-md-3">
+          <div class="card text-center border-0 bg-info bg-opacity-10">
+            <div class="card-body">
+              <i class="bi bi-bank2 fs-2 text-info"></i>
+              <h6 class="mt-2">FD Interest Due</h6>
+              <h4 class="text-info">₹{{ "{:,.2f}".format(stats.fd_interest_due or 0) }}</h4>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Day End Action -->
+      <div class="card border-warning">
+        <div class="card-header bg-warning bg-opacity-25 fw-bold">
+          <i class="bi bi-gear-fill"></i> Run Day End Process
+        </div>
+        <div class="card-body">
+          <p class="text-muted">
+            This will close the current business day and prepare the system for the next day.
+            Make sure all collections are posted before proceeding.
+          </p>
+          <form method="POST" id="dayendForm">
+            <div class="row g-3 align-items-end">
+              <div class="col-md-4">
+                <label class="form-label fw-semibold">Business Date</label>
+                <input type="date" name="business_date" class="form-control"
+                       value="{{ today }}" required>
+              </div>
+              <div class="col-md-4">
+                <label class="form-label fw-semibold">Remarks</label>
+                <input type="text" name="remarks" class="form-control"
+                       placeholder="Optional notes">
+              </div>
+              <div class="col-md-4">
+                <button type="submit" class="btn btn-danger btn-lg w-100"
+                        onclick="return confirm('Run Day End Process? This cannot be undone.')">
+                  <i class="bi bi-check2-all"></i> Run Day End
+                </button>
+              </div>
+            </div>
+          </form>
+        </div>
+      </div>
+
+    </div>
+  </div>
+</div>
+{% endblock %}

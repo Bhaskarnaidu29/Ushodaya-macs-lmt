@@ -1,0 +1,307 @@
+{% extends "base.html" %}
+{% block title %}Day End Processing{% endblock %}
+
+{% block extra_css %}
+<style>
+    .dayend-header {
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        color: white;
+        padding: 30px;
+        border-radius: 10px;
+        margin-bottom: 20px;
+    }
+    .status-card {
+        border-left: 4px solid #667eea;
+        padding: 20px;
+        margin-bottom: 15px;
+        background: white;
+        border-radius: 8px;
+        box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+    }
+    .pending-card {
+        border-left-color: #dc3545;
+        background: #fff5f5;
+    }
+    .success-card {
+        border-left-color: #28a745;
+        background: #f0fff4;
+    }
+    .center-group {
+        background: #f8f9fa;
+        border-radius: 8px;
+        padding: 15px;
+        margin-bottom: 15px;
+        border-left: 4px solid #ffc107;
+    }
+    .member-row {
+        background: white;
+        padding: 10px;
+        margin: 5px 0;
+        border-radius: 5px;
+        border-left: 3px solid #dc3545;
+    }
+    .btn-dayend {
+        background: #28a745;
+        color: white;
+        padding: 15px 40px;
+        font-size: 1.1rem;
+        font-weight: 700;
+        border: none;
+        border-radius: 8px;
+    }
+    .btn-dayend:hover {
+        background: #218838;
+        color: white;
+    }
+    .btn-dayend:disabled {
+        background: #6c757d;
+        cursor: not-allowed;
+    }
+    .last-dayend {
+        background: #e7f3ff;
+        padding: 15px;
+        border-radius: 8px;
+        border-left: 4px solid #007bff;
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="container-fluid mt-4">
+    <!-- Header -->
+    <div class="dayend-header">
+        <div class="row align-items-center">
+            <div class="col-md-8">
+                <h2><i class="bi bi-calendar-check-fill"></i> Day End Processing</h2>
+                <p class="mb-0">{{ branch_name }} | {{ today }}</p>
+            </div>
+            <div class="col-md-4 text-end">
+                <a href="{{ url_for('dayend.dayend_history') }}" class="btn btn-light">
+                    <i class="bi bi-clock-history"></i> View History
+                </a>
+            </div>
+        </div>
+    </div>
+
+    <!-- Last Dayend Info -->
+    <div class="last-dayend mb-4">
+        <h6><i class="bi bi-info-circle"></i> <strong>Last Day End:</strong></h6>
+        {% if last_dayend_date %}
+            <h4 class="mb-0 text-primary">{{ last_dayend_date.strftime('%d %B %Y - %I:%M %p') }}</h4>
+            <small class="text-muted">
+                {{ (today|string|length - last_dayend_date|string|length)|abs }} day(s) ago
+            </small>
+        {% else %}
+            <h5 class="mb-0 text-muted">No previous day end found</h5>
+        {% endif %}
+    </div>
+
+    <!-- Status Check -->
+    {% if can_proceed %}
+    <!-- SUCCESS: No Pending Recoveries -->
+    <div class="status-card success-card">
+        <div class="row align-items-center">
+            <div class="col-md-8">
+                <h4 class="text-success mb-2">
+                    <i class="bi bi-check-circle-fill"></i> Ready for Day End!
+                </h4>
+                <p class="mb-0 text-muted">
+                    All recoveries have been posted. You can proceed with day end processing.
+                </p>
+            </div>
+            <div class="col-md-4 text-end">
+                <form method="POST" action="{{ url_for('dayend.dayend_process') }}" 
+                      onsubmit="return confirm('Process Day End for {{ today }}?\n\nThis action cannot be undone.')">
+                    <button type="submit" class="btn-dayend">
+                        <i class="bi bi-calendar-check-fill"></i> PROCESS DAY END
+                    </button>
+                </form>
+            </div>
+        </div>
+    </div>
+
+    <!-- Summary Box -->
+    <div class="card">
+        <div class="card-header bg-success text-white">
+            <h5 class="mb-0"><i class="bi bi-clipboard-check"></i> Recovery Status - All Clear!</h5>
+        </div>
+        <div class="card-body">
+            <div class="alert alert-success mb-0">
+                <i class="bi bi-check-circle"></i> 
+                All pending recoveries have been posted. System is ready for day end processing.
+            </div>
+        </div>
+    </div>
+
+    {% else %}
+    <!-- ERROR: Pending Recoveries Found -->
+    <div class="status-card pending-card">
+        <div class="row align-items-center">
+            <div class="col-md-8">
+                <h4 class="text-danger mb-2">
+                    <i class="bi bi-exclamation-triangle-fill"></i> Cannot Process Day End!
+                </h4>
+                <p class="mb-0">
+                    <strong>{{ pending_recoveries|length }} pending recovery(ies)</strong> found across 
+                    <strong>{{ centers_pending|length }} center(s)</strong>.
+                    <br>
+                    Total Pending Amount: <strong class="text-danger">₹{{ "%.2f"|format(total_pending_amount) }}</strong>
+                </p>
+            </div>
+            <div class="col-md-4 text-end">
+                <button type="button" class="btn-dayend" disabled>
+                    <i class="bi bi-x-circle"></i> DAY END BLOCKED
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Pending Recoveries by Center -->
+    <div class="card">
+        <div class="card-header bg-danger text-white">
+            <h5 class="mb-0">
+                <i class="bi bi-exclamation-octagon"></i> Pending Recoveries - Must Complete Before Day End
+            </h5>
+        </div>
+        <div class="card-body">
+            <div class="alert alert-warning">
+                <strong><i class="bi bi-info-circle"></i> Action Required:</strong>
+                Please post recovery for all members listed below before proceeding with day end.
+                Go to <a href="{{ url_for('loanrec.recovery_posting') }}" class="alert-link">
+                    <strong>Loan Recovery Posting</strong>
+                </a> to complete pending recoveries.
+            </div>
+
+            <!-- Centers with Pending Recoveries -->
+            {% for center_name, center_data in centers_pending.items() %}
+            <div class="center-group">
+                <div class="d-flex justify-content-between align-items-center mb-3">
+                    <div>
+                        <h5 class="mb-0">
+                            <i class="bi bi-building"></i> {{ center_name }}
+                            <span class="badge bg-warning text-dark">{{ center_data.center_no }}</span>
+                        </h5>
+                        <small class="text-muted">
+                            {{ center_data.count }} pending EMI(s) | 
+                            Total: ₹{{ "%.2f"|format(center_data.total_amount) }}
+                        </small>
+                    </div>
+                    <div>
+                        <a href="{{ url_for('loanrec.recovery_posting') }}" 
+                           class="btn btn-sm btn-primary">
+                            <i class="bi bi-arrow-right-circle"></i> Post Recovery
+                        </a>
+                    </div>
+                </div>
+
+                <!-- Member Details -->
+                <div class="table-responsive">
+                    <table class="table table-sm table-hover mb-0">
+                        <thead class="table-light">
+                            <tr>
+                                <th>Member</th>
+                                <th>EMI #</th>
+                                <th>Due Date</th>
+                                <th class="text-end">Principal</th>
+                                <th class="text-end">Interest</th>
+                                <th class="text-end">Savings</th>
+                                <th class="text-end">Total</th>
+                                <th>Product</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for member in center_data.members %}
+                            <tr>
+                                <td>
+                                    <strong>{{ member.member_name }}</strong><br>
+                                    <small class="text-muted">{{ member.member_code }}</small>
+                                </td>
+                                <td>
+                                    <span class="badge bg-primary">EMI #{{ member.emi_sequence }}</span>
+                                </td>
+                                <td>
+                                    {{ member.due_date.strftime('%d-%b-%Y') if member.due_date else 'N/A' }}
+                                    <br>
+                                    <small class="text-danger">
+                                        {% set days_overdue = (today|string|length) %}
+                                        Overdue
+                                    </small>
+                                </td>
+                                <td class="text-end text-danger">₹{{ "%.2f"|format(member.principal) }}</td>
+                                <td class="text-end text-warning">₹{{ "%.2f"|format(member.interest) }}</td>
+                                <td class="text-end text-info">₹{{ "%.2f"|format(member.savings) }}</td>
+                                <td class="text-end">
+                                    <strong>₹{{ "%.2f"|format(member.total) }}</strong>
+                                </td>
+                                <td><small>{{ member.product }}</small></td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                        <tfoot class="table-light">
+                            <tr>
+                                <td colspan="6" class="text-end"><strong>Center Total:</strong></td>
+                                <td class="text-end">
+                                    <strong class="text-danger">₹{{ "%.2f"|format(center_data.total_amount) }}</strong>
+                                </td>
+                                <td></td>
+                            </tr>
+                        </tfoot>
+                    </table>
+                </div>
+            </div>
+            {% endfor %}
+
+            <!-- Grand Total -->
+            <div class="card mt-3" style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white;">
+                <div class="card-body">
+                    <div class="row text-center">
+                        <div class="col-md-3">
+                            <div class="small">Total Centers</div>
+                            <h3>{{ centers_pending|length }}</h3>
+                        </div>
+                        <div class="col-md-3">
+                            <div class="small">Total Members</div>
+                            <h3>{{ pending_recoveries|length }}</h3>
+                        </div>
+                        <div class="col-md-3">
+                            <div class="small">Total Pending EMIs</div>
+                            <h3>{{ pending_recoveries|length }}</h3>
+                        </div>
+                        <div class="col-md-3">
+                            <div class="small">Total Amount</div>
+                            <h3>₹{{ "%.2f"|format(total_pending_amount) }}</h3>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    {% endif %}
+
+    <!-- Quick Actions -->
+    <div class="card mt-4">
+        <div class="card-header bg-primary text-white">
+            <h6 class="mb-0"><i class="bi bi-lightning-fill"></i> Quick Actions</h6>
+        </div>
+        <div class="card-body">
+            <div class="row">
+                <div class="col-md-4">
+                    <a href="{{ url_for('loanrec.recovery_posting') }}" class="btn btn-outline-primary w-100">
+                        <i class="bi bi-wallet2"></i> Post Recovery
+                    </a>
+                </div>
+                <div class="col-md-4">
+                    <a href="{{ url_for('dayend.dayend_history') }}" class="btn btn-outline-secondary w-100">
+                        <i class="bi bi-clock-history"></i> View History
+                    </a>
+                </div>
+                <div class="col-md-4">
+                    <button onclick="window.location.reload()" class="btn btn-outline-info w-100">
+                        <i class="bi bi-arrow-clockwise"></i> Refresh Status
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

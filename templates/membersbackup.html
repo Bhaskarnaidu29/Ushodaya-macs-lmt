@@ -1,0 +1,282 @@
+{% extends "base.html" %}
+
+{% block title %}Members - Ushodaya MACS Ltd{% endblock %}
+{% block page_title %}Member Management{% endblock %}
+
+{% block extra_css %}
+<style>
+    .page-header {
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        color: white;
+        border-radius: 16px;
+        padding: 30px;
+        margin-bottom: 30px;
+        box-shadow: 0 4px 20px rgba(102, 126, 234, 0.3);
+    }
+
+    .add-member-btn {
+        background: white;
+        color: #667eea;
+        padding: 12px 30px;
+        border-radius: 10px;
+        font-weight: 700;
+        display: inline-flex;
+        align-items: center;
+        gap: 10px;
+        transition: all 0.3s;
+        text-decoration: none;
+    }
+
+    .add-member-btn:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 4px 15px rgba(0,0,0,0.1);
+        color: #667eea;
+    }
+
+    .search-box {
+        background: white;
+        border-radius: 12px;
+        padding: 20px;
+        margin-bottom: 25px;
+        box-shadow: 0 2px 10px rgba(0,0,0,0.05);
+    }
+
+    .members-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fill, minmax(380px, 1fr));
+        gap: 25px;
+    }
+
+    .member-card {
+        background: white;
+        border-radius: 16px;
+        padding: 25px;
+        box-shadow: 0 4px 15px rgba(0,0,0,0.08);
+        transition: all 0.3s;
+        position: relative;
+        overflow: hidden;
+    }
+
+    .member-card:hover {
+        transform: translateY(-5px);
+        box-shadow: 0 8px 25px rgba(0,0,0,0.12);
+    }
+
+    .member-header {
+        display: flex;
+        justify-content: space-between;
+        align-items: start;
+        margin-bottom: 15px;
+    }
+
+    .member-code {
+        background: linear-gradient(135deg, #667eea, #764ba2);
+        color: white;
+        padding: 6px 14px;
+        border-radius: 20px;
+        font-weight: 700;
+        font-size: 0.85rem;
+    }
+
+    .member-name {
+        font-size: 1.3rem;
+        font-weight: 700;
+        color: #2c3e50;
+        margin-bottom: 8px;
+    }
+
+    .status-badge {
+        display: inline-block;
+        padding: 5px 12px;
+        border-radius: 12px;
+        font-size: 0.75rem;
+        font-weight: 700;
+    }
+
+    .status-active { background: #d4edda; color: #155724; }
+    .status-inactive { background: #f8d7da; color: #721c24; }
+
+    .member-info {
+        display: grid;
+        grid-template-columns: 1fr;
+        gap: 10px;
+        margin-top: 15px;
+        padding-top: 15px;
+        border-top: 2px solid #f8f9fa;
+    }
+
+    .info-item {
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        font-size: 0.9rem;
+    }
+
+    .info-icon {
+        color: #667eea;
+        font-size: 1rem;
+    }
+
+    .member-actions {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 10px;
+        margin-top: 15px;
+        padding-top: 15px;
+        border-top: 2px solid #f8f9fa;
+    }
+
+    .btn-action {
+        padding: 10px;
+        border-radius: 8px;
+        font-weight: 700;
+        font-size: 0.85rem;
+        text-decoration: none;
+        text-align: center;
+        transition: all 0.3s;
+    }
+
+    .btn-edit {
+        background: linear-gradient(135deg, #667eea, #764ba2);
+        color: white;
+    }
+
+    .btn-delete {
+        background: linear-gradient(135deg, #fa709a, #fee140);
+        color: white;
+        border: none;
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="container-fluid">
+    <div class="page-header">
+        <div class="d-flex justify-content-between align-items-center">
+            <div>
+                <h2><i class="bi bi-people"></i> Member Management</h2>
+                <p class="mb-0" style="opacity: 0.9;">Manage your group members</p>
+            </div>
+            <a href="{{ url_for('members_bp.add_member') }}" class="add-member-btn">
+                <i class="bi bi-plus-circle"></i> Add Member
+            </a>
+        </div>
+    </div>
+
+    <div class="search-box">
+        <input type="text" class="form-control" id="searchInput" 
+               placeholder="Search by name, member code, phone, or center...">
+    </div>
+
+    {% if members %}
+    <div class="members-grid">
+        {% for member in members %}
+        <div class="member-card" 
+             data-name="{{ member.full_name|lower }}" 
+             data-code="{{ member.member_code|lower }}"
+             data-phone="{{ member.phone1|lower if member.phone1 else '' }}"
+             data-center="{{ member.center_name|lower if member.center_name else '' }}">
+            
+            <div class="member-header">
+                <div class="member-code">
+                    <i class="bi bi-hash"></i>{{ member.member_code }}
+                </div>
+                <span class="status-badge status-{{ member.status|lower if member.status else 'active' }}">
+                    {{ member.status or 'ACTIVE' }}
+                </span>
+            </div>
+
+            <div class="member-name">{{ member.full_name }}</div>
+
+            <div class="member-info">
+                <div class="info-item">
+                    <span class="info-icon"><i class="bi bi-house-door"></i></span>
+                    <span>{{ member.center_name or 'No Center' }} ({{ member.center_no or 'N/A' }})</span>
+                </div>
+
+                <div class="info-item">
+                    <span class="info-icon"><i class="bi bi-telephone"></i></span>
+                    <span>{{ member.phone1 or 'No Phone' }}</span>
+                </div>
+
+                <div class="info-item">
+                    <span class="info-icon"><i class="bi bi-envelope"></i></span>
+                    <span>{{ member.email[:30] + '...' if member.email and member.email|length > 30 else (member.email or 'No Email') }}</span>
+                </div>
+
+                <div class="info-item">
+                    <span class="info-icon"><i class="bi bi-geo-alt"></i></span>
+                    <span>{{ member.city or 'Unknown' }}, {{ member.district or 'Unknown' }}</span>
+                </div>
+
+                <div class="info-item">
+                    <span class="info-icon"><i class="bi bi-calendar-check"></i></span>
+                    <span>Joined: {{ member.join_date.strftime('%d %b %Y') if member.join_date else 'N/A' }}</span>
+                </div>
+            </div>
+
+            <div class="member-actions">
+                <a href="{{ url_for('members_bp.edit_member', member_id=member.id) }}" class="btn-action btn-edit">
+                    <i class="bi bi-pencil"></i> Edit
+                </a>
+                <button onclick="confirmDelete({{ member.id }}, '{{ member.full_name }}')" class="btn-action btn-delete">
+                    <i class="bi bi-person-x"></i> Deactivate
+                </button>
+            </div>
+        </div>
+        {% endfor %}
+    </div>
+    {% else %}
+    <div class="text-center py-5">
+        <i class="bi bi-people" style="font-size: 4rem; color: #ccc;"></i>
+        <h4 class="mt-3">No Members Found</h4>
+        <a href="{{ url_for('members_bp.add_member') }}" class="btn btn-primary mt-3">
+            <i class="bi bi-plus-circle"></i> Add First Member
+        </a>
+    </div>
+    {% endif %}
+
+    <form id="deleteForm" method="POST" style="display: none;"></form>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+<script>
+    // Search functionality
+    document.getElementById('searchInput').addEventListener('keyup', function() {
+        const term = this.value.toLowerCase();
+        document.querySelectorAll('.member-card').forEach(card => {
+            const name = card.dataset.name;
+            const code = card.dataset.code;
+            const phone = card.dataset.phone;
+            const center = card.dataset.center;
+            
+            if (name.includes(term) || code.includes(term) || 
+                phone.includes(term) || center.includes(term)) {
+                card.style.display = '';
+            } else {
+                card.style.display = 'none';
+            }
+        });
+    });
+
+    // Delete confirmation
+    function confirmDelete(memberId, memberName) {
+        Swal.fire({
+            title: 'Deactivate Member?',
+            text: `Are you sure you want to deactivate "${memberName}"?`,
+            icon: 'warning',
+            showCancelButton: true,
+            confirmButtonColor: '#fa709a',
+            cancelButtonColor: '#6c757d',
+            confirmButtonText: 'Yes, deactivate'
+        }).then((result) => {
+            if (result.isConfirmed) {
+                document.getElementById('deleteForm').action = `/members/delete/${memberId}`;
+                document.getElementById('deleteForm').submit();
+            }
+        });
+    }
+</script>
+{% endblock %}

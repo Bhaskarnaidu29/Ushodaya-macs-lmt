@@ -1,0 +1,251 @@
+{% extends "base.html" %}
+{% block title %}Member-wise Prepaid Closure{% endblock %}
+
+{% block extra_css %}
+<style>
+    .nav-tabs { border-bottom: 2px solid #667eea; }
+    .nav-tabs .nav-link { color: #667eea; font-weight: 600; }
+    .nav-tabs .nav-link.active { color: white; background: #667eea; }
+    
+    .member-card {
+        background: linear-gradient(135deg, #11998e 0%, #38ef7d 100%);
+        color: white;
+        padding: 20px;
+        border-radius: 10px;
+        margin-bottom: 20px;
+    }
+    .loan-item {
+        background: white;
+        padding: 20px;
+        border-radius: 8px;
+        margin-bottom: 15px;
+        border-left: 4px solid #11998e;
+    }
+    .calc-box {
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        color: white;
+        padding: 25px;
+        border-radius: 10px;
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="container-fluid mt-4">
+    <!-- Tabs -->
+    <ul class="nav nav-tabs mb-4">
+        <li class="nav-item">
+            <a class="nav-link" href="{{ url_for('rec_member.member_recovery') }}">
+                <i class="bi bi-wallet2"></i> Regular Recovery
+            </a>
+        </li>
+        <li class="nav-item">
+            <a class="nav-link active" href="{{ url_for('rec_member.member_prepaid') }}">
+                <i class="bi bi-check-circle"></i> Prepaid/Closure
+            </a>
+        </li>
+        <li class="nav-item">
+            <a class="nav-link" href="{{ url_for('rec_member.member_arrears') }}">
+                <i class="bi bi-exclamation-triangle"></i> Arrears Recovery
+            </a>
+        </li>
+    </ul>
+
+    <h2><i class="bi bi-cash-coin"></i> Member-wise Prepaid Loan Closure</h2>
+    <p class="text-muted">Early closure with prepaid type calculation</p>
+
+    <!-- Member Selection -->
+    <div class="card mb-4">
+        <div class="card-body">
+            <form method="GET">
+                <div class="row">
+                    <div class="col-md-6">
+                        <label><strong>Select Member:</strong></label>
+                        <select class="form-control" name="member_code" onchange="this.form.submit()" required>
+                            <option value="">-- Select Member --</option>
+                            {% for member in members %}
+                            <option value="{{ member[0] }}" {% if selected_member == member[0] %}selected{% endif %}>
+                                {{ member[1] }} ({{ member[0] }})
+                            </option>
+                            {% endfor %}
+                        </select>
+                    </div>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- Member Info & Active Loans -->
+    {% if selected_member and member_info %}
+    <div class="member-card">
+        <div class="row">
+            <div class="col-md-6">
+                <h4><i class="bi bi-person-badge"></i> {{ member_info[1] }}</h4>
+                <p class="mb-0">Code: {{ member_info[0] }} | Center: {{ member_info[2] }}</p>
+            </div>
+            <div class="col-md-6 text-end">
+                <h5>Active Loans: {{ active_loans|length }}</h5>
+            </div>
+        </div>
+    </div>
+
+    <!-- Prepaid Type Info -->
+    <div class="alert alert-info">
+        <h5><i class="bi bi-info-circle"></i> Prepaid Type Guide:</h5>
+        <ul class="mb-0">
+            {% for pt in prepaid_types %}
+            <li>
+                <strong>{{ pt[1] }}:</strong>
+                {% if pt[1] == 'Death' %}
+                    Only principal collected, no interest
+                {% elif pt[1] == 'Prepaid' %}
+                    Principal + Interest + Charges ({{ pt[3] }}%)
+                {% elif pt[1] == 'SpecialPrepaid' %}
+                    Principal + Interest, no charges
+                {% else %}
+                    {{ 'With charges' if pt[2] else 'No charges' }}
+                {% endif %}
+            </li>
+            {% endfor %}
+        </ul>
+    </div>
+
+    {% if active_loans %}
+    {% for loan in active_loans %}
+    <div class="loan-item">
+        <div class="row">
+            <div class="col-md-12">
+                <h5>
+                    <i class="bi bi-tag"></i> {{ loan[8] }}
+                    <span class="badge bg-success float-end">Active</span>
+                </h5>
+                <div class="row mt-3">
+                    <div class="col-md-3">
+                        <small class="text-muted">Loan Amount</small>
+                        <h6>₹{{ "{:,.2f}".format(loan[3] or 0) }}</h6>
+                    </div>
+                    <div class="col-md-3">
+                        <small class="text-muted">Principal Outstanding</small>
+                        <h6 class="text-danger">₹{{ "{:,.2f}".format(loan[4] or 0) }}</h6>
+                    </div>
+                    <div class="col-md-3">
+                        <small class="text-muted">Interest Outstanding</small>
+                        <h6 class="text-warning">₹{{ "{:,.2f}".format(loan[5] or 0) }}</h6>
+                    </div>
+                    <div class="col-md-3">
+                        <small class="text-muted">Savings Due</small>
+                        <h6 class="text-info">₹{{ "{:,.2f}".format(loan[9] or 0) }}</h6>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <hr>
+
+        <form method="POST" class="prepaid-form" id="form_{{ loan[0] }}">
+            <input type="hidden" name="loanid" value="{{ loan[0] }}">
+            <input type="hidden" name="member_code" value="{{ selected_member }}">
+            
+            <div class="row g-3">
+                <div class="col-md-6">
+                    <label class="form-label"><strong>Prepaid Type:</strong></label>
+                    <select class="form-select" name="prepaid_type" required 
+                            onchange="calculatePrepaid({{ loan[0] }}, {{ loan[4] }}, {{ loan[5] }}, {{ loan[9] }})">
+                        <option value="">-- Select Type --</option>
+                        {% for pt in prepaid_types %}
+                        <option value="{{ pt[0] }}"
+                                data-charges="{{ pt[2] }}"
+                                data-percent="{{ pt[3] }}"
+                                data-fullint="{{ pt[4] }}"
+                                data-fullsav="{{ pt[5] }}"
+                                data-name="{{ pt[1] }}">
+                            {{ pt[1] }}
+                            {% if pt[2] %} ({{ pt[3] }}% charges){% endif %}
+                        </option>
+                        {% endfor %}
+                    </select>
+                </div>
+
+                <div class="col-md-6">
+                    <div class="calc-box" id="calc_{{ loan[0] }}" style="display:none;">
+                        <div class="row text-center">
+                            <div class="col-md-4">
+                                <div class="small">Principal</div>
+                                <h5 id="calc_p_{{ loan[0] }}">₹0</h5>
+                            </div>
+                            <div class="col-md-4">
+                                <div class="small">Interest</div>
+                                <h5 id="calc_i_{{ loan[0] }}">₹0</h5>
+                            </div>
+                            <div class="col-md-4">
+                                <div class="small">Charges</div>
+                                <h5 id="calc_c_{{ loan[0] }}">₹0</h5>
+                            </div>
+                        </div>
+                        <hr style="border-color:rgba(255,255,255,0.3);">
+                        <div class="text-center">
+                            <div class="small">Total Prepaid Amount</div>
+                            <h3 id="calc_total_{{ loan[0] }}">₹0.00</h3>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <input type="hidden" name="prepaid_amount" id="prepaid_amt_{{ loan[0] }}">
+            <input type="hidden" name="preclosure_charges" id="charges_{{ loan[0] }}">
+
+            <div class="text-end mt-3">
+                <button type="submit" class="btn btn-success btn-lg" 
+                        onclick="return confirm('Close this loan with prepaid amount?')">
+                    <i class="bi bi-check-circle-fill"></i> Close Loan
+                </button>
+            </div>
+        </form>
+    </div>
+    {% endfor %}
+
+    {% else %}
+    <div class="alert alert-warning">
+        <i class="bi bi-exclamation-triangle"></i> No active loans found for this member.
+    </div>
+    {% endif %}
+    {% endif %}
+</div>
+
+<script>
+function calculatePrepaid(loanid, principal, interest, savings) {
+    const form = document.getElementById('form_' + loanid);
+    const typeSelect = form.querySelector('select[name="prepaid_type"]');
+    const selectedOption = typeSelect.options[typeSelect.selectedIndex];
+    
+    if (!selectedOption.value) {
+        document.getElementById('calc_' + loanid).style.display = 'none';
+        return;
+    }
+
+    const hasCharges = selectedOption.dataset.charges === 'True';
+    const chargesPercent = parseFloat(selectedOption.dataset.percent || 0);
+    const fullInterest = selectedOption.dataset.fullint === 'True';
+    const fullSavings = selectedOption.dataset.fullsav === 'True';
+
+    let prepaidAmount = principal;  // Always collect principal
+    let interestCollection = fullInterest ? interest : 0;
+    let chargesAmount = hasCharges ? (principal * chargesPercent / 100) : 0;
+    let savingsCollection = fullSavings ? savings : 0;
+
+    prepaidAmount += interestCollection + chargesAmount + savingsCollection;
+
+    // Display
+    document.getElementById('calc_p_' + loanid).textContent = '₹' + principal.toFixed(2);
+    document.getElementById('calc_i_' + loanid).textContent = '₹' + interestCollection.toFixed(2);
+    document.getElementById('calc_c_' + loanid).textContent = '₹' + chargesAmount.toFixed(2);
+    document.getElementById('calc_total_' + loanid).textContent = '₹' + prepaidAmount.toFixed(2);
+
+    // Hidden fields
+    document.getElementById('prepaid_amt_' + loanid).value = prepaidAmount.toFixed(2);
+    document.getElementById('charges_' + loanid).value = chargesAmount.toFixed(2);
+
+    document.getElementById('calc_' + loanid).style.display = 'block';
+}
+</script>
+{% endblock %}

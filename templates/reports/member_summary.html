@@ -1,0 +1,48 @@
+{% extends "base.html" %}
+{% block content %}
+
+<div class="container mt-4">
+<h3>Member Summary Report</h3>
+
+<form method="POST" class="card p-3 mb-3">
+    <div class="row">
+        <div class="col-md-4">
+            <label>Member Code</label>
+            <input type="text" name="member_code" class="form-control" value="{{ member_code }}" placeholder="Enter Member Code">
+        </div>
+        <div class="col-md-2 mt-4">
+            <button class="btn btn-primary">Generate</button>
+        </div>
+    </div>
+</form>
+
+<table class="table table-bordered">
+<thead class="table-dark">
+<tr>
+<th>Member Code</th>
+<th>Member Name</th>
+<th>Center</th>
+<th>Total Loans</th>
+<th>Total Loan Amount</th>
+<th>Principal Outstanding</th>
+<th>Interest Outstanding</th>
+</tr>
+</thead>
+
+<tbody>
+{% for r in rows %}
+<tr>
+<td>{{r.member_code}}</td>
+<td>{{r.full_name}}</td>
+<td>{{r.center_name}}</td>
+<td>{{r.total_loans}}</td>
+<td>{{r.total_loan_amount}}</td>
+<td>{{r.principal_outstanding}}</td>
+<td>{{r.interest_outstanding}}</td>
+</tr>
+{% endfor %}
+</tbody>
+</table>
+
+</div>
+{% endblock %}

@@ -1,0 +1,380 @@
+{% extends "base.html" %}
+
+{% block title %}System Updates - Ushodaya MACS Ltd{% endblock %}
+{% block page_title %}System Updates{% endblock %}
+
+{% block extra_css %}
+<style>
+    .header-card {
+        background: linear-gradient(135deg, #0c2a78 0%, #1857c9 100%);
+        color: white;
+        border-radius: 14px;
+        padding: 25px 28px;
+        margin-bottom: 30px;
+    }
+
+    .form-card {
+        background: white;
+        border-radius: 14px;
+        padding: 28px;
+        margin-bottom: 24px;
+        box-shadow: 0 2px 10px rgba(0,0,0,0.06);
+        border-left: 5px solid #0c2a78;
+    }
+
+    .current-version-card {
+        background: linear-gradient(135deg, #f0f9ff, #e0f2fe);
+        border: 2px solid #0c2a78;
+        border-radius: 12px;
+        padding: 25px;
+        text-align: center;
+    }
+
+    .version-number {
+        font-size: 3rem;
+        font-weight: 700;
+        color: #0c2a78;
+        margin-bottom: 10px;
+    }
+
+    .version-status {
+        color: #10b981;
+        font-weight: 600;
+        font-size: 1.1rem;
+    }
+
+    .update-item {
+        background: #f9fafb;
+        border-radius: 10px;
+        padding: 20px;
+        margin-bottom: 15px;
+        border: 2px solid #e5e7eb;
+        transition: all .2s;
+    }
+
+    .update-item:hover {
+        border-color: #0c2a78;
+        box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+    }
+
+    .update-item.critical {
+        border-color: #ef4444;
+        background: #fef2f2;
+    }
+
+    .update-header {
+        display: flex;
+        justify-content: space-between;
+        align-items: start;
+        margin-bottom: 15px;
+    }
+
+    .update-version {
+        font-size: 1.3rem;
+        font-weight: 700;
+        color: #1e293b;
+    }
+
+    .update-badge {
+        padding: 6px 16px;
+        border-radius: 20px;
+        font-weight: 600;
+        font-size: .85rem;
+    }
+
+    .badge-feature {
+        background: #dbeafe;
+        color: #1e40af;
+    }
+
+    .badge-security {
+        background: #fee2e2;
+        color: #991b1b;
+    }
+
+    .badge-critical {
+        background: #ef4444;
+        color: white;
+    }
+
+    .update-meta {
+        color: #6b7280;
+        font-size: .9rem;
+        margin-bottom: 15px;
+    }
+
+    .feature-list {
+        list-style: none;
+        padding-left: 0;
+    }
+
+    .feature-list li {
+        padding: 8px 0;
+        padding-left: 30px;
+        position: relative;
+    }
+
+    .feature-list li:before {
+        content: "✓";
+        position: absolute;
+        left: 0;
+        color: #10b981;
+        font-weight: 700;
+        font-size: 1.2rem;
+    }
+
+    .btn-download-update {
+        background: linear-gradient(135deg, #10b981, #059669);
+        color: white;
+        padding: 10px 24px;
+        border-radius: 8px;
+        text-decoration: none;
+        font-weight: 600;
+        display: inline-block;
+        margin-top: 10px;
+    }
+
+    .btn-download-update:hover {
+        color: white;
+        transform: translateY(-2px);
+        box-shadow: 0 4px 12px rgba(16, 185, 129, 0.3);
+    }
+
+    .timeline {
+        position: relative;
+        padding-left: 40px;
+    }
+
+    .timeline:before {
+        content: '';
+        position: absolute;
+        left: 15px;
+        top: 0;
+        bottom: 0;
+        width: 2px;
+        background: #e5e7eb;
+    }
+
+    .timeline-item {
+        position: relative;
+        padding-bottom: 30px;
+    }
+
+    .timeline-item:before {
+        content: '';
+        position: absolute;
+        left: -31px;
+        top: 5px;
+        width: 12px;
+        height: 12px;
+        border-radius: 50%;
+        background: #0c2a78;
+        border: 3px solid white;
+        box-shadow: 0 0 0 2px #0c2a78;
+    }
+
+    .timeline-date {
+        color: #6b7280;
+        font-size: .85rem;
+        font-weight: 600;
+        margin-bottom: 8px;
+    }
+
+    .timeline-version {
+        font-weight: 700;
+        color: #1e293b;
+        font-size: 1.1rem;
+        margin-bottom: 10px;
+    }
+
+    .timeline-changes {
+        list-style: none;
+        padding-left: 0;
+    }
+
+    .timeline-changes li {
+        color: #4b5563;
+        padding: 4px 0;
+        font-size: .9rem;
+    }
+
+    .info-box {
+        background: #dbeafe;
+        border-left: 4px solid #0c2a78;
+        padding: 15px;
+        border-radius: 8px;
+        margin-bottom: 20px;
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="container-fluid">
+    <div class="row justify-content-center">
+        <div class="col-lg-10">
+            <div class="header-card">
+                <h3 class="mb-1"><i class="bi bi-arrow-repeat me-2"></i>System Updates</h3>
+                <p class="mb-0" style="opacity: 0.9;">Check for latest updates and features</p>
+            </div>
+
+            {% with messages = get_flashed_messages(with_categories=true) %}
+                {% if messages %}{% for cat,msg in messages %}
+                <div class="alert alert-{{ cat }} alert-dismissible fade show">
+                    {{ msg }}
+                    <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+                </div>
+                {% endfor %}{% endif %}
+            {% endwith %}
+
+            <!-- Current Version -->
+            <div class="form-card">
+                <h4 class="mb-3"><i class="bi bi-info-circle me-2"></i>Current Version</h4>
+                <div class="current-version-card">
+                    <div class="version-number">v{{ current_version }}</div>
+                    <div class="version-status">
+                        <i class="bi bi-check-circle-fill me-2"></i>Up to Date
+                    </div>
+                    <p class="text-muted mb-0 mt-2">
+                        Released: {{ current_date.strftime('%d %B %Y') }}
+                    </p>
+                </div>
+            </div>
+
+            <!-- Available Updates -->
+            {% if available_updates %}
+            <div class="form-card">
+                <h4 class="mb-3">
+                    <i class="bi bi-cloud-download me-2"></i>Available Updates 
+                    <span class="badge bg-danger ms-2">{{ available_updates|length }}</span>
+                </h4>
+                
+                {% for update in available_updates %}
+                <div class="update-item {% if update.critical %}critical{% endif %}">
+                    <div class="update-header">
+                        <div>
+                            <div class="update-version">
+                                <i class="bi bi-box-seam me-2"></i>Version {{ update.version }}
+                                {% if update.critical %}
+                                <span class="badge-critical update-badge ms-2">
+                                    <i class="bi bi-exclamation-triangle-fill me-1"></i>CRITICAL
+                                </span>
+                                {% endif %}
+                            </div>
+                            <div class="update-meta">
+                                <i class="bi bi-calendar me-1"></i>{{ update.release_date.strftime('%d %B %Y') }}
+                                <span class="mx-2">|</span>
+                                <span class="{% if update.type == 'Security Patch' %}badge-security{% else %}badge-feature{% endif %} update-badge">
+                                    {{ update.type }}
+                                </span>
+                                <span class="mx-2">|</span>
+                                <i class="bi bi-hdd me-1"></i>{{ update.size }}
+                            </div>
+                        </div>
+                    </div>
+
+                    {% if update.critical %}
+                    <div class="alert alert-danger mb-3">
+                        <i class="bi bi-shield-fill-exclamation me-2"></i>
+                        <strong>Critical Update:</strong> This update contains important security fixes. 
+                        Please install as soon as possible.
+                    </div>
+                    {% endif %}
+
+                    <h6><strong>What's New:</strong></h6>
+                    <ul class="feature-list">
+                        {% for feature in update.features %}
+                        <li>{{ feature }}</li>
+                        {% endfor %}
+                    </ul>
+
+                    <a href="{{ url_for('help.download_update', version=update.version) }}" 
+                       class="btn-download-update">
+                        <i class="bi bi-download me-2"></i>Download Update
+                    </a>
+                </div>
+                {% endfor %}
+            </div>
+            {% else %}
+            <div class="form-card">
+                <h4 class="mb-3"><i class="bi bi-check-circle me-2"></i>System is Up to Date</h4>
+                <div class="text-center py-4">
+                    <i class="bi bi-check-circle" style="font-size: 4rem; color: #10b981;"></i>
+                    <p class="text-muted mt-3">You are running the latest version of the system.</p>
+                    <button class="btn btn-primary mt-3" onclick="location.reload()">
+                        <i class="bi bi-arrow-clockwise me-2"></i>Check Again
+                    </button>
+                </div>
+            </div>
+            {% endif %}
+
+            <!-- Update Instructions -->
+            <div class="form-card">
+                <h4 class="mb-3"><i class="bi bi-question-circle me-2"></i>How to Update</h4>
+                <div class="info-box">
+                    <i class="bi bi-info-circle-fill me-2"></i>
+                    <strong>Note:</strong> For manual updates, please contact technical support.
+                </div>
+                <ol class="list-group list-group-numbered">
+                    <li class="list-group-item">
+                        <strong>Create Backup:</strong> Always create a database backup before updating
+                    </li>
+                    <li class="list-group-item">
+                        <strong>Download Update:</strong> Click the download button for the desired update
+                    </li>
+                    <li class="list-group-item">
+                        <strong>Extract Files:</strong> Extract the update package to a temporary location
+                    </li>
+                    <li class="list-group-item">
+                        <strong>Stop Application:</strong> Close all application windows
+                    </li>
+                    <li class="list-group-item">
+                        <strong>Copy Files:</strong> Copy updated files to the application directory
+                    </li>
+                    <li class="list-group-item">
+                        <strong>Restart:</strong> Start the application and verify the update
+                    </li>
+                </ol>
+            </div>
+
+            <!-- Update History -->
+            <div class="form-card">
+                <h4 class="mb-3"><i class="bi bi-clock-history me-2"></i>Update History</h4>
+                <div class="timeline">
+                    {% for history in update_history %}
+                    <div class="timeline-item">
+                        <div class="timeline-date">
+                            {{ history.date.strftime('%d %B %Y') }}
+                        </div>
+                        <div class="timeline-version">
+                            Version {{ history.version }}
+                        </div>
+                        <ul class="timeline-changes">
+                            {% for change in history.changes %}
+                            <li>{{ change }}</li>
+                            {% endfor %}
+                        </ul>
+                    </div>
+                    {% endfor %}
+                </div>
+            </div>
+
+            <!-- Automatic Updates -->
+            <div class="form-card">
+                <h4 class="mb-3"><i class="bi bi-gear-fill me-2"></i>Update Settings</h4>
+                <div class="form-check form-switch mb-3">
+                    <input class="form-check-input" type="checkbox" id="autoCheck" checked>
+                    <label class="form-check-label" for="autoCheck">
+                        <strong>Automatically check for updates on startup</strong>
+                    </label>
+                </div>
+                <div class="form-check form-switch">
+                    <input class="form-check-input" type="checkbox" id="notifyCheck" checked>
+                    <label class="form-check-label" for="notifyCheck">
+                        <strong>Notify me when updates are available</strong>
+                    </label>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

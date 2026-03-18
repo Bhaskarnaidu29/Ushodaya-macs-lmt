@@ -1,0 +1,143 @@
+{% extends "base.html" %}
+{% block title %}FD List{% endblock %}
+
+{% block extra_css %}
+<style>
+  .fd-list-header {
+    background: linear-gradient(135deg, #1e3a8a 0%, #0d9488 100%);
+    color: #fff;
+    border-radius: 12px;
+    padding: 20px 28px;
+    margin-bottom: 20px;
+  }
+  .fd-table { width: 100%; font-size: .9rem; }
+  .fd-table thead th {
+    background: #1e40af;
+    color: #fff;
+    padding: 12px 10px;
+    white-space: nowrap;
+  }
+  .fd-table tbody td {
+    padding: 10px;
+    border-bottom: 1px solid #e2e8f0;
+    vertical-align: middle;
+  }
+  .fd-table tbody tr:hover { background: #eff6ff; }
+  .badge-active { background: #dcfce7; color: #15803d; padding: 4px 10px; border-radius: 12px; font-size: .8rem; }
+  .badge-matured { background: #fef9c3; color: #854d0e; padding: 4px 10px; border-radius: 12px; font-size: .8rem; }
+  .badge-freq { background: #e0e7ff; color: #3730a3; padding: 3px 8px; border-radius: 8px; font-size: .75rem; }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="container-fluid mt-4">
+
+  {# Header - Collections button REMOVED #}
+  <div class="fd-list-header d-flex justify-content-between align-items-center">
+    <div>
+      <h4 class="mb-0 fw-bold"><i class="bi bi-list-ul me-2"></i>All Fixed Deposits</h4>
+      <small style="opacity:.85;">View all FDs for your branch</small>
+    </div>
+    <div class="d-flex gap-2">
+      <a href="{{ url_for('fixeddeposit_bp.fixeddeposit') }}" class="btn btn-light btn-sm">
+        <i class="bi bi-plus-circle"></i> Create New FD
+      </a>
+      {# Collections button REMOVED as requested #}
+    </div>
+  </div>
+
+  {# Table #}
+  {% if fds %}
+  <div class="card border-0 shadow-sm">
+    <div class="card-body p-0">
+      <div class="table-responsive">
+        <table class="fd-table">
+          <thead>
+            <tr>
+              <th>#</th>
+              <th>FD Number</th>
+              <th>Member Code</th>
+              <th>Member Name</th>
+              <th>Deposit Date</th>
+              <th>Maturity Date</th>
+              <th>Deposit Amount</th>
+              <th>ROI (%)</th>
+              <th>Interest</th>
+              <th>Tenure</th>
+              <th>Frequency</th>
+              <th>Status</th>
+              <th>Actions</th>
+            </tr>
+          </thead>
+          <tbody>
+            {% for fd in fds %}
+            {# Columns: Id, FDNumber, MemberCode, MemberName, DepositDate, WithdrawDate,
+                        DepositAmount, ROI, InterestAmount, DepositTenure, FDStatus, PaymentFrequency #}
+            <tr>
+              <td>{{ loop.index }}</td>
+              <td><strong>{{ fd[1] }}</strong></td>
+              <td>{{ fd[2] }}</td>
+              <td>{{ fd[3] }}</td>
+              <td>{{ fd[4].strftime('%d-%b-%Y') if fd[4] else '' }}</td>
+              <td>{{ fd[5].strftime('%d-%b-%Y') if fd[5] else '' }}</td>
+              <td class="text-end">₹{{ "{:,.0f}".format(fd[6] or 0) }}</td>
+              <td class="text-center">{{ fd[7] }}%</td>
+              <td class="text-end">₹{{ "{:,.2f}".format(fd[8] or 0) }}</td>
+              <td class="text-center">{{ fd[9] }} months</td>
+              <td class="text-center">
+                {% set freq = fd[11] if fd[11] else 1 %}
+                {% if freq == 1 %}
+                <span class="badge-freq">Monthly</span>
+                {% elif freq == 3 %}
+                <span class="badge-freq">Quarterly</span>
+                {% elif freq == 6 %}
+                <span class="badge-freq">Half-Yearly</span>
+                {% elif freq == 12 %}
+                <span class="badge-freq">Yearly</span>
+                {% elif freq == 24 %}
+                <span class="badge-freq">2-Yearly</span>
+                {% else %}
+                <span class="badge-freq">Monthly</span>
+                {% endif %}
+              </td>
+              <td>
+                {% if fd[10] == 'Active' %}
+                <span class="badge-active"><i class="bi bi-check-circle"></i> Active</span>
+                {% else %}
+                <span class="badge-matured"><i class="bi bi-hourglass-bottom"></i> Matured</span>
+                {% endif %}
+              </td>
+              <td>
+                <a href="{{ url_for('fixeddeposit_bp.fd_view', fd_id=fd[0]) }}" 
+                   class="btn btn-sm btn-primary">
+                  <i class="bi bi-eye"></i> View
+                </a>
+              </td>
+            </tr>
+            {% endfor %}
+          </tbody>
+          <tfoot>
+            <tr style="background:#f8fafc;font-weight:600;">
+              <td colspan="6" class="text-end">TOTALS:</td>
+              <td class="text-end">₹{{ "{:,.0f}".format(total_deposit or 0) }}</td>
+              <td colspan="2" class="text-end">₹{{ "{:,.2f}".format(total_interest or 0) }}</td>
+              <td colspan="4"></td>
+            </tr>
+          </tfoot>
+        </table>
+      </div>
+    </div>
+  </div>
+  {% else %}
+  <div class="alert alert-info text-center py-5">
+    <i class="bi bi-inbox fs-1 d-block mb-3 opacity-50"></i>
+    <h5>No Fixed Deposits Found</h5>
+    <p class="text-muted mb-3">You haven't created any FDs yet.</p>
+    <a href="{{ url_for('fixeddeposit_bp.fixeddeposit') }}" class="btn btn-primary">
+      <i class="bi bi-plus-circle"></i> Create Your First FD
+    </a>
+  </div>
+  {% endif %}
+
+</div>
+{% endblock %}

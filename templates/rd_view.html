@@ -1,0 +1,207 @@
+{% extends "base.html" %}
+{% block title %}RD Details{% endblock %}
+
+{% block extra_css %}
+<style>
+  .rd-detail-card {
+    background: linear-gradient(135deg, #7c3aed 0%, #2563eb 100%);
+    color: #fff;
+    border-radius: 12px;
+    padding: 25px;
+    margin-bottom: 20px;
+  }
+  .info-row { display: flex; justify-content: space-between; padding: 8px 0; border-bottom: 1px solid rgba(255,255,255,.15); }
+  .info-row:last-child { border-bottom: none; }
+  .info-label { opacity: .75; font-size: .85rem; }
+  .info-value { font-weight: 600; }
+  .schedule-table { width: 100%; font-size: .88rem; }
+  .schedule-table thead th {
+    background: #7c3aed;
+    color: #fff;
+    padding: 10px;
+  }
+  .schedule-table tbody td {
+    padding: 8px 10px;
+    border-bottom: 1px solid #e2e8f0;
+  }
+  .schedule-table tbody tr:hover { background: #faf5ff; }
+  .row-paid { background: #f0fdf4; }
+  .row-pending { background: #fef9c3; }
+  .row-overdue { background: #fee2e2; }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="container-fluid mt-4">
+
+  {# RD Master Details #}
+  {% if rd %}
+  {# Columns: RDId, RDNumber, MemberCode, MemberName, MonthlyDeposit, 
+              Tenure, InterestRate, StartDate, MaturityDate, Status, BranchId #}
+  
+  <div class="rd-detail-card">
+    <div class="d-flex justify-content-between align-items-start mb-3">
+      <div>
+        <h4 class="mb-1 fw-bold">{{ rd[1] }}</h4>
+        <small style="opacity:.8;">Recurring Deposit Details</small>
+      </div>
+      <div class="d-flex gap-2">
+        <a href="{{ url_for('recurringdeposit_bp.rd_list') }}" class="btn btn-light btn-sm">
+          <i class="bi bi-arrow-left"></i> Back to List
+        </a>
+      </div>
+    </div>
+
+    <div class="row g-3">
+      <div class="col-md-6">
+        <div style="background:rgba(255,255,255,.1);border-radius:8px;padding:15px;">
+          <div class="info-row">
+            <span class="info-label">Member Code:</span>
+            <span class="info-value">{{ rd[2] }}</span>
+          </div>
+          <div class="info-row">
+            <span class="info-label">Member Name:</span>
+            <span class="info-value">{{ rd[3] }}</span>
+          </div>
+          <div class="info-row">
+            <span class="info-label">RD Status:</span>
+            <span class="info-value">
+              {% if rd[9] == 'Active' %}
+              ✓ {{ rd[9] }}
+              {% else %}
+              {{ rd[9] }}
+              {% endif %}
+            </span>
+          </div>
+        </div>
+      </div>
+
+      <div class="col-md-6">
+        <div style="background:rgba(255,255,255,.1);border-radius:8px;padding:15px;">
+          <div class="info-row">
+            <span class="info-label">Monthly Deposit:</span>
+            <span class="info-value">₹{{ "{:,.0f}".format(rd[4] or 0) }}</span>
+          </div>
+          <div class="info-row">
+            <span class="info-label">Tenure:</span>
+            <span class="info-value">{{ rd[5] }} months</span>
+          </div>
+          <div class="info-row">
+            <span class="info-label">Interest Rate:</span>
+            <span class="info-value">{{ rd[6] }}% p.a.</span>
+          </div>
+          <div class="info-row">
+            <span class="info-label">Total Deposits:</span>
+            <span class="info-value">₹{{ "{:,.0f}".format((rd[4] or 0) * (rd[5] or 0)) }}</span>
+          </div>
+        </div>
+      </div>
+
+      <div class="col-md-6">
+        <div style="background:rgba(255,255,255,.1);border-radius:8px;padding:15px;">
+          <div class="info-row">
+            <span class="info-label">Start Date:</span>
+            <span class="info-value">{{ rd[7].strftime('%d-%b-%Y') if rd[7] else '' }}</span>
+          </div>
+          <div class="info-row">
+            <span class="info-label">Maturity Date:</span>
+            <span class="info-value">{{ rd[8].strftime('%d-%b-%Y') if rd[8] else '' }}</span>
+          </div>
+        </div>
+      </div>
+
+      <div class="col-md-6">
+        <div style="background:rgba(255,255,255,.1);border-radius:8px;padding:15px;">
+          <div class="info-row">
+            <span class="info-label">Estimated Interest:</span>
+            <span class="info-value text-success">
+              ₹{{ "{:,.2f}".format(maturity_value - (rd[4] or 0) * (rd[5] or 0)) }}
+            </span>
+          </div>
+          <div class="info-row">
+            <span class="info-label">Maturity Value:</span>
+            <span class="info-value text-warning fs-5">
+              ₹{{ "{:,.2f}".format(maturity_value or 0) }}
+            </span>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  {# Collection Schedule #}
+  <div class="card border-0 shadow-sm">
+    <div class="card-header" style="background:#7c3aed;color:#fff;">
+      <h5 class="mb-0"><i class="bi bi-calendar3"></i> Collection Schedule</h5>
+    </div>
+    <div class="card-body p-0">
+      {% if collections %}
+      <div class="table-responsive">
+        <table class="schedule-table">
+          <thead>
+            <tr>
+              <th>#</th>
+              <th>Installment No</th>
+              <th>Due Date</th>
+              <th>Amount</th>
+              <th>Paid Amount</th>
+              <th>Paid Date</th>
+              <th>Status</th>
+            </tr>
+          </thead>
+          <tbody>
+            {% for col in collections %}
+            {# Columns: Id, InstallmentNo, DueDate, Amount, Status, PaidDate, PaidAmount #}
+            {% set is_paid = col[5] is not none %}
+            {% set is_overdue = (not is_paid) and col[2] and col[2] < today %}
+            <tr class="{{ 'row-paid' if is_paid else ('row-overdue' if is_overdue else 'row-pending') }}">
+              <td>{{ loop.index }}</td>
+              <td>{{ col[1] }}</td>
+              <td>
+                {{ col[2].strftime('%d-%b-%Y') if col[2] else '' }}
+                {% if is_overdue %}
+                <span class="badge bg-danger ms-1">Overdue</span>
+                {% endif %}
+              </td>
+              <td class="text-end">₹{{ "{:,.2f}".format(col[3] or 0) }}</td>
+              <td class="text-end">₹{{ "{:,.2f}".format(col[6] or 0) }}</td>
+              <td>{{ col[5].strftime('%d-%b-%Y') if col[5] else '—' }}</td>
+              <td>
+                {% if is_paid %}
+                <span class="badge bg-success"><i class="bi bi-check2"></i> Paid</span>
+                {% elif is_overdue %}
+                <span class="badge bg-danger"><i class="bi bi-exclamation-triangle"></i> Overdue</span>
+                {% else %}
+                <span class="badge bg-warning text-dark"><i class="bi bi-clock"></i> Pending</span>
+                {% endif %}
+              </td>
+            </tr>
+            {% endfor %}
+          </tbody>
+          <tfoot>
+            <tr style="background:#f8fafc;font-weight:600;">
+              <td colspan="3" class="text-end">TOTALS:</td>
+              <td class="text-end">₹{{ "{:,.2f}".format(collections|sum(attribute=3)) }}</td>
+              <td class="text-end">₹{{ "{:,.2f}".format(collections|sum(attribute=6)) }}</td>
+              <td colspan="2"></td>
+            </tr>
+          </tfoot>
+        </table>
+      </div>
+      {% else %}
+      <div class="alert alert-info m-3">No collection schedule found.</div>
+      {% endif %}
+    </div>
+  </div>
+
+  {% else %}
+  <div class="alert alert-warning">RD not found.</div>
+  {% endif %}
+
+</div>
+
+<script>
+// Pass today's date to template
+const TODAY = new Date("{{ today }}");
+</script>
+{% endblock %}

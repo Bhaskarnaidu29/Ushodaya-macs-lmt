@@ -1,0 +1,32 @@
+{% extends "base.html" %}
+{% block content %}
+
+<div class="container mt-4">
+<h3>Center Outstanding Report</h3>
+
+<table class="table table-bordered">
+<thead class="table-dark">
+<tr>
+<th>Center Name</th>
+<th>Total Members</th>
+<th>Principal Outstanding</th>
+<th>Interest Outstanding</th>
+<th>Total Outstanding</th>
+</tr>
+</thead>
+
+<tbody>
+{% for r in rows %}
+<tr>
+<td>{{r.center_name}}</td>
+<td>{{r.total_members}}</td>
+<td>{{r.principal_outstanding}}</td>
+<td>{{r.interest_outstanding}}</td>
+<td>{{r.total_outstanding}}</td>
+</tr>
+{% endfor %}
+</tbody>
+</table>
+
+</div>
+{% endblock %}

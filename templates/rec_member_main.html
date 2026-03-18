@@ -1,0 +1,282 @@
+{% extends "base.html" %}
+{% block title %}Member-wise Recovery{% endblock %}
+
+{% block extra_css %}
+<style>
+    .nav-tabs { border-bottom: 2px solid #667eea; }
+    .nav-tabs .nav-link { color: #667eea; font-weight: 600; }
+    .nav-tabs .nav-link.active { color: white; background: #667eea; }
+    
+    .member-card {
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        color: white;
+        padding: 20px;
+        border-radius: 10px;
+        margin-bottom: 20px;
+    }
+    .emi-row { background: white; padding: 15px; margin: 10px 0; border-radius: 8px; border-left: 4px solid #667eea; }
+    .input-sm { width: 100px; text-align: right; }
+    .auto-field { background: #e8f5e9 !important; }
+    .manual-field { background: #fff3e0 !important; }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="container-fluid mt-4">
+    <!-- Tabs -->
+    <ul class="nav nav-tabs mb-4">
+        <li class="nav-item">
+            <a class="nav-link active" href="{{ url_for('rec_member.member_recovery') }}">
+                <i class="bi bi-wallet2"></i> Regular Recovery
+            </a>
+        </li>
+        <li class="nav-item">
+            <a class="nav-link" href="{{ url_for('rec_member.member_prepaid') }}">
+                <i class="bi bi-check-circle"></i> Prepaid/Closure
+            </a>
+        </li>
+        <li class="nav-item">
+            <a class="nav-link" href="{{ url_for('rec_member.member_arrears') }}">
+                <i class="bi bi-exclamation-triangle"></i> Arrears Recovery
+            </a>
+        </li>
+    </ul>
+
+    <h2><i class="bi bi-person-circle"></i> Member-wise Recovery Posting</h2>
+    <p class="text-muted">Select member and post recovery | {{ today }}</p>
+
+    <!-- Member Selection -->
+    <div class="card mb-4">
+        <div class="card-body">
+            <form method="GET">
+                <div class="row">
+                    <div class="col-md-6">
+                        <label><strong>Select Member:</strong></label>
+                        <select class="form-control" name="member_code" onchange="this.form.submit()" required>
+                            <option value="">-- Select Member --</option>
+                            {% for member in members %}
+                            <option value="{{ member[0] }}" {% if selected_member == member[0] %}selected{% endif %}>
+                                {{ member[1] }} ({{ member[0] }})
+                            </option>
+                            {% endfor %}
+                        </select>
+                    </div>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- Member Info & Pending EMIs -->
+    {% if selected_member and member_info %}
+    <div class="member-card">
+        <div class="row">
+            <div class="col-md-6">
+                <h4><i class="bi bi-person-badge"></i> {{ member_info[1] }}</h4>
+                <p class="mb-0">Code: {{ member_info[0] }} | Center: {{ member_info[2] }}</p>
+            </div>
+            <div class="col-md-6 text-end">
+                <h5>Pending EMIs: {{ pending_emis|length }}</h5>
+            </div>
+        </div>
+    </div>
+
+    {% if pending_emis %}
+    <form method="POST" id="recoveryForm">
+        <input type="hidden" name="action" value="save">
+        <input type="hidden" name="member_code" value="{{ selected_member }}">
+
+        <div class="card">
+            <div class="card-header bg-primary text-white">
+                <strong>Pending EMIs for Recovery</strong>
+            </div>
+            <div class="card-body">
+                <div class="mb-3">
+                    <input type="checkbox" id="selectAll" onchange="toggleAll()">
+                    <strong> Select All</strong>
+                    <button type="button" class="btn btn-sm btn-info ms-2" onclick="autoFillAll()">
+                        <i class="bi bi-lightning-fill"></i> Auto-Fill
+                    </button>
+                </div>
+
+                {% for emi in pending_emis %}
+                {% set p_due = (emi[4] or 0) - (emi[7] or 0) %}
+                {% set i_due = (emi[5] or 0) - (emi[8] or 0) %}
+                {% set s_due = (emi[6] or 0) - (emi[9] or 0) %}
+                {% set as_due = (emi[10] or 0) %}
+                
+                <div class="emi-row">
+                    <div class="row align-items-center">
+                        <div class="col-md-1">
+                            <input type="checkbox" class="form-check-input emi-check" 
+                                   name="selected_loanrec" value="{{ emi[1] }}"
+                                   onchange="updateTotal()">
+                        </div>
+                        <div class="col-md-2">
+                            <strong>EMI #{{ emi[2] }}</strong><br>
+                            <small class="text-muted">{{ emi[3].strftime('%d-%b-%Y') if emi[3] else 'N/A' }}</small><br>
+                            <small class="text-primary">{{ emi[11] }}</small>
+                        </div>
+                        <div class="col-md-2">
+                            <label class="small">Principal</label>
+                            <input type="number" class="form-control input-sm" 
+                                   name="p_{{ emi[1] }}" id="p_{{ emi[1] }}"
+                                   data-due="{{ p_due }}" value="0" step="0.01" min="0"
+                                   onchange="calcEmiTotal({{ emi[1] }})">
+                            <small>Due: ₹{{ "%.2f"|format(p_due) }}</small>
+                        </div>
+                        <div class="col-md-2">
+                            <label class="small">Interest</label>
+                            <input type="number" class="form-control input-sm" 
+                                   name="i_{{ emi[1] }}" id="i_{{ emi[1] }}"
+                                   data-due="{{ i_due }}" value="0" step="0.01" min="0"
+                                   onchange="calcEmiTotal({{ emi[1] }})">
+                            <small>Due: ₹{{ "%.2f"|format(i_due) }}</small>
+                        </div>
+                        <div class="col-md-2">
+                            <label class="small">Savings (Auto)</label>
+                            <input type="number" class="form-control input-sm auto-field" 
+                                   name="s_{{ emi[1] }}" id="s_{{ emi[1] }}"
+                                   data-due="{{ s_due }}" value="0" step="0.01" min="0"
+                                   onchange="calcEmiTotal({{ emi[1] }})">
+                            <small>Due: ₹{{ "%.2f"|format(s_due) }}</small>
+                        </div>
+                        <div class="col-md-2">
+                            <label class="small">Add. Savings</label>
+                            <input type="number" class="form-control input-sm manual-field" 
+                                   name="as_{{ emi[1] }}" id="as_{{ emi[1] }}"
+                                   data-due="{{ as_due }}" value="0" step="0.01" min="0"
+                                   onchange="calcEmiTotal({{ emi[1] }})">
+                            <small>Due: ₹{{ "%.2f"|format(as_due) }}</small>
+                        </div>
+                        <div class="col-md-1">
+                            <strong id="total_{{ emi[1] }}">₹0.00</strong>
+                        </div>
+                    </div>
+                    <div class="row mt-2">
+                        <div class="col-md-3">
+                            <select class="form-select form-select-sm" name="mode_{{ emi[1] }}">
+                                <option value="Cash">Cash</option>
+                                <option value="Online">Online</option>
+                                <option value="Cheque">Cheque</option>
+                            </select>
+                        </div>
+                        <div class="col-md-3">
+                            <input type="number" class="form-control form-control-sm" 
+                                   name="adv_{{ emi[1] }}" placeholder="Advance" 
+                                   value="0" step="0.01" min="0">
+                        </div>
+                    </div>
+                </div>
+                {% endfor %}
+
+                <!-- Summary -->
+                <div class="card mt-4" style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white;">
+                    <div class="card-body">
+                        <h5>Collection Summary</h5>
+                        <div class="row text-center">
+                            <div class="col-md-2">
+                                <div>Selected</div>
+                                <h4 id="selectedCount">0</h4>
+                            </div>
+                            <div class="col-md-2">
+                                <div>Principal</div>
+                                <h4 id="sumPrincipal">₹0</h4>
+                            </div>
+                            <div class="col-md-2">
+                                <div>Interest</div>
+                                <h4 id="sumInterest">₹0</h4>
+                            </div>
+                            <div class="col-md-2">
+                                <div>Savings</div>
+                                <h4 id="sumSavings">₹0</h4>
+                            </div>
+                            <div class="col-md-2">
+                                <div>Add. Sav</div>
+                                <h4 id="sumAddl">₹0</h4>
+                            </div>
+                            <div class="col-md-2">
+                                <div>TOTAL</div>
+                                <h3 id="grandTotal">₹0</h3>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="text-center mt-4">
+                    <button type="submit" class="btn btn-success btn-lg">
+                        <i class="bi bi-cash-coin"></i> POST RECOVERY
+                    </button>
+                </div>
+            </div>
+        </div>
+    </form>
+    {% else %}
+    <div class="alert alert-info">
+        <i class="bi bi-info-circle"></i> No pending EMIs for this member.
+    </div>
+    {% endif %}
+    {% endif %}
+</div>
+
+<script>
+function toggleAll() {
+    const checked = document.getElementById('selectAll').checked;
+    document.querySelectorAll('.emi-check').forEach(cb => cb.checked = checked);
+    updateTotal();
+}
+
+function autoFillAll() {
+    document.querySelectorAll('.emi-check:checked').forEach(cb => {
+        const id = cb.value;
+        document.getElementById('p_' + id).value = parseFloat(document.getElementById('p_' + id).dataset.due).toFixed(2);
+        document.getElementById('i_' + id).value = parseFloat(document.getElementById('i_' + id).dataset.due).toFixed(2);
+        document.getElementById('s_' + id).value = parseFloat(document.getElementById('s_' + id).dataset.due).toFixed(2);
+        document.getElementById('as_' + id).value = parseFloat(document.getElementById('as_' + id).dataset.due).toFixed(2);
+        calcEmiTotal(id);
+    });
+}
+
+function calcEmiTotal(id) {
+    const p = parseFloat(document.getElementById('p_' + id)?.value || 0);
+    const i = parseFloat(document.getElementById('i_' + id)?.value || 0);
+    const s = parseFloat(document.getElementById('s_' + id)?.value || 0);
+    const a = parseFloat(document.getElementById('as_' + id)?.value || 0);
+    const total = p + i + s + a;
+    document.getElementById('total_' + id).textContent = '₹' + total.toFixed(2);
+    updateTotal();
+}
+
+function updateTotal() {
+    let count = 0, sumP = 0, sumI = 0, sumS = 0, sumA = 0;
+    document.querySelectorAll('.emi-check:checked').forEach(cb => {
+        const id = cb.value;
+        count++;
+        sumP += parseFloat(document.getElementById('p_' + id)?.value || 0);
+        sumI += parseFloat(document.getElementById('i_' + id)?.value || 0);
+        sumS += parseFloat(document.getElementById('s_' + id)?.value || 0);
+        sumA += parseFloat(document.getElementById('as_' + id)?.value || 0);
+    });
+    const tot = sumP + sumI + sumS + sumA;
+    document.getElementById('selectedCount').textContent = count;
+    document.getElementById('sumPrincipal').textContent = '₹' + sumP.toFixed(2);
+    document.getElementById('sumInterest').textContent = '₹' + sumI.toFixed(2);
+    document.getElementById('sumSavings').textContent = '₹' + sumS.toFixed(2);
+    document.getElementById('sumAddl').textContent = '₹' + sumA.toFixed(2);
+    document.getElementById('grandTotal').textContent = '₹' + tot.toFixed(2);
+}
+
+document.getElementById('recoveryForm')?.addEventListener('submit', function(e) {
+    const checked = document.querySelectorAll('.emi-check:checked').length;
+    if (checked === 0) {
+        e.preventDefault();
+        alert('Please select at least one EMI');
+        return false;
+    }
+    const total = document.getElementById('grandTotal').textContent;
+    if (!confirm('Post recovery?\nTotal: ' + total)) {
+        e.preventDefault();
+        return false;
+    }
+});
+</script>
+{% endblock %}

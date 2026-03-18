@@ -1,0 +1,259 @@
+{% extends "base.html" %}
+
+{% block title %}Loan Products{% endblock %}
+
+{% block content %}
+<div class="container-fluid mt-4">
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <div>
+            <h2><i class="bi bi-box-seam"></i> Loan Products</h2>
+            <p class="text-muted">Manage loan products and configurations</p>
+        </div>
+        <div>
+            <button class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#addProductModal">
+                <i class="bi bi-plus-circle"></i> Add New Product
+            </button>
+            <a href="{{ url_for('settings_bp.settings') }}" class="btn btn-outline-secondary">
+                <i class="bi bi-arrow-left"></i> Back
+            </a>
+        </div>
+    </div>
+
+    {% with msgs = get_flashed_messages(with_categories=true) %}
+    {% if msgs %}
+        {% for cat, msg in msgs %}
+        <div class="alert alert-{{ cat }} alert-dismissible fade show">
+            {{ msg }}
+            <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+        </div>
+        {% endfor %}
+    {% endif %}
+    {% endwith %}
+
+    <!-- Products Table -->
+    <div class="card">
+        <div class="card-body">
+            <div class="table-responsive">
+                <table class="table table-hover">
+                    <thead class="table-primary">
+                        <tr>
+                            <th>#</th>
+                            <th>Product Name</th>
+                            <th>Code</th>
+                            <th>Amount Range</th>
+                            <th>Interest Rate</th>
+                            <th>Tenure</th>
+                            <th>Security Deposit</th>
+                            <th>Status</th>
+                            <th>Actions</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for product in products %}
+                        <tr>
+                            <td>{{ loop.index }}</td>
+                            <td><strong>{{ product[1] }}</strong></td>
+                            <td>{{ product[2] }}</td>
+                            <td>₹{{ "{:,.0f}".format(product[4] or 0) }} - ₹{{ "{:,.0f}".format(product[5] or 0) }}</td>
+                            <td>{{ product[6] }}%</td>
+                            <td>{{ product[7] }}-{{ product[8] }} months</td>
+                            <td>{{ product[13] }}%</td>
+                            <td>
+                                {% if product[9] %}
+                                <span class="badge bg-success">Active</span>
+                                {% else %}
+                                <span class="badge bg-secondary">Inactive</span>
+                                {% endif %}
+                            </td>
+                            <td>
+                                <button class="btn btn-sm btn-info" data-bs-toggle="modal" data-bs-target="#viewProductModal{{ product[0] }}">
+                                    <i class="bi bi-eye"></i>
+                                </button>
+                                <form method="POST" style="display:inline;">
+                                    <input type="hidden" name="action" value="delete">
+                                    <input type="hidden" name="ProductID" value="{{ product[0] }}">
+                                    <button type="submit" class="btn btn-sm btn-danger" onclick="return confirm('Deactivate this product?')">
+                                        <i class="bi bi-trash"></i>
+                                    </button>
+                                </form>
+                            </td>
+                        </tr>
+
+                        <!-- View Modal -->
+                        <div class="modal fade" id="viewProductModal{{ product[0] }}">
+                            <div class="modal-dialog modal-lg">
+                                <div class="modal-content">
+                                    <div class="modal-header bg-info text-white">
+                                        <h5 class="modal-title">Product Details - {{ product[1] }}</h5>
+                                        <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+                                    </div>
+                                    <div class="modal-body">
+                                        <div class="row">
+                                            <div class="col-md-6">
+                                                <strong>Product Code:</strong> {{ product[2] }}<br>
+                                                <strong>Description:</strong> {{ product[3] or 'N/A' }}<br>
+                                                <strong>Min Amount:</strong> ₹{{ "{:,.2f}".format(product[4] or 0) }}<br>
+                                                <strong>Max Amount:</strong> ₹{{ "{:,.2f}".format(product[5] or 0) }}<br>
+                                                <strong>Interest Rate:</strong> {{ product[6] }}%<br>
+                                                <strong>Min Tenure:</strong> {{ product[7] }} months<br>
+                                                <strong>Max Tenure:</strong> {{ product[8] }} months<br>
+                                            </div>
+                                            <div class="col-md-6">
+                                                <strong>Processing Fee:</strong> ₹{{ "{:,.2f}".format(product[10] or 0) }}<br>
+                                                <strong>Savings (Weekly):</strong> {{ product[11] }}%<br>
+                                                <strong>Payment Frequency:</strong> {{ product[12] }}<br>
+                                                <strong>Security Deposit:</strong> {{ product[13] }}%<br>
+                                                <strong>Member Insurance:</strong> ₹{{ "{:,.2f}".format(product[14] or 0) }}<br>
+                                                <strong>Nominee Insurance:</strong> ₹{{ "{:,.2f}".format(product[15] or 0) }}<br>
+                                                <strong>Status:</strong> {{ 'Active' if product[9] else 'Inactive' }}
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Add Product Modal -->
+<div class="modal fade" id="addProductModal">
+    <div class="modal-dialog modal-xl">
+        <div class="modal-content">
+            <div class="modal-header bg-primary text-white">
+                <h5 class="modal-title">Add New Product</h5>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+            </div>
+            <form method="POST">
+                <div class="modal-body">
+                    <input type="hidden" name="action" value="add">
+                    
+                    <div class="row">
+                        <!-- Basic Info -->
+                        <div class="col-md-6">
+                            <h6 class="text-primary">Basic Information</h6>
+                            <div class="mb-3">
+                                <label class="form-label">Product Name <span class="text-danger">*</span></label>
+                                <input type="text" class="form-control" name="ProductName" required>
+                            </div>
+                            <div class="mb-3">
+                                <label class="form-label">Product Code</label>
+                                <input type="text" class="form-control" name="ProductCode">
+                            </div>
+                            <div class="mb-3">
+                                <label class="form-label">Description</label>
+                                <textarea class="form-control" name="Description" rows="2"></textarea>
+                            </div>
+                        </div>
+
+                        <!-- Amount & Tenure -->
+                        <div class="col-md-6">
+                            <h6 class="text-primary">Amount & Tenure</h6>
+                            <div class="mb-3">
+                                <label class="form-label">Min Amount (₹)</label>
+                                <input type="number" class="form-control" name="MinAmount" step="1000" value="0">
+                            </div>
+                            <div class="mb-3">
+                                <label class="form-label">Max Amount (₹)</label>
+                                <input type="number" class="form-control" name="MaxAmount" step="1000" value="0">
+                            </div>
+                            <div class="row">
+                                <div class="col-md-6">
+                                    <label class="form-label">Min Tenure (months)</label>
+                                    <input type="number" class="form-control" name="MinTenure" value="0">
+                                </div>
+                                <div class="col-md-6">
+                                    <label class="form-label">Max Tenure (months)</label>
+                                    <input type="number" class="form-control" name="MaxTenure" value="0">
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Interest & Charges -->
+                        <div class="col-md-6">
+                            <h6 class="text-primary mt-3">Interest & Charges</h6>
+                            <div class="mb-3">
+                                <label class="form-label">Interest Rate (%)</label>
+                                <input type="number" class="form-control" name="InterestRate" step="0.01" value="0">
+                            </div>
+                            <div class="mb-3">
+                                <label class="form-label">Processing Fee (₹)</label>
+                                <input type="number" class="form-control" name="ProcessingFee" step="0.01" value="0">
+                            </div>
+                            <div class="mb-3">
+                                <label class="form-label">Payment Frequency</label>
+                                <select class="form-select" name="PaymentFrequency">
+                                    <option value="Weekly">Weekly</option>
+                                    <option value="Monthly">Monthly</option>
+                                    <option value="Quarterly">Quarterly</option>
+                                </select>
+                            </div>
+                        </div>
+
+                        <!-- Savings & Deposits -->
+                        <div class="col-md-6">
+                            <h6 class="text-primary mt-3">Savings & Deposits</h6>
+                            <div class="mb-3">
+                                <label class="form-label">Savings (% of Loan, Weekly)</label>
+                                <input type="number" class="form-control" name="Savings" step="0.01" value="2.5" placeholder="2.5">
+                                <small class="text-muted">Example: 2.5% = LoanAmount * 2.5% weekly</small>
+                            </div>
+                            <div class="mb-3">
+                                <label class="form-label">Additional Savings (₹)</label>
+                                <input type="number" class="form-control" name="AdditionalSavings" step="0.01" value="0">
+                            </div>
+                            <div class="mb-3">
+                                <label class="form-label">Security Deposit (%)</label>
+                                <input type="number" class="form-control" name="SecurityDeposit" step="0.01" value="10" placeholder="10">
+                                <small class="text-muted">Usually 10% of loan amount</small>
+                            </div>
+                            <div class="mb-3">
+                                <label class="form-label">Interest on Security Deposit (%)</label>
+                                <input type="number" class="form-control" name="IntSecurityDeposit" step="0.01" value="0">
+                            </div>
+                        </div>
+
+                        <!-- Insurance -->
+                        <div class="col-md-6">
+                            <h6 class="text-primary mt-3">Insurance</h6>
+                            <div class="mb-3">
+                                <label class="form-label">Member Insurance (% one-time)</label>
+                                <input type="number" class="form-control" name="MemberInsurance" step="0.01" value="0.5" placeholder="0.5">
+                                <small class="text-muted">Usually 0.5% of loan amount</small>
+                            </div>
+                            <div class="mb-3">
+                                <label class="form-label">Nominee Insurance (% one-time)</label>
+                                <input type="number" class="form-control" name="NomineeInsurance" step="0.01" value="0.5" placeholder="0.5">
+                                <small class="text-muted">Usually 0.5% of loan amount</small>
+                            </div>
+                        </div>
+
+                        <!-- Options -->
+                        <div class="col-md-6">
+                            <h6 class="text-primary mt-3">Options</h6>
+                            <div class="form-check mb-2">
+                                <input class="form-check-input" type="checkbox" name="Active" checked>
+                                <label class="form-check-label">Active</label>
+                            </div>
+                            <div class="form-check mb-2">
+                                <input class="form-check-input" type="checkbox" name="FixedTenure">
+                                <label class="form-check-label">Fixed Tenure</label>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+                    <button type="submit" class="btn btn-primary">
+                        <i class="bi bi-check-circle"></i> Add Product
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+{% endblock %}

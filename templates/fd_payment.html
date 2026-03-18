@@ -1,0 +1,147 @@
+{% extends "base.html" %}
+{% block title %}Post FD Payment{% endblock %}
+
+{% block extra_css %}
+<style>
+  .payment-header {
+    background: linear-gradient(135deg, #16a34a 0%, #0d9488 100%);
+    color: #fff;
+    border-radius: 12px;
+    padding: 20px 28px;
+    margin-bottom: 20px;
+  }
+  .payment-table { width: 100%; font-size: .88rem; }
+  .payment-table thead th {
+    background: #16a34a;
+    color: #fff;
+    padding: 10px;
+  }
+  .payment-table tbody td {
+    padding: 10px;
+    border-bottom: 1px solid #e2e8f0;
+    vertical-align: middle;
+  }
+  .payment-table tbody tr:hover { background: #f0fdf4; }
+  .payment-input {
+    width: 100px;
+    padding: 5px 8px;
+    border: 1px solid #d1d5db;
+    border-radius: 5px;
+    text-align: right;
+  }
+  .row-paid { background: #dcfce7; }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="container-fluid mt-4">
+
+  <div class="payment-header d-flex justify-content-between align-items-center">
+    <div>
+      <h4 class="mb-0 fw-bold"><i class="bi bi-cash-coin me-2"></i>Post FD Payment</h4>
+      <small style="opacity:.85;">Record interest and principal payments</small>
+    </div>
+    <a href="{{ url_for('fixeddeposit_bp.fd_view', fd_id=fd_id) }}" class="btn btn-light btn-sm">
+      <i class="bi bi-arrow-left"></i> Back to FD Details
+    </a>
+  </div>
+
+  {% if payments %}
+  {# Columns: FDNumber, MemberName, DepositAmount, Id, MaturityDate, 
+              InterestDue, InterestPaid, DepositPaid, PaidDate #}
+  
+  <div class="card border-0 shadow-sm mb-3">
+    <div class="card-header bg-light">
+      <div class="row">
+        <div class="col-md-4">
+          <strong>FD Number:</strong> {{ payments[0][0] }}
+        </div>
+        <div class="col-md-4">
+          <strong>Member:</strong> {{ payments[0][1] }}
+        </div>
+        <div class="col-md-4">
+          <strong>Deposit:</strong> ₹{{ "{:,.0f}".format(payments[0][2] or 0) }}
+        </div>
+      </div>
+    </div>
+  </div>
+
+  {# Payment Form #}
+  <div class="card border-0 shadow-sm">
+    <div class="card-body p-0">
+      <div class="table-responsive">
+        <table class="payment-table">
+          <thead>
+            <tr>
+              <th>#</th>
+              <th>Maturity Date</th>
+              <th>Interest Due</th>
+              <th>Interest Paid</th>
+              <th>Deposit Paid</th>
+              <th>Paid Date</th>
+              <th>Status</th>
+              <th>Action</th>
+            </tr>
+          </thead>
+          <tbody>
+            {% for pmt in payments %}
+            {% set is_paid = pmt[8] is not none %}
+            <tr class="{{ 'row-paid' if is_paid else '' }}">
+              <td>{{ loop.index }}</td>
+              <td>{{ pmt[4].strftime('%d-%b-%Y') if pmt[4] else '' }}</td>
+              <td class="text-end">₹{{ "{:,.2f}".format(pmt[5] or 0) }}</td>
+              <td class="text-end">₹{{ "{:,.2f}".format(pmt[6] or 0) }}</td>
+              <td class="text-end">₹{{ "{:,.0f}".format(pmt[7] or 0) }}</td>
+              <td>{{ pmt[8].strftime('%d-%b-%Y') if pmt[8] else '—' }}</td>
+              <td>
+                {% if is_paid %}
+                <span class="badge bg-success">Paid</span>
+                {% else %}
+                <span class="badge bg-warning text-dark">Pending</span>
+                {% endif %}
+              </td>
+              <td>
+                {% if not is_paid %}
+                <form method="POST" class="d-inline" 
+                      onsubmit="return confirm('Post this payment?')">
+                  <input type="hidden" name="collection_id" value="{{ pmt[3] }}">
+                  <input type="number" name="interest_paid" 
+                         class="payment-input mb-1" 
+                         placeholder="Interest"
+                         value="{{ "{:.2f}".format(pmt[5] or 0) }}"
+                         step="0.01" min="0">
+                  <input type="number" name="deposit_paid" 
+                         class="payment-input mb-1" 
+                         placeholder="Deposit"
+                         value="{{ "{:.0f}".format(pmt[7] or 0) if loop.last else '0' }}"
+                         step="0.01" min="0">
+                  <input type="date" name="paid_date" 
+                         class="payment-input mb-1"
+                         value="{{ today }}">
+                  <button type="submit" class="btn btn-sm btn-success">
+                    <i class="bi bi-check2"></i> Post
+                  </button>
+                </form>
+                {% else %}
+                —
+                {% endif %}
+              </td>
+            </tr>
+            {% endfor %}
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+
+  <div class="alert alert-info mt-3">
+    <i class="bi bi-info-circle"></i>
+    <strong>Note:</strong> Interest is paid monthly. Deposit (principal) is repaid only on the last installment.
+  </div>
+
+  {% else %}
+  <div class="alert alert-warning">No payment schedule found for this FD.</div>
+  {% endif %}
+
+</div>
+{% endblock %}

@@ -1,0 +1,361 @@
+{% extends "base.html" %}
+
+{% block title %}Create Fixed Deposit - Ushodaya MACS Ltd{% endblock %}
+{% block page_title %}Create Fixed Deposit{% endblock %}
+
+{% block extra_css %}
+<style>
+    .form-card {
+        background: white;
+        border-radius: 14px;
+        padding: 28px;
+        margin-bottom: 24px;
+        box-shadow: 0 2px 10px rgba(0,0,0,0.06);
+        border-left: 5px solid #0c2a78;
+    }
+
+    .info-box {
+        background: linear-gradient(135deg, #dbeafe, #bfdbfe);
+        border-left: 4px solid #0c2a78;
+        padding: 16px;
+        border-radius: 8px;
+        margin-bottom: 20px;
+    }
+
+    .autocomplete {
+        position: relative;
+    }
+
+    .autocomplete-items {
+        position: absolute;
+        border: 1px solid #d4d4d4;
+        border-top: none;
+        z-index: 99;
+        top: 100%;
+        left: 0;
+        right: 0;
+        max-height: 300px;
+        overflow-y: auto;
+        background: white;
+        box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+    }
+
+    .autocomplete-items div {
+        padding: 12px;
+        cursor: pointer;
+        background-color: #fff;
+        border-bottom: 1px solid #d4d4d4;
+    }
+
+    .autocomplete-items div:hover {
+        background-color: #e9e9e9;
+    }
+
+    .autocomplete-active {
+        background-color: #0c2a78 !important;
+        color: #ffffff;
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="container-fluid">
+    <div class="row justify-content-center">
+        <div class="col-lg-10">
+            
+            <div class="info-box">
+                <i class="bi bi-info-circle-fill me-2"></i>
+                <strong>Fixed Deposit Creation:</strong> Enter member details, deposit amount, tenure, and payment frequency.
+                Interest will be calculated automatically based on ROI and tenure.
+            </div>
+
+            <div class="form-card">
+                <h4 class="mb-4"><i class="bi bi-plus-circle me-2"></i>New Fixed Deposit</h4>
+
+                <form method="POST" class="needs-validation" novalidate>
+                    
+                    <div class="row">
+                        <!-- Member Code -->
+                        <div class="col-md-6 mb-3">
+                            <label class="form-label required">Member Code</label>
+                            <div class="autocomplete">
+                                <input type="text" 
+                                       class="form-control" 
+                                       name="MemberCode" 
+                                       id="MemberCode" 
+                                       placeholder="Start typing member code or name"
+                                       required>
+                            </div>
+                        </div>
+
+                        <!-- Member Name -->
+                        <div class="col-md-6 mb-3">
+                            <label class="form-label required">Member Name</label>
+                            <input type="text" 
+                                   class="form-control" 
+                                   name="MemberName" 
+                                   id="MemberName" 
+                                   readonly 
+                                   required>
+                        </div>
+                    </div>
+
+                    <div class="row">
+                        <!-- Joint Name -->
+                        <div class="col-md-6 mb-3">
+                            <label class="form-label">Joint Name (Optional)</label>
+                            <input type="text" 
+                                   class="form-control" 
+                                   name="JointName" 
+                                   placeholder="Joint account holder name">
+                        </div>
+
+                        <!-- Aadhar Number -->
+                        <div class="col-md-6 mb-3">
+                            <label class="form-label">Aadhar Number</label>
+                            <input type="text" 
+                                   class="form-control" 
+                                   name="AadharNumber" 
+                                   id="AadharNumber" 
+                                   readonly>
+                        </div>
+                    </div>
+
+                    <div class="row">
+                        <!-- Deposit Date -->
+                        <div class="col-md-6 mb-3">
+                            <label class="form-label required">Deposit Date</label>
+                            <input type="date" 
+                                   class="form-control" 
+                                   name="DepositDate" 
+                                   value="{{ today }}" 
+                                   required>
+                        </div>
+
+                        <!-- Deposit Amount -->
+                        <div class="col-md-6 mb-3">
+                            <label class="form-label required">Deposit Amount (₹)</label>
+                            <input type="number" 
+                                   class="form-control" 
+                                   name="DepositAmount" 
+                                   id="DepositAmount"
+                                   step="0.01" 
+                                   min="1000"
+                                   placeholder="Enter amount"
+                                   required>
+                        </div>
+                    </div>
+
+                    <div class="row">
+                        <!-- Deposit Tenure -->
+                        <div class="col-md-4 mb-3">
+                            <label class="form-label required">Deposit Tenure (Months)</label>
+                            <select class="form-select" name="DepositTenure" id="DepositTenure" required>
+                                <option value="">Select Tenure</option>
+                                <option value="12">12 Months (1 Year)</option>
+                                <option value="24">24 Months (2 Years)</option>
+                                <option value="36">36 Months (3 Years)</option>
+                                <option value="48">48 Months (4 Years)</option>
+                                <option value="60">60 Months (5 Years)</option>
+                            </select>
+                        </div>
+
+                        <!-- Payment Frequency -->
+                        <div class="col-md-4 mb-3">
+                            <label class="form-label required">Payment Frequency</label>
+                            <select class="form-select" name="PaymentFrequency" id="PaymentFrequency" required>
+                                <option value="">Select Frequency</option>
+                                <option value="1">Monthly (12 payments/year)</option>
+                                <option value="3">Quarterly (4 payments/year)</option>
+                                <option value="6">Half-Yearly (2 payments/year)</option>
+                                <option value="12">Yearly (1 payment/year)</option>
+                                <option value="24">2-Yearly (1 payment/2 years)</option>
+                            </select>
+                            <small class="text-muted">Determines how often interest is paid</small>
+                        </div>
+
+                        <!-- ROI -->
+                        <div class="col-md-4 mb-3">
+                            <label class="form-label required">Rate of Interest (%)</label>
+                            <input type="number" 
+                                   class="form-control" 
+                                   name="ROI" 
+                                   id="ROI"
+                                   step="0.01" 
+                                   min="0.01"
+                                   max="30"
+                                   placeholder="e.g., 8.5"
+                                   required>
+                        </div>
+                    </div>
+
+                    <div class="row">
+                        <!-- Nominee Name -->
+                        <div class="col-md-6 mb-3">
+                            <label class="form-label">Nominee Name</label>
+                            <input type="text" 
+                                   class="form-control" 
+                                   name="NomineeName" 
+                                   placeholder="Nominee name">
+                        </div>
+
+                        <!-- Remarks -->
+                        <div class="col-md-6 mb-3">
+                            <label class="form-label">Remarks</label>
+                            <textarea class="form-control" 
+                                      name="Remarks" 
+                                      rows="2" 
+                                      placeholder="Any additional notes"></textarea>
+                        </div>
+                    </div>
+
+                    <!-- Calculated Values Display -->
+                    <div id="calculationResult" class="alert alert-info" style="display: none;">
+                        <strong>Preview:</strong>
+                        <div class="mt-2">
+                            <span id="interestDisplay"></span><br>
+                            <span id="maturityDisplay"></span><br>
+                            <span id="paymentsDisplay"></span>
+                        </div>
+                    </div>
+
+                    <div class="d-flex gap-2 mt-4">
+                        <button type="submit" class="btn btn-primary">
+                            <i class="bi bi-save me-2"></i>Create Fixed Deposit
+                        </button>
+                        <a href="{{ url_for('fixeddeposit_bp.fd_list') }}" class="btn btn-secondary">
+                            <i class="bi bi-x-circle me-2"></i>Cancel
+                        </a>
+                        <button type="button" class="btn btn-info" id="calculateBtn">
+                            <i class="bi bi-calculator me-2"></i>Calculate Preview
+                        </button>
+                    </div>
+
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+// Member autocomplete
+const memberCodeInput = document.getElementById('MemberCode');
+const memberNameInput = document.getElementById('MemberName');
+const aadharInput = document.getElementById('AadharNumber');
+let autocompleteList;
+
+memberCodeInput.addEventListener('input', function() {
+    const val = this.value.trim();
+    closeAllLists();
+    
+    if (val.length < 2) return;
+    
+    fetch(`{{ url_for('fixeddeposit_bp.member_lookup') }}?prefix=${encodeURIComponent(val)}`)
+        .then(r => r.json())
+        .then(data => {
+            if (data.length === 0) return;
+            
+            autocompleteList = document.createElement('div');
+            autocompleteList.className = 'autocomplete-items';
+            memberCodeInput.parentNode.appendChild(autocompleteList);
+            
+            data.forEach(member => {
+                const div = document.createElement('div');
+                div.innerHTML = `
+                    <strong>${member.member_code}</strong> - ${member.full_name}
+                    <br><small>${member.aadhaar || 'No Aadhar'} | ${member.phone1 || 'No Phone'}</small>
+                `;
+                div.addEventListener('click', function() {
+                    memberCodeInput.value = member.member_code;
+                    memberNameInput.value = member.full_name;
+                    aadharInput.value = member.aadhaar || '';
+                    closeAllLists();
+                });
+                autocompleteList.appendChild(div);
+            });
+        })
+        .catch(err => console.error('Autocomplete error:', err));
+});
+
+function closeAllLists() {
+    const items = document.getElementsByClassName('autocomplete-items');
+    Array.from(items).forEach(item => item.parentNode.removeChild(item));
+}
+
+document.addEventListener('click', function(e) {
+    if (e.target !== memberCodeInput) {
+        closeAllLists();
+    }
+});
+
+// Calculate preview
+document.getElementById('calculateBtn').addEventListener('click', function() {
+    const amount = parseFloat(document.getElementById('DepositAmount').value) || 0;
+    const roi = parseFloat(document.getElementById('ROI').value) || 0;
+    const tenure = parseInt(document.getElementById('DepositTenure').value) || 0;
+    const frequency = parseInt(document.getElementById('PaymentFrequency').value) || 1;
+    
+    if (amount <= 0 || roi <= 0 || tenure <= 0) {
+        alert('Please fill in all required fields');
+        return;
+    }
+    
+    // Calculate total interest
+    const years = tenure / 12.0;
+    const totalInterest = (amount * roi * years) / 100.0;
+    const maturityAmount = amount + totalInterest;
+    
+    // Calculate number of payments
+    let numPayments;
+    let frequencyName;
+    
+    if (frequency === 1) {
+        numPayments = tenure;
+        frequencyName = "Monthly";
+    } else if (frequency === 3) {
+        numPayments = Math.floor(tenure / 3);
+        frequencyName = "Quarterly";
+    } else if (frequency === 6) {
+        numPayments = Math.floor(tenure / 6);
+        frequencyName = "Half-Yearly";
+    } else if (frequency === 12) {
+        numPayments = Math.floor(tenure / 12);
+        frequencyName = "Yearly";
+    } else if (frequency === 24) {
+        numPayments = Math.floor(tenure / 24);
+        frequencyName = "2-Yearly";
+    } else {
+        numPayments = tenure;
+        frequencyName = "Monthly";
+    }
+    
+    if (numPayments === 0) numPayments = 1;
+    
+    const interestPerPayment = totalInterest / numPayments;
+    
+    // Display results
+    document.getElementById('interestDisplay').innerHTML = 
+        `Total Interest: <strong>₹${totalInterest.toFixed(2)}</strong> | ` +
+        `Maturity Amount: <strong>₹${maturityAmount.toFixed(2)}</strong>`;
+    
+    document.getElementById('maturityDisplay').innerHTML = 
+        `Interest per payment: <strong>₹${interestPerPayment.toFixed(2)}</strong>`;
+    
+    document.getElementById('paymentsDisplay').innerHTML = 
+        `Number of ${frequencyName} payments: <strong>${numPayments}</strong>`;
+    
+    document.getElementById('calculationResult').style.display = 'block';
+});
+
+// Set today's date
+document.addEventListener('DOMContentLoaded', function() {
+    const today = new Date().toISOString().split('T')[0];
+    const dateInput = document.querySelector('input[name="DepositDate"]');
+    if (dateInput && !dateInput.value) {
+        dateInput.value = today;
+    }
+});
+</script>
+{% endblock %}

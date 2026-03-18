@@ -1,0 +1,331 @@
+{% extends "base.html" %}
+{% block title %}Disburse Loan - Ushodaya MACS Ltd{% endblock %}
+{% block page_title %}Disburse Loan{% endblock %}
+
+{# application tuple (GET):
+   [0]=AppID  [1]=MemberCode  [2]=MemberName  [3]=phone1  [4]=CenterName
+   [5]=LoanAmountApproved  [6]=ProductName  [7]=InterestRate  [8]=Tenure
+   [9]=ProcessingFee%  [10]=MemberInsurance%  [11]=NomineeInsurance%
+   [12]=Savings%  [13]=AdditionalSavings%  [14]=SecurityDeposit%
+   [15]=PaymentFrequency  [16]=collection_day  [17]=weekly_collection_day
+   charges dict (Rs): processingfee, memberinsurancefee, nomineeinsurancefee,
+                      savingsdueamount, securitydepositamount
+#}
+
+{% block extra_css %}
+<style>
+.page-hdr{background:linear-gradient(135deg,#10b981,#059669);color:#fff;border-radius:14px;padding:22px 28px;margin-bottom:20px}
+.back-btn{background:#fff;color:#059669;padding:8px 18px;border-radius:8px;font-weight:700;text-decoration:none;display:inline-flex;align-items:center;gap:6px;font-size:.88rem}
+.back-btn:hover{opacity:.85}
+.info-card{background:#fff;border-radius:12px;padding:22px 24px;margin-bottom:16px;box-shadow:0 2px 10px rgba(0,0,0,.06)}
+.sec-title{font-size:.9rem;font-weight:700;color:#0c2a78;border-bottom:2px solid #0c2a78;padding-bottom:7px;margin-bottom:16px;display:flex;align-items:center;gap:8px}
+.det-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(185px,1fr));gap:12px}
+.det-item{background:#f8fafc;border-left:4px solid #0c2a78;border-radius:8px;padding:12px 14px}
+.det-lbl{font-size:.72rem;color:#6b7280;font-weight:600;text-transform:uppercase;margin-bottom:4px}
+.det-val{font-size:.96rem;font-weight:700;color:#1e293b}
+.emi-live{background:linear-gradient(135deg,#0c2a78,#1857c9);color:#fff;border-radius:12px;padding:20px;text-align:center;margin-bottom:16px}
+.emi-live .lbl{font-size:.88rem;opacity:.85}
+.emi-live .val{font-size:2.3rem;font-weight:800}
+.emi-live .note{font-size:.75rem;opacity:.75;margin-top:4px}
+.charge-card{background:#fef9ec;border:2px solid #fde68a;border-radius:12px;padding:18px 22px;margin-bottom:16px}
+.charge-row{display:flex;justify-content:space-between;align-items:center;padding:7px 0;border-bottom:1px solid rgba(0,0,0,.06);font-size:.88rem}
+.charge-row:last-child{border-bottom:none}
+.pct-badge{font-size:.7rem;background:#fde68a;color:#92400e;border-radius:4px;padding:1px 6px;margin-left:5px}
+.charge-total{font-weight:700;color:#92400e;display:flex;justify-content:space-between;margin-top:10px;padding-top:10px;border-top:2px solid #fcd34d;font-size:.95rem}
+.net-box{background:#d1fae5;border:2px solid #6ee7b7;border-radius:8px;padding:10px 14px;font-size:.88rem;color:#065f46;margin-top:8px;font-weight:700}
+.disburse-form{background:#eff6ff;border:2px solid #bfdbfe;border-radius:12px;padding:22px 24px;margin-bottom:16px}
+.form-label{font-weight:600;color:#374151;font-size:.88rem}
+.form-control,.form-select{border:2px solid #e5e7eb;border-radius:8px;padding:10px 13px;font-size:.92rem}
+.form-control:focus,.form-select:focus{border-color:#0c2a78;outline:none;box-shadow:0 0 0 3px rgba(12,42,120,.1)}
+.editable-amt{border-color:#f59e0b !important;background:#fffbeb !important;}
+.addl-inp{border-color:#c4b5fd !important;background:#faf5ff !important;}
+.btn-disburse{background:linear-gradient(135deg,#10b981,#059669);color:#fff;padding:13px 36px;border-radius:9px;font-weight:700;font-size:.95rem;border:none;cursor:pointer;display:inline-flex;align-items:center;gap:7px;transition:all .2s}
+.btn-disburse:hover{transform:translateY(-1px);box-shadow:0 6px 18px rgba(16,185,129,.4)}
+.btn-cancel{background:#f1f5f9;color:#475569;padding:13px 36px;border-radius:9px;font-weight:700;font-size:.95rem;text-decoration:none;display:inline-flex;align-items:center;gap:7px}
+.btn-cancel:hover{background:#e2e8f0}
+.freq-pill{display:inline-block;background:#fff;color:#059669;padding:7px 20px;border-radius:20px;font-weight:800;font-size:.95rem;margin-top:8px;box-shadow:0 2px 8px rgba(0,0,0,.1)}
+.changed-tag{display:none;font-size:.72rem;background:#f59e0b;color:#fff;border-radius:4px;padding:1px 7px;margin-left:6px}
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="container-fluid">
+<div class="row justify-content-center">
+<div class="col-lg-10 col-xl-9">
+
+  {% with messages = get_flashed_messages(with_categories=true) %}
+    {% if messages %}{% for cat,msg in messages %}
+    <div class="alert alert-{{cat}} alert-dismissible fade show">
+      <i class="bi bi-info-circle me-2"></i>{{msg}}
+      <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+    </div>
+    {% endfor %}{% endif %}
+  {% endwith %}
+
+  <!-- Header -->
+  <div class="page-hdr d-flex justify-content-between align-items-center flex-wrap gap-2">
+    <div>
+      <h4 class="fw-bold mb-1"><i class="bi bi-send-fill me-2"></i>Disburse Loan</h4>
+      <small style="opacity:.85">Complete disbursement for <strong>{{ application[2] }}</strong></small>
+      <div>
+        <span class="freq-pill">
+          <i class="bi bi-calendar-week me-1"></i>
+          {% if is_weekly %}WEEKLY{% else %}MONTHLY{% endif %} LOAN
+          &nbsp;—&nbsp; Collection: <strong>{{ collection_info }}</strong>
+        </span>
+      </div>
+    </div>
+    <a href="{{ url_for('loans.index') }}" class="back-btn"><i class="bi bi-arrow-left"></i> Back</a>
+  </div>
+
+  <!-- Member Details -->
+  <div class="info-card">
+    <div class="sec-title"><i class="bi bi-person-circle"></i> Member &amp; Loan Details</div>
+    <div class="det-grid">
+      <div class="det-item"><div class="det-lbl">Member Code</div><div class="det-val">{{ application[1] }}</div></div>
+      <div class="det-item"><div class="det-lbl">Member Name</div><div class="det-val">{{ application[2] or '—' }}</div></div>
+      <div class="det-item"><div class="det-lbl">Phone</div><div class="det-val">{{ application[3] or 'N/A' }}</div></div>
+      <div class="det-item"><div class="det-lbl">Center</div><div class="det-val">{{ application[4] or '—' }}</div></div>
+      <div class="det-item"><div class="det-lbl">Product</div><div class="det-val">{{ application[6] or '—' }}</div></div>
+      <div class="det-item"><div class="det-lbl">Interest Rate</div><div class="det-val">{{ application[7] or 0 }}% p.a.</div></div>
+      <div class="det-item"><div class="det-lbl">Tenure</div><div class="det-val">{{ application[8] or 0 }} {% if is_weekly %}Weeks{% else %}Months{% endif %}</div></div>
+      <div class="det-item" style="border-left-color:#f59e0b">
+        <div class="det-lbl">Collection Day</div>
+        <div class="det-val" style="color:#92400e">{{ collection_info }}</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Disbursement Form -->
+  <div class="disburse-form">
+    <h6 style="color:#1d4ed8;margin-bottom:18px"><i class="bi bi-clipboard-check me-2"></i>Disbursement Details</h6>
+
+    <form method="POST" action="{{ url_for('loans.confirm_disburse', app_id=application[0]) }}" id="disburseForm">
+      <div class="row g-3">
+
+        <!-- Disbursement Date -->
+        <div class="col-md-4">
+          <label class="form-label"><i class="bi bi-calendar-event me-1"></i>Disbursement Date <span style="color:red">*</span></label>
+          <input type="date" class="form-control" name="disbursement_date" required value="{{ today }}">
+        </div>
+
+        <!-- Actual Loan Amount (editable) -->
+        <div class="col-md-4">
+          <label class="form-label">
+            <i class="bi bi-currency-rupee me-1"></i>Actual Loan Amount <span style="color:red">*</span>
+            <span class="changed-tag" id="changedTag">CHANGED</span>
+          </label>
+          <input type="number" class="form-control editable-amt"
+                 name="actual_loan_amount" id="loanAmtInput"
+                 required step="1" min="1"
+                 value="{{ application[5]|int if application[5] else 0 }}"
+                 data-approved="{{ application[5]|float if application[5] else 0 }}"
+                 data-rate="{{ application[7]|float if application[7] else 0 }}"
+                 data-tenure="{{ application[8]|int if application[8] else 0 }}"
+                 data-weekly="{{ 'true' if is_weekly else 'false' }}"
+                 data-proc="{{ application[9]|float or 0 }}"
+                 data-memins="{{ application[10]|float or 0 }}"
+                 data-nomins="{{ application[11]|float or 0 }}"
+                 data-sav="{{ application[12]|float or 0 }}"
+                 data-secdep="{{ application[14]|float or 0 }}"
+                 oninput="recalcAll()">
+          <small class="text-muted">Approved: <strong>&#8377;{{ "{:,.0f}".format(application[5]|float) if application[5] else '0' }}</strong> — change if disbursing a different amount</small>
+        </div>
+
+        <!-- Payment Mode -->
+        <div class="col-md-4">
+          <label class="form-label"><i class="bi bi-credit-card me-1"></i>Payment Mode <span style="color:red">*</span></label>
+          <select class="form-select" name="payment_mode" required>
+            <option value="Cash">Cash</option>
+            <option value="Cheque">Cheque</option>
+            <option value="Bank Transfer">Bank Transfer</option>
+            <option value="UPI">UPI</option>
+          </select>
+        </div>
+
+        <!-- Additional Savings - Manual -->
+        <div class="col-md-6">
+          <label class="form-label">
+            <i class="bi bi-piggy-bank me-1" style="color:#7c3aed"></i>
+            Additional Savings per EMI
+            <span style="color:#7c3aed;font-size:.75rem;margin-left:4px">(Enter manually in &#8377;)</span>
+          </label>
+          <div class="input-group">
+            <span class="input-group-text" style="background:#ede9fe;border-color:#c4b5fd;color:#7c3aed;font-weight:700">&#8377;</span>
+            <input type="number" class="form-control addl-inp"
+                   name="additional_savings_manual" id="addlSavInput"
+                   step="1" min="0" value="0"
+                   placeholder="e.g. 100"
+                   oninput="updateAddlDisplay()">
+          </div>
+          <small class="text-muted">
+            Saved in <code>additionalsavingsdueamount</code> for every EMI row.
+            Product rate: {{ application[13] or 0 }}% = &#8377;<span id="productAddlRef">{{ "{:,.2f}".format((application[5]|float * (application[13]|float or 0) / 100)) if application[5] else '0.00' }}</span> (used if 0).
+          </small>
+        </div>
+
+        <!-- Additional savings display -->
+        <div class="col-md-6 d-flex align-items-end">
+          <div style="background:#faf5ff;border:2px solid #c4b5fd;border-radius:8px;padding:12px 16px;width:100%">
+            <div style="font-size:.78rem;color:#7c3aed;font-weight:700;margin-bottom:4px">ADDITIONAL SAVINGS STORED PER EMI</div>
+            <div style="font-size:1.6rem;font-weight:800;color:#6d28d9">&#8377;<span id="addlDisplay">0.00</span></div>
+            <div style="font-size:.74rem;color:#8b5cf6;margin-top:2px">Stored in additionalsavingsdueamount of each of {{ application[8] }} EMI rows</div>
+          </div>
+        </div>
+
+      </div><!-- /row -->
+
+      <!-- Live EMI Box -->
+      <div class="emi-live mt-3">
+        <div class="lbl">{% if is_weekly %}Weekly{% else %}Monthly{% endif %} EMI (rounded to nearest &#8377;5)</div>
+        <div class="val" id="liveEmi">&#8377;{{ "{:,.0f}".format(emi|float) }}</div>
+        <div class="note">
+          {{ application[7] or 0 }}% p.a. &times; {{ application[8] or 0 }}
+          {% if is_weekly %}weeks{% else %}months{% endif %}
+          &nbsp;|&nbsp; Last EMI adjusted to close exactly
+        </div>
+      </div>
+
+      <!-- Charges Breakdown -->
+      <div class="charge-card">
+        <h6 style="color:#92400e;margin-bottom:12px"><i class="bi bi-calculator me-1"></i> Charges Breakdown (loan &times; product %)</h6>
+        <div class="charge-row">
+          <span>Processing Fee <span class="pct-badge">{{ application[9] or 0 }}%</span></span>
+          <strong id="cProc">&#8377;{{ "{:,.2f}".format(charges.processingfee|float) }}</strong>
+        </div>
+        <div class="charge-row">
+          <span>Member Insurance <span class="pct-badge">{{ application[10] or 0 }}%</span></span>
+          <strong id="cMemIns">&#8377;{{ "{:,.2f}".format(charges.memberinsurancefee|float) }}</strong>
+        </div>
+        <div class="charge-row">
+          <span>Nominee Insurance <span class="pct-badge">{{ application[11] or 0 }}%</span></span>
+          <strong id="cNomIns">&#8377;{{ "{:,.2f}".format(charges.nomineeinsurancefee|float) }}</strong>
+        </div>
+        <div class="charge-row">
+          <span>Savings per EMI <span class="pct-badge">{{ application[12] or 0 }}%</span></span>
+          <strong id="cSav">&#8377;{{ "{:,.2f}".format(charges.savingsdueamount|float) }}</strong>
+        </div>
+        <div class="charge-row">
+          <span>Additional Savings per EMI <span class="pct-badge" style="background:#ede9fe;color:#7c3aed">manual</span></span>
+          <strong style="color:#7c3aed">&#8377;<span id="cAddl">0.00</span></strong>
+        </div>
+        <div class="charge-row">
+          <span>Security Deposit (one-time) <span class="pct-badge">{{ application[14] or 0 }}%</span></span>
+          <strong id="cSecDep">&#8377;{{ "{:,.2f}".format(charges.securitydepositamount|float) }}</strong>
+        </div>
+        <div class="charge-total">
+          <span>Total Upfront Deductions:</span>
+          <span id="cTotal">&#8377;{{ "{:,.2f}".format(charges.processingfee|float + charges.memberinsurancefee|float + charges.nomineeinsurancefee|float + charges.securitydepositamount|float) }}</span>
+        </div>
+        <div class="net-box">
+          <i class="bi bi-wallet2 me-1"></i>
+          Net amount member receives: <span id="netAmt">&#8377;{{ "{:,.2f}".format((application[5]|float if application[5] else 0) - (charges.processingfee|float + charges.memberinsurancefee|float + charges.nomineeinsurancefee|float + charges.securitydepositamount|float)) }}</span>
+          <span style="font-size:.75rem;font-weight:400;opacity:.8"> (loan &minus; upfront deductions)</span>
+        </div>
+      </div>
+
+      <!-- Confirm summary -->
+      <div class="alert alert-warning" style="border-radius:10px;font-size:.9rem">
+        <strong><i class="bi bi-exclamation-triangle me-1"></i> Confirm:</strong>
+        <strong>{% if is_weekly %}WEEKLY{% else %}MONTHLY{% endif %}</strong> loan for <strong>{{ application[2] }}</strong><br>
+        Amount: <strong id="sumAmt">&#8377;{{ "{:,.0f}".format(application[5]|float) if application[5] else '0' }}</strong>
+        &nbsp;|&nbsp; EMI: <strong id="sumEmi">&#8377;{{ "{:,.0f}".format(emi|float) }}</strong>
+        &times; {{ application[8] }} (last EMI adjusted)
+        &nbsp;|&nbsp; Collection: <strong>{{ collection_info }}</strong>
+      </div>
+
+      <div class="d-flex gap-3 justify-content-center mt-3">
+        <button type="submit" class="btn-disburse">
+          <i class="bi bi-check-circle-fill"></i> Confirm Disbursement
+        </button>
+        <a href="{{ url_for('loans.index') }}" class="btn-cancel">
+          <i class="bi bi-x-circle"></i> Cancel
+        </a>
+      </div>
+
+    </form>
+  </div>
+
+  <!-- Info panel -->
+  <div class="alert alert-info" style="border-radius:10px;font-size:.86rem">
+    <strong><i class="bi bi-info-circle me-1"></i> What happens on disbursement:</strong>
+    <ul class="mb-0 mt-1">
+      <li>1 Loans row created with computed charge amounts</li>
+      <li>LoanRec row #0 — loan-taken record (date + full loan amount, <code>emisequence=0</code>)</li>
+      <li>LoanRec rows #1–{{ application[8] }} — EMI schedule ({{ application[8]|int + 1 }} total rows)</li>
+      <li>Each EMI: <code>savingsdueamount</code> = auto (product %) &nbsp;|&nbsp; <code>additionalsavingsdueamount</code> = manual &#8377; entered above</li>
+      <li>Last EMI adjusted to close loan exactly</li>
+    </ul>
+  </div>
+
+</div></div></div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+const el       = document.getElementById('loanAmtInput');
+const approved = parseFloat(el.dataset.approved) || 0;
+const intRate  = parseFloat(el.dataset.rate)     || 0;
+const tenure   = parseInt(el.dataset.tenure)     || 0;
+const isWeekly = el.dataset.weekly === 'true';
+const pProc    = parseFloat(el.dataset.proc)   || 0;
+const pMemIns  = parseFloat(el.dataset.memins) || 0;
+const pNomIns  = parseFloat(el.dataset.nomins) || 0;
+const pSav     = parseFloat(el.dataset.sav)    || 0;
+const pSecDep  = parseFloat(el.dataset.secdep) || 0;
+
+function roundTo5(x){ return Math.round(x / 5) * 5; }
+function fmtRs(n){ return n.toLocaleString('en-IN', {minimumFractionDigits:2, maximumFractionDigits:2}); }
+function fmtRs0(n){ return Math.round(n).toLocaleString('en-IN'); }
+
+function calcEmi(p, r, n, weekly){
+  if(!r) return p / n;
+  const pr = r / 100 / (weekly ? 52 : 12);
+  const pw = Math.pow(1 + pr, n);
+  return (p * pr * pw) / (pw - 1);
+}
+
+function recalcAll(){
+  const loan = parseFloat(document.getElementById('loanAmtInput').value) || 0;
+
+  // Show CHANGED tag
+  document.getElementById('changedTag').style.display =
+    Math.abs(loan - approved) > 0.5 ? 'inline' : 'none';
+
+  // EMI
+  const emi = roundTo5(calcEmi(loan, intRate, tenure, isWeekly));
+  document.getElementById('liveEmi').textContent = '\u20B9' + fmtRs0(emi);
+  document.getElementById('sumEmi').textContent  = '\u20B9' + fmtRs0(emi);
+  document.getElementById('sumAmt').textContent  = '\u20B9' + fmtRs0(loan);
+
+  // Charges
+  const proc   = loan * pProc   / 100;
+  const memins = loan * pMemIns / 100;
+  const nomins = loan * pNomIns / 100;
+  const sav    = loan * pSav    / 100;
+  const secdep = loan * pSecDep / 100;
+  const upfront = proc + memins + nomins + secdep;
+
+  document.getElementById('cProc').textContent   = '\u20B9' + fmtRs(proc);
+  document.getElementById('cMemIns').textContent = '\u20B9' + fmtRs(memins);
+  document.getElementById('cNomIns').textContent = '\u20B9' + fmtRs(nomins);
+  document.getElementById('cSav').textContent    = '\u20B9' + fmtRs(sav);
+  document.getElementById('cSecDep').textContent = '\u20B9' + fmtRs(secdep);
+  document.getElementById('cTotal').textContent  = '\u20B9' + fmtRs(upfront);
+  document.getElementById('netAmt').textContent  = '\u20B9' + fmtRs(loan - upfront);
+  document.getElementById('productAddlRef').textContent = fmtRs(sav);
+
+  updateAddlDisplay();
+}
+
+function updateAddlDisplay(){
+  const v = parseFloat(document.getElementById('addlSavInput').value) || 0;
+  const s = fmtRs(v);
+  document.getElementById('addlDisplay').textContent = s;
+  document.getElementById('cAddl').textContent = s;
+}
+
+// Init on load
+recalcAll();
+</script>
+{% endblock %}

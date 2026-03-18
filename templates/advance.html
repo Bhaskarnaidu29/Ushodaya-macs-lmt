@@ -1,0 +1,202 @@
+{% extends "base.html" %}
+{% block title %}Advance Recovery - Ushodaya MACS Ltd{% endblock %}
+{% block page_title %}Advance Recovery{% endblock %}
+
+{% block extra_css %}
+<style>
+    .page-header {
+        background: linear-gradient(135deg, #0c2a78 0%, #1857c9 100%);
+        color: white;
+        border-radius: 12px;
+        padding: 25px 30px;
+        margin-bottom: 25px;
+    }
+    .stat-card {
+        background: white;
+        border-radius: 12px;
+        padding: 20px;
+        box-shadow: 0 2px 10px rgba(0,0,0,0.07);
+        border-left: 4px solid #0c2a78;
+        margin-bottom: 20px;
+    }
+    .stat-card .stat-value { font-size: 1.6rem; font-weight: 700; color: #0c2a78; }
+    .stat-card .stat-label { font-size: 0.85rem; color: #6c757d; }
+    .table-card {
+        background: white;
+        border-radius: 12px;
+        padding: 25px;
+        box-shadow: 0 2px 10px rgba(0,0,0,0.07);
+    }
+    .badge-credit { background: #d1fae5; color: #065f46; padding: 4px 10px; }
+    .badge-debit  { background: #fee2e2; color: #991b1b; padding: 4px 10px; }
+    .btn-add {
+        background: linear-gradient(135deg, #0c2a78, #1857c9);
+        color: white;
+        border: none;
+        border-radius: 8px;
+        padding: 10px 22px;
+        font-weight: 600;
+        text-decoration: none;
+        display: inline-flex;
+        align-items: center;
+        gap: 6px;
+    }
+    .btn-add:hover { color: white; opacity: 0.9; }
+    .empty-state { text-align: center; padding: 60px 20px; color: #9ca3af; }
+    .empty-state i { font-size: 3.5rem; margin-bottom: 15px; display: block; }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="container-fluid">
+
+    {% with messages = get_flashed_messages(with_categories=true) %}
+        {% if messages %}
+            {% for category, message in messages %}
+            <div class="alert alert-{{ category }} alert-dismissible fade show" role="alert">
+                {{ message }}
+                <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+            </div>
+            {% endfor %}
+        {% endif %}
+    {% endwith %}
+
+    <!-- Header -->
+    <div class="page-header d-flex justify-content-between align-items-center flex-wrap gap-3">
+        <div>
+            <h4 class="mb-1 fw-bold"><i class="bi bi-cash-stack me-2"></i>Advance Recovery</h4>
+            <small style="opacity:.85;">Manage advance deposits and track recovery postings</small>
+        </div>
+        <a href="{{ url_for('advance.show_add_advance_form') }}" class="btn-add">
+            <i class="bi bi-plus-circle"></i> Post New Advance
+        </a>
+    </div>
+
+    <!-- Stats Row -->
+    <div class="row mb-4">
+        <div class="col-md-3">
+            <div class="stat-card">
+                <div class="stat-value">{{ advances|length }}</div>
+                <div class="stat-label"><i class="bi bi-list-check me-1"></i>Total Transactions</div>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="stat-card" style="border-left-color:#10b981;">
+                <div class="stat-value" style="color:#10b981;">
+                    {% set total_credits = advances | selectattr('creditdebit', 'equalto', 'Credit') | sum(attribute='amount') %}
+                    ₹{{ "{:,.0f}".format(total_credits if total_credits else 0) }}
+                </div>
+                <div class="stat-label"><i class="bi bi-arrow-down-circle me-1"></i>Total Deposits (Credits)</div>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="stat-card" style="border-left-color:#ef4444;">
+                <div class="stat-value" style="color:#ef4444;">
+                    {% set total_debits = advances | selectattr('creditdebit', 'equalto', 'Debit') | sum(attribute='amount') %}
+                    ₹{{ "{:,.0f}".format(total_debits if total_debits else 0) }}
+                </div>
+                <div class="stat-label"><i class="bi bi-arrow-up-circle me-1"></i>Total Applied (Debits)</div>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="stat-card" style="border-left-color:#6366f1;">
+                <div class="stat-value" style="color:#6366f1;">
+                    {% set net_balance = (total_credits if total_credits else 0) - (total_debits if total_debits else 0) %}
+                    ₹{{ "{:,.0f}".format(net_balance if net_balance else 0) }}
+                </div>
+                <div class="stat-label"><i class="bi bi-wallet2 me-1"></i>Net Balance Available</div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Table -->
+    <div class="table-card">
+        <div class="d-flex justify-content-between align-items-center mb-3">
+            <h6 class="fw-bold mb-0"><i class="bi bi-table me-2 text-primary"></i>Advance Recovery Transactions</h6>
+            <input type="text" id="searchInput" class="form-control form-control-sm w-auto"
+                   placeholder="Search member/loan..." style="min-width:220px;">
+        </div>
+
+        {% if advances %}
+        <div class="table-responsive">
+            <table class="table table-hover align-middle" id="advanceTable">
+                <thead class="table-dark">
+                    <tr>
+                        <th>#ID</th>
+                        <th>Member</th>
+                        <th>Loan ID</th>
+                        <th>Amount (₹)</th>
+                        <th>Type</th>
+                        <th>Notes</th>
+                        <th>Transaction Date</th>
+                        <th>Created By</th>
+                        <th>Created Date</th>
+                        <th>Payment Ref</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for a in advances %}
+                    <tr>
+                        <td><span class="badge bg-secondary">{{ a.advancerecoveryid }}</span></td>
+                        <td>
+                            <strong>{{ a.member_code }}</strong>
+                            {% if a.member_name %}
+                            <br><small class="text-muted">{{ a.member_name }}</small>
+                            {% endif %}
+                        </td>
+                        <td>{{ a.loanid or '—' }}</td>
+                        <td><strong>₹{{ "{:,.2f}".format(a.amount or 0) }}</strong></td>
+                        <td>
+                            <span class="badge {{ 'badge-credit' if a.creditdebit == 'Credit' else 'badge-debit' }} rounded-pill">
+                                <i class="bi bi-{{ 'arrow-down-circle' if a.creditdebit == 'Credit' else 'arrow-up-circle' }} me-1"></i>
+                                {{ a.creditdebit }}
+                            </span>
+                        </td>
+                        <td><small>{{ a.notes or '—' }}</small></td>
+                        <td>
+                            {% if a.transactiondate %}
+                                {{ a.transactiondate.strftime('%d %b %Y') }}
+                                <br><small class="text-muted">{{ a.transactiondate.strftime('%H:%M') }}</small>
+                            {% else %}
+                                —
+                            {% endif %}
+                        </td>
+                        <td>{{ a.createdby or '—' }}</td>
+                        <td>
+                            {% if a.createddate %}
+                                {{ a.createddate.strftime('%d %b %Y') }}
+                            {% else %}
+                                —
+                            {% endif %}
+                        </td>
+                        <td><small class="text-muted">{{ a.paymentid or '—' }}</small></td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+        {% else %}
+        <div class="empty-state">
+            <i class="bi bi-inbox text-muted"></i>
+            <h5>No Advance Records Found</h5>
+            <p class="text-muted mb-4">Start by posting a new advance deposit.</p>
+            <a href="{{ url_for('advance.show_add_advance_form') }}" class="btn-add">
+                <i class="bi bi-plus-circle"></i> Post First Advance
+            </a>
+        </div>
+        {% endif %}
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+// Simple search filter
+document.getElementById('searchInput').addEventListener('keyup', function () {
+    const term = this.value.toLowerCase();
+    document.querySelectorAll('#advanceTable tbody tr').forEach(row => {
+        row.style.display = row.textContent.toLowerCase().includes(term) ? '' : 'none';
+    });
+});
+</script>
+{% endblock %}

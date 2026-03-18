@@ -1,0 +1,156 @@
+{% extends "base.html" %}
+{% block title %}Reports - Ushodaya MACS Ltd{% endblock %}
+{% block page_title %}Reports{% endblock %}
+
+{% block extra_css %}
+<style>
+    .reports-header {
+        background: linear-gradient(135deg, #0c2a78 0%, #1857c9 100%);
+        color: white; border-radius: 12px;
+        padding: 28px 30px; margin-bottom: 28px;
+    }
+    .report-card {
+        background: white; border-radius: 12px;
+        padding: 24px; box-shadow: 0 2px 10px rgba(0,0,0,.07);
+        border: 2px solid #e5e7eb;
+        transition: all .2s; cursor: pointer;
+        text-decoration: none; color: inherit;
+        display: block; height: 100%;
+    }
+    .report-card:hover {
+        border-color: #0c2a78;
+        box-shadow: 0 6px 20px rgba(12,42,120,.15);
+        transform: translateY(-2px); color: inherit;
+    }
+    .report-icon {
+        width: 52px; height: 52px; border-radius: 12px;
+        display: flex; align-items: center; justify-content: center;
+        font-size: 1.5rem; margin-bottom: 14px;
+    }
+    .report-title { font-weight: 700; font-size: 1rem; color: #1e293b; margin-bottom: 6px; }
+    .report-desc  { font-size: .83rem; color: #6b7280; }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="container-fluid">
+
+    {% with messages = get_flashed_messages(with_categories=true) %}
+        {% if messages %}{% for cat, msg in messages %}
+        <div class="alert alert-{{ cat }} alert-dismissible fade show">
+            <i class="bi bi-info-circle me-2"></i>{{ msg }}
+            <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+        </div>
+        {% endfor %}{% endif %}
+    {% endwith %}
+
+    <div class="reports-header">
+        <h4 class="fw-bold mb-1"><i class="bi bi-bar-chart-line me-2"></i>Reports Center</h4>
+        <small style="opacity:.85;">Select a report type to generate and view data</small>
+    </div>
+
+    <div class="row g-4">
+
+        <div class="col-md-4 col-lg-3">
+            <a href="{{ url_for('reports.report_view') }}?type=monthly_collection" class="report-card">
+                <div class="report-icon" style="background:#dbeafe;">
+                    <i class="bi bi-calendar-month text-primary"></i>
+                </div>
+                <div class="report-title">Monthly Collection</div>
+                <div class="report-desc">Collection sheet for monthly loan payments by due date</div>
+            </a>
+        </div>
+
+        <div class="col-md-4 col-lg-3">
+            <a href="{{ url_for('reports.report_view') }}?type=weekly_collection" class="report-card">
+                <div class="report-icon" style="background:#d1fae5;">
+                    <i class="bi bi-calendar-week" style="color:#059669;"></i>
+                </div>
+                <div class="report-title">Weekly Collection</div>
+                <div class="report-desc">Collection sheet for weekly loan payments by due date</div>
+            </a>
+        </div>
+
+        <div class="col-md-4 col-lg-3">
+            <a href="{{ url_for('reports.report_view') }}?type=daily" class="report-card">
+                <div class="report-icon" style="background:#fef3c7;">
+                    <i class="bi bi-calendar-day" style="color:#d97706;"></i>
+                </div>
+                <div class="report-title">Daily Collection</div>
+                <div class="report-desc">Loan repayments collected on a given date range</div>
+            </a>
+        </div>
+
+        <div class="col-md-4 col-lg-3">
+            <a href="{{ url_for('reports.report_view') }}?type=memberwise" class="report-card">
+                <div class="report-icon" style="background:#f3e8ff;">
+                    <i class="bi bi-person-lines-fill" style="color:#7c3aed;"></i>
+                </div>
+                <div class="report-title">Member-wise Report</div>
+                <div class="report-desc">Full repayment history for a specific member</div>
+            </a>
+        </div>
+
+        <div class="col-md-4 col-lg-3">
+            <a href="{{ url_for('reports.report_view') }}?type=fdcollections" class="report-card">
+                <div class="report-icon" style="background:#fef3c7;">
+                    <i class="bi bi-bank" style="color:#d97706;"></i>
+                </div>
+                <div class="report-title">FD Collections</div>
+                <div class="report-desc">Fixed deposit interest and principal collections</div>
+            </a>
+        </div>
+
+        <div class="col-md-4 col-lg-3">
+            <a href="{{ url_for('reports.report_view') }}?type=rd" class="report-card">
+                <div class="report-icon" style="background:#d1fae5;">
+                    <i class="bi bi-calendar-range" style="color:#059669;"></i>
+                </div>
+                <div class="report-title">RD Collections</div>
+                <div class="report-desc">Recurring deposit payment collections by date</div>
+            </a>
+        </div>
+
+        <div class="col-md-4 col-lg-3">
+            <a href="{{ url_for('reports.report_view') }}?type=fdaccounts" class="report-card">
+                <div class="report-icon" style="background:#fce7f3;">
+                    <i class="bi bi-piggy-bank" style="color:#be185d;"></i>
+                </div>
+                <div class="report-title">FD Accounts</div>
+                <div class="report-desc">All fixed deposit accounts and maturity details</div>
+            </a>
+        </div>
+
+        <div class="col-md-4 col-lg-3">
+            <a href="{{ url_for('reports.report_view') }}?type=rdaccounts" class="report-card">
+                <div class="report-icon" style="background:#ecfdf5;">
+                    <i class="bi bi-journal-bookmark" style="color:#10b981;"></i>
+                </div>
+                <div class="report-title">RD Accounts</div>
+                <div class="report-desc">All recurring deposit accounts and status</div>
+            </a>
+        </div>
+
+        <div class="col-md-4 col-lg-3">
+            <a href="{{ url_for('reports.report_view') }}?type=fdinterest" class="report-card">
+                <div class="report-icon" style="background:#fff7ed;">
+                    <i class="bi bi-percent" style="color:#ea580c;"></i>
+                </div>
+                <div class="report-title">FD Interest</div>
+                <div class="report-desc">Interest payments made on fixed deposits</div>
+            </a>
+        </div>
+
+        <div class="col-md-4 col-lg-3">
+            <a href="{{ url_for('reports.report_view') }}?type=glance" class="report-card">
+                <div class="report-icon" style="background:#eff6ff;">
+                    <i class="bi bi-eye" style="color:#2563eb;"></i>
+                </div>
+                <div class="report-title">At a Glance</div>
+                <div class="report-desc">Day-end summary — members, loans, RD, FD counts</div>
+            </a>
+        </div>
+
+    </div>
+</div>
+{% endblock %}

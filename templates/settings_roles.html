@@ -1,0 +1,62 @@
+{% extends "base.html" %}
+{% block title %}Roles{% endblock %}
+{% block content %}
+<div class="container-fluid mt-4">
+    <h2><i class="bi bi-people-fill"></i> Roles</h2>
+    <button class="btn btn-primary mb-3" data-bs-toggle="modal" data-bs-target="#addModal">Add Role</button>
+    <a href="{{ url_for('settings_bp.settings') }}" class="btn btn-secondary mb-3">Back</a>
+    
+    <table class="table table-striped">
+        <thead class="table-primary">
+            <tr><th>#</th><th>Role Name</th><th>Description</th><th>Status</th><th>Actions</th></tr>
+        </thead>
+        <tbody>
+            {% for r in roles %}
+            <tr>
+                <td>{{ loop.index }}</td>
+                <td><strong>{{ r[1] }}</strong></td>
+                <td>{{ r[2] or 'N/A' }}</td>
+                <td><span class="badge bg-{{ 'success' if r[3] else 'secondary' }}">{{ 'Active' if r[3] else 'Inactive' }}</span></td>
+                <td>
+                    <form method="POST" style="display:inline;">
+                        <input type="hidden" name="action" value="update">
+                        <input type="hidden" name="RoleID" value="{{ r[0] }}">
+                        <input type="text" name="RoleName" value="{{ r[1] }}" size="15">
+                        <input type="checkbox" name="IsActive" {% if r[3] %}checked{% endif %}>
+                        <button type="submit" class="btn btn-sm btn-success">Update</button>
+                    </form>
+                </td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+</div>
+
+<div class="modal fade" id="addModal">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <form method="POST">
+                <div class="modal-header"><h5>Add Role</h5></div>
+                <div class="modal-body">
+                    <input type="hidden" name="action" value="add">
+                    <div class="mb-3">
+                        <label>Role Name</label>
+                        <input type="text" class="form-control" name="RoleName" required>
+                    </div>
+                    <div class="mb-3">
+                        <label>Description</label>
+                        <textarea class="form-control" name="Description"></textarea>
+                    </div>
+                    <div class="form-check">
+                        <input class="form-check-input" type="checkbox" name="IsActive" checked>
+                        <label>Active</label>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="submit" class="btn btn-primary">Add</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+{% endblock %}

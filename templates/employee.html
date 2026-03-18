@@ -1,0 +1,278 @@
+{% extends "base.html" %}
+{% block title %}Employees - Ushodaya MACS Ltd{% endblock %}
+{% block page_title %}Employee Management{% endblock %}
+
+{% block extra_css %}
+<style>
+  /* Index query columns:
+     [0]=EmpID  [1]=EmpCode  [2]=EmpName  [3]=Designation  [4]=Department
+     [5]=MobileNo  [6]=Email  [7]=Role  [8]=DOJ  [9]=Salary
+     [10]=WithdrawDate  [11]=username  [12]=expire */
+
+  .page-header{background:linear-gradient(135deg,#0c2a78,#1857c9);color:#fff;border-radius:14px;padding:22px 28px;margin-bottom:20px}
+  .add-btn{background:#fff;color:#0c2a78;padding:9px 20px;border-radius:8px;font-weight:700;text-decoration:none;display:inline-flex;align-items:center;gap:7px;white-space:nowrap;font-size:.9rem}
+  .add-btn:hover{color:#0c2a78;box-shadow:0 4px 12px rgba(0,0,0,.15);transform:translateY(-1px)}
+
+  .toolbar{background:#fff;border-radius:12px;padding:13px 18px;margin-bottom:18px;box-shadow:0 2px 8px rgba(0,0,0,.06);display:flex;align-items:center;gap:12px;flex-wrap:wrap}
+  .toolbar input{flex:1;min-width:200px;border:2px solid #e5e7eb;border-radius:8px;padding:8px 14px;font-size:.9rem}
+  .toolbar input:focus{border-color:#0c2a78;outline:none}
+  .rec-count{margin-left:auto;font-size:.85rem;color:#6b7280;font-weight:600;white-space:nowrap}
+
+  /* Cards */
+  .emp-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(370px,1fr));gap:18px}
+  .emp-card{background:#fff;border-radius:14px;padding:20px;box-shadow:0 2px 10px rgba(0,0,0,.07);border-left:5px solid #0c2a78;transition:all .2s}
+  .emp-card:hover{transform:translateY(-3px);box-shadow:0 6px 20px rgba(0,0,0,.12)}
+  .emp-card.withdrawn{border-left-color:#ef4444;opacity:.85}
+
+  .emp-top{display:flex;align-items:flex-start;gap:14px;margin-bottom:14px}
+  .emp-avatar{width:50px;height:50px;border-radius:50%;background:linear-gradient(135deg,#0c2a78,#1857c9);color:#fff;display:flex;align-items:center;justify-content:center;font-size:1.3rem;font-weight:700;flex-shrink:0}
+  .emp-name{font-size:1.05rem;font-weight:700;color:#1e293b;margin-bottom:2px}
+  .emp-code{font-size:.8rem;color:#6b7280;font-weight:600}
+  .badge-role{display:inline-block;padding:3px 10px;border-radius:20px;font-size:.72rem;font-weight:700;margin-left:auto;flex-shrink:0}
+  .badge-role.admin{background:#fef3c7;color:#92400e}
+  .badge-role.employee{background:#dbeafe;color:#1e40af}
+  .badge-role.manager{background:#d1fae5;color:#065f46}
+  .badge-role.default{background:#f3e8ff;color:#6b21a8}
+  .badge-active{background:#d1fae5;color:#065f46;border-radius:20px;padding:2px 8px;font-size:.7rem;font-weight:700}
+  .badge-withdrawn{background:#fee2e2;color:#991b1b;border-radius:20px;padding:2px 8px;font-size:.7rem;font-weight:700}
+
+  .emp-info{display:grid;grid-template-columns:1fr 1fr;gap:8px;border-top:1px solid #f1f5f9;padding-top:12px;margin-top:4px}
+  .info-item{}
+  .info-lbl{font-size:.68rem;color:#9ca3af;font-weight:600;text-transform:uppercase;letter-spacing:.4px}
+  .info-val{font-size:.85rem;color:#374151;font-weight:600;margin-top:1px}
+
+  .emp-actions{display:flex;gap:8px;margin-top:14px;padding-top:12px;border-top:1px solid #f1f5f9}
+  .btn-edit{background:#0c2a78;color:#fff;border-radius:7px;padding:7px 16px;font-size:.82rem;font-weight:600;text-decoration:none;display:inline-flex;align-items:center;gap:5px}
+  .btn-edit:hover{color:#fff;opacity:.9}
+  .btn-withdraw{background:#fee2e2;color:#dc2626;border-radius:7px;padding:7px 16px;font-size:.82rem;font-weight:600;border:none;cursor:pointer;display:inline-flex;align-items:center;gap:5px}
+  .btn-withdraw:hover{background:#fecaca}
+
+  /* List */
+  .list-view{background:#fff;border-radius:12px;box-shadow:0 2px 8px rgba(0,0,0,.06);overflow:hidden}
+  .list-view table{width:100%;border-collapse:collapse}
+  .list-view thead th{background:#0c2a78;color:#fff;font-weight:600;white-space:nowrap;padding:12px 13px;font-size:.82rem}
+  .list-view tbody td{padding:10px 13px;vertical-align:middle;font-size:.86rem}
+  .list-view tbody tr:hover{background:#f0f7ff}
+  .list-view tbody tr{border-bottom:1px solid #f1f5f9}
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="container-fluid">
+
+  {% with messages = get_flashed_messages(with_categories=true) %}
+    {% if messages %}{% for cat,msg in messages %}
+    <div class="alert alert-{{cat}} alert-dismissible fade show">
+      <i class="bi bi-info-circle me-2"></i>{{msg}}
+      <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+    </div>
+    {% endfor %}{% endif %}
+  {% endwith %}
+
+  <!-- Header -->
+  <div class="page-header d-flex justify-content-between align-items-center flex-wrap gap-2">
+    <div>
+      <h4 class="fw-bold mb-1"><i class="bi bi-people me-2"></i>Employee Management</h4>
+      <small style="opacity:.85">Manage team members and their access</small>
+    </div>
+    <a href="{{ url_for('employee.add_employee') }}" class="add-btn">
+      <i class="bi bi-person-plus-fill"></i> Add Employee
+    </a>
+  </div>
+
+  <!-- Toolbar -->
+  <div class="toolbar">
+    <i class="bi bi-search text-muted"></i>
+    <input type="text" id="searchInput" placeholder="Search by name, code, designation, department…">
+    <span class="rec-count" id="recCount">{{ employees|length }} employees</span>
+    <div class="btn-group">
+      <button class="btn btn-sm btn-primary active" id="btnCard" onclick="setView('card')">
+        <i class="bi bi-grid-3x3-gap"></i> Card
+      </button>
+      <button class="btn btn-sm btn-outline-primary" id="btnList" onclick="setView('list')">
+        <i class="bi bi-list-ul"></i> List
+      </button>
+    </div>
+  </div>
+
+  {% if employees %}
+
+  <!-- CARD VIEW -->
+  <div id="cardView" class="emp-grid">
+    {% for e in employees %}
+    {# e[0]=EmpID e[1]=EmpCode e[2]=EmpName e[3]=Designation e[4]=Department
+       e[5]=MobileNo e[6]=Email e[7]=Role e[8]=DOJ e[9]=Salary
+       e[10]=WithdrawDate e[11]=username e[12]=expire #}
+    <div class="emp-card {% if e[10] %}withdrawn{% endif %}"
+         data-name="{{ e[2]|lower }}"
+         data-code="{{ e[1]|lower }}"
+         data-desig="{{ e[3]|lower if e[3] else '' }}"
+         data-dept="{{ e[4]|lower if e[4] else '' }}">
+
+      <div class="emp-top">
+        <div class="emp-avatar">{{ e[2][0]|upper }}</div>
+        <div style="flex:1">
+          <div class="emp-name">{{ e[2] }}</div>
+          <div class="emp-code">
+            <i class="bi bi-hash"></i>{{ e[1] }}
+            {% if e[10] %}
+              <span class="badge-withdrawn ms-1">Withdrawn</span>
+            {% else %}
+              <span class="badge-active ms-1">Active</span>
+            {% endif %}
+          </div>
+        </div>
+        {% set role_lc = (e[7]|lower if e[7] else 'default') %}
+        <span class="badge-role {{ role_lc if role_lc in ['admin','employee','manager'] else 'default' }}">
+          {{ e[7] or 'Employee' }}
+        </span>
+      </div>
+
+      <div class="emp-info">
+        <div class="info-item">
+          <div class="info-lbl">Designation</div>
+          <div class="info-val">{{ e[3] or '—' }}</div>
+        </div>
+        <div class="info-item">
+          <div class="info-lbl">Department</div>
+          <div class="info-val">{{ e[4] or '—' }}</div>
+        </div>
+        <div class="info-item">
+          <div class="info-lbl">Mobile</div>
+          <div class="info-val">{{ e[5] or '—' }}</div>
+        </div>
+        <div class="info-item">
+          <div class="info-lbl">DOJ</div>
+          <div class="info-val">{{ e[8].strftime('%d %b %Y') if e[8] else '—' }}</div>
+        </div>
+        <div class="info-item">
+          <div class="info-lbl">Username</div>
+          <div class="info-val">{{ e[11] or e[1]|lower }}</div>
+        </div>
+        <div class="info-item">
+          <div class="info-lbl">Expires</div>
+          <div class="info-val">{{ e[12].strftime('%d %b %Y') if e[12] else 'No Expiry' }}</div>
+        </div>
+      </div>
+
+      <div class="emp-actions">
+        <a href="{{ url_for('employee.edit_employee', emp_id=e[0]) }}" class="btn-edit">
+          <i class="bi bi-pencil"></i> Edit
+        </a>
+        {% if not e[10] %}
+        <button onclick="confirmWithdraw({{ e[0] }}, '{{ e[2]|replace("'","\\'") }}')" class="btn-withdraw">
+          <i class="bi bi-person-x"></i> Withdraw
+        </button>
+        {% endif %}
+      </div>
+    </div>
+    {% endfor %}
+  </div>
+
+  <!-- LIST VIEW -->
+  <div id="listView" class="list-view" style="display:none">
+    <table>
+      <thead>
+        <tr>
+          <th>#</th><th>Code</th><th>Name</th><th>Designation</th>
+          <th>Department</th><th>Mobile</th><th>Role</th>
+          <th>DOJ</th><th>Expires</th><th>Status</th><th>Actions</th>
+        </tr>
+      </thead>
+      <tbody id="listBody">
+        {% for e in employees %}
+        <tr data-name="{{ e[2]|lower }}"
+            data-code="{{ e[1]|lower }}"
+            data-desig="{{ e[3]|lower if e[3] else '' }}"
+            data-dept="{{ e[4]|lower if e[4] else '' }}">
+          <td class="text-muted">{{ loop.index }}</td>
+          <td><strong>{{ e[1] }}</strong></td>
+          <td><strong>{{ e[2] }}</strong></td>
+          <td>{{ e[3] or '—' }}</td>
+          <td>{{ e[4] or '—' }}</td>
+          <td>{{ e[5] or '—' }}</td>
+          <td>{{ e[7] or 'Employee' }}</td>
+          <td>{{ e[8].strftime('%d %b %Y') if e[8] else '—' }}</td>
+          <td>{{ e[12].strftime('%d %b %Y') if e[12] else '—' }}</td>
+          <td>
+            {% if e[10] %}
+              <span class="badge-withdrawn">Withdrawn</span>
+            {% else %}
+              <span class="badge-active">Active</span>
+            {% endif %}
+          </td>
+          <td style="white-space:nowrap">
+            <a href="{{ url_for('employee.edit_employee', emp_id=e[0]) }}"
+               class="btn-edit" style="padding:5px 10px;font-size:.78rem">
+              <i class="bi bi-pencil"></i>
+            </a>
+            {% if not e[10] %}
+            <button onclick="confirmWithdraw({{ e[0] }}, '{{ e[2]|replace("'","\\'") }}')"
+                    class="btn-withdraw ms-1" style="padding:5px 10px;font-size:.78rem">
+              <i class="bi bi-person-x"></i>
+            </button>
+            {% endif %}
+          </td>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+
+  {% else %}
+  <div class="text-center py-5">
+    <i class="bi bi-people" style="font-size:3.5rem;color:#cbd5e1"></i>
+    <h5 class="mt-3 text-muted">No Employees Found</h5>
+    <a href="{{ url_for('employee.add_employee') }}" class="btn btn-primary mt-3">
+      <i class="bi bi-person-plus-fill me-1"></i> Add First Employee
+    </a>
+  </div>
+  {% endif %}
+
+  <form id="deleteForm" method="POST" style="display:none"></form>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+<script>
+  let view = localStorage.getItem('empView') || 'card';
+
+  function setView(v){
+    view = v; localStorage.setItem('empView', v);
+    document.getElementById('cardView').style.display = v==='card' ? '' : 'none';
+    document.getElementById('listView').style.display = v==='list' ? '' : 'none';
+    document.getElementById('btnCard').className = 'btn btn-sm ' + (v==='card' ? 'btn-primary active' : 'btn-outline-primary');
+    document.getElementById('btnList').className = 'btn btn-sm ' + (v==='list' ? 'btn-primary active' : 'btn-outline-primary');
+  }
+  document.addEventListener('DOMContentLoaded', ()=> setView(view));
+
+  document.getElementById('searchInput').addEventListener('input', function(){
+    const t = this.value.toLowerCase(); let n = 0;
+    document.querySelectorAll('.emp-card').forEach(el=>{
+      const ok = ['name','code','desig','dept'].some(k=>(el.dataset[k]||'').includes(t));
+      el.style.display = ok ? '' : 'none'; if(ok) n++;
+    });
+    document.querySelectorAll('#listBody tr').forEach(el=>{
+      const ok = ['name','code','desig','dept'].some(k=>(el.dataset[k]||'').includes(t));
+      el.style.display = ok ? '' : 'none';
+    });
+    document.getElementById('recCount').textContent = n + ' employees';
+  });
+
+  function confirmWithdraw(id, name){
+    Swal.fire({
+      title: 'Withdraw Employee?',
+      html: `Mark <strong>${name}</strong> as withdrawn?<br><small class="text-muted">Their login will be disabled.</small>`,
+      icon: 'warning', showCancelButton: true,
+      confirmButtonColor: '#dc2626', cancelButtonColor: '#6c757d',
+      confirmButtonText: 'Yes, Withdraw'
+    }).then(r=>{
+      if(r.isConfirmed){
+        const f = document.getElementById('deleteForm');
+        f.action = `/employee/delete/${id}`; f.submit();
+      }
+    });
+  }
+</script>
+{% endblock %}

@@ -1,0 +1,331 @@
+{% extends "base.html" %}
+
+{% block title %}Database Restore - Ushodaya MACS Ltd{% endblock %}
+{% block page_title %}Database Restore{% endblock %}
+
+{% block extra_css %}
+<style>
+    .header-card {
+        background: linear-gradient(135deg, #dc2626 0%, #991b1b 100%);
+        color: white;
+        border-radius: 14px;
+        padding: 25px 28px;
+        margin-bottom: 30px;
+    }
+
+    .form-card {
+        background: white;
+        border-radius: 14px;
+        padding: 28px;
+        margin-bottom: 24px;
+        box-shadow: 0 2px 10px rgba(0,0,0,0.06);
+        border-left: 5px solid #dc2626;
+    }
+
+    .danger-box {
+        background: #fee2e2;
+        border: 2px solid #dc2626;
+        border-radius: 10px;
+        padding: 20px;
+        margin-bottom: 20px;
+    }
+
+    .danger-box h5 {
+        color: #991b1b;
+        font-weight: 700;
+        margin-bottom: 15px;
+    }
+
+    .danger-box ul {
+        margin-bottom: 0;
+        padding-left: 20px;
+    }
+
+    .danger-box li {
+        color: #7f1d1d;
+        margin-bottom: 8px;
+    }
+
+    .backup-select {
+        background: #f9fafb;
+        border: 2px solid #e5e7eb;
+        border-radius: 10px;
+        padding: 15px;
+        margin-bottom: 10px;
+        cursor: pointer;
+        transition: all .2s;
+    }
+
+    .backup-select:hover {
+        border-color: #dc2626;
+        background: #fef2f2;
+    }
+
+    .backup-select input[type="radio"] {
+        margin-right: 15px;
+        width: 20px;
+        height: 20px;
+    }
+
+    .backup-select.selected {
+        border-color: #dc2626;
+        background: #fef2f2;
+    }
+
+    .confirm-box {
+        background: #fef3c7;
+        border: 2px solid #f59e0b;
+        border-radius: 10px;
+        padding: 20px;
+        margin: 20px 0;
+    }
+
+    .form-check-input:checked {
+        background-color: #dc2626;
+        border-color: #dc2626;
+    }
+
+    .btn-restore {
+        background: linear-gradient(135deg, #dc2626, #991b1b);
+        color: white;
+        padding: 12px 32px;
+        border-radius: 8px;
+        font-weight: 700;
+        border: none;
+        font-size: 1rem;
+    }
+
+    .btn-restore:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 6px 20px rgba(220, 38, 38, 0.3);
+    }
+
+    .btn-restore:disabled {
+        opacity: 0.5;
+        cursor: not-allowed;
+    }
+
+    .btn-cancel {
+        background: #6c757d;
+        color: white;
+        padding: 12px 32px;
+        border-radius: 8px;
+        font-weight: 700;
+        text-decoration: none;
+    }
+
+    .backup-info {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+    }
+
+    .backup-meta {
+        color: #6b7280;
+        font-size: .85rem;
+        margin-top: 5px;
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="container-fluid">
+    <div class="row justify-content-center">
+        <div class="col-lg-10">
+            <div class="header-card">
+                <h3 class="mb-1"><i class="bi bi-database-fill-up me-2"></i>Database Restore</h3>
+                <p class="mb-0" style="opacity: 0.9;">
+                    <i class="bi bi-exclamation-triangle-fill me-2"></i>
+                    DANGER ZONE - Restore database from backup
+                </p>
+            </div>
+
+            {% with messages = get_flashed_messages(with_categories=true) %}
+                {% if messages %}{% for cat,msg in messages %}
+                <div class="alert alert-{{ cat }} alert-dismissible fade show" style="white-space: pre-line;">
+                    {{ msg }}
+                    <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+                </div>
+                {% endfor %}{% endif %}
+            {% endwith %}
+
+            <!-- Warning -->
+            <div class="form-card">
+                <div class="danger-box">
+                    <h5><i class="bi bi-exclamation-octagon-fill me-2"></i>⚠️ CRITICAL WARNING ⚠️</h5>
+                    <p><strong>Restoring a backup will:</strong></p>
+                    <ul>
+                        <li><strong>REPLACE ALL CURRENT DATA</strong> with data from the backup</li>
+                        <li><strong>DELETE</strong> any data added after the backup date</li>
+                        <li><strong>LOG OUT ALL USERS</strong> from the system</li>
+                        <li><strong>REQUIRE RESTART</strong> of the application</li>
+                    </ul>
+                    <p class="mt-3 mb-0">
+                        <i class="bi bi-shield-fill-exclamation me-2"></i>
+                        <strong>Only proceed if you are absolutely certain and have authorization!</strong>
+                    </p>
+                </div>
+            </div>
+
+            <!-- Restore Form -->
+            <div class="form-card">
+                <h4 class="mb-3"><i class="bi bi-arrow-clockwise me-2"></i>Select Backup to Restore</h4>
+                
+                <form method="POST" id="restoreForm">
+                    {% if backups %}
+                        <div class="mb-4">
+                            {% for backup in backups %}
+                            <label class="backup-select">
+                                <input type="radio" name="backup_file" value="{{ backup.name }}" required>
+                                <div class="backup-info">
+                                    <div>
+                                        <strong style="color: #1e293b; font-size: 1.05rem;">
+                                            <i class="bi bi-file-earmark-zip-fill me-2"></i>{{ backup.name }}
+                                        </strong>
+                                        <div class="backup-meta">
+                                            <i class="bi bi-calendar me-1"></i>{{ backup.date.strftime('%d-%b-%Y %I:%M %p') }}
+                                            <span class="mx-2">|</span>
+                                            <i class="bi bi-hdd me-1"></i>{{ "%.2f"|format(backup.size) }} MB
+                                        </div>
+                                    </div>
+                                </div>
+                            </label>
+                            {% endfor %}
+                        </div>
+
+                        <!-- Confirmation -->
+                        <div class="confirm-box">
+                            <h5 style="color: #92400e;">
+                                <i class="bi bi-check-square me-2"></i>Confirmation Required
+                            </h5>
+                            <div class="form-check mb-3">
+                                <input class="form-check-input" type="checkbox" name="confirm" 
+                                       id="confirmCheck" value="on" required>
+                                <label class="form-check-label" for="confirmCheck">
+                                    <strong>I understand that this will replace all current data</strong>
+                                </label>
+                            </div>
+                            <div class="form-check mb-3">
+                                <input class="form-check-input" type="checkbox" id="backupCheck" required>
+                                <label class="form-check-label" for="backupCheck">
+                                    <strong>I have created a current backup before restoring</strong>
+                                </label>
+                            </div>
+                            <div class="form-check">
+                                <input class="form-check-input" type="checkbox" id="authCheck" required>
+                                <label class="form-check-label" for="authCheck">
+                                    <strong>I am authorized to perform this operation</strong>
+                                </label>
+                            </div>
+                        </div>
+
+                        <div class="d-flex gap-3">
+                            <button type="submit" class="btn-restore" id="restoreBtn" disabled>
+                                <i class="bi bi-arrow-counterclockwise me-2"></i>Restore Database
+                            </button>
+                            <a href="{{ url_for('home') }}" class="btn-cancel">
+                                <i class="bi bi-x-circle me-2"></i>Cancel
+                            </a>
+                        </div>
+
+                    {% else %}
+                        <div class="text-center py-5">
+                            <i class="bi bi-inbox" style="font-size: 4rem; color: #d1d5db;"></i>
+                            <p class="text-muted mt-3">No backup files available for restore.</p>
+                            <a href="{{ url_for('help.backup') }}" class="btn btn-primary mt-3">
+                                <i class="bi bi-download me-2"></i>Create Backup First
+                            </a>
+                        </div>
+                    {% endif %}
+                </form>
+            </div>
+
+            <!-- Restore Process -->
+            {% if backups %}
+            <div class="form-card">
+                <h4 class="mb-3"><i class="bi bi-gear-fill me-2"></i>Restore Process</h4>
+                <ol class="list-group list-group-numbered">
+                    <li class="list-group-item">
+                        <strong>Validation:</strong> System validates the selected backup file
+                    </li>
+                    <li class="list-group-item">
+                        <strong>Database Lock:</strong> Current database is set to single-user mode
+                    </li>
+                    <li class="list-group-item">
+                        <strong>Restore:</strong> Backup data is restored to the database
+                    </li>
+                    <li class="list-group-item">
+                        <strong>Verification:</strong> System verifies the restored data
+                    </li>
+                    <li class="list-group-item">
+                        <strong>Unlock:</strong> Database is set back to multi-user mode
+                    </li>
+                    <li class="list-group-item">
+                        <strong>Session Clear:</strong> All users are logged out for security
+                    </li>
+                </ol>
+            </div>
+            {% endif %}
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+// Enable restore button only when all checks are complete
+document.addEventListener('DOMContentLoaded', function() {
+    const confirmCheck = document.getElementById('confirmCheck');
+    const backupCheck = document.getElementById('backupCheck');
+    const authCheck = document.getElementById('authCheck');
+    const restoreBtn = document.getElementById('restoreBtn');
+    const backupRadios = document.querySelectorAll('input[name="backup_file"]');
+    
+    function updateRestoreButton() {
+        const backupSelected = Array.from(backupRadios).some(r => r.checked);
+        const allChecked = confirmCheck && confirmCheck.checked && 
+                          backupCheck && backupCheck.checked && 
+                          authCheck && authCheck.checked;
+        
+        if (restoreBtn) {
+            restoreBtn.disabled = !(backupSelected && allChecked);
+        }
+    }
+    
+    if (confirmCheck) confirmCheck.addEventListener('change', updateRestoreButton);
+    if (backupCheck) backupCheck.addEventListener('change', updateRestoreButton);
+    if (authCheck) authCheck.addEventListener('change', updateRestoreButton);
+    backupRadios.forEach(radio => radio.addEventListener('change', updateRestoreButton));
+    
+    // Highlight selected backup
+    backupRadios.forEach(radio => {
+        radio.addEventListener('change', function() {
+            document.querySelectorAll('.backup-select').forEach(el => {
+                el.classList.remove('selected');
+            });
+            if (this.checked) {
+                this.closest('.backup-select').classList.add('selected');
+            }
+            updateRestoreButton();
+        });
+    });
+    
+    // Final confirmation before submit
+    const restoreForm = document.getElementById('restoreForm');
+    if (restoreForm) {
+        restoreForm.addEventListener('submit', function(e) {
+            const confirmed = confirm(
+                '⚠️ FINAL CONFIRMATION ⚠️\n\n' +
+                'Are you absolutely sure you want to restore this backup?\n\n' +
+                'This will REPLACE ALL CURRENT DATA and CANNOT BE UNDONE!\n\n' +
+                'Click OK to proceed with restore.'
+            );
+            
+            if (!confirmed) {
+                e.preventDefault();
+            }
+        });
+    }
+});
+</script>
+{% endblock %}

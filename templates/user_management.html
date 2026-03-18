@@ -1,0 +1,108 @@
+{% extends "base.html" %}
+{% block title %}User Management{% endblock %}
+
+{% block extra_css %}
+<style>
+    .user-table { width: 100%; }
+    .user-table th { background: #667eea; color: white; }
+    .badge-superadmin { background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%); }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="container-fluid mt-4">
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <div>
+            <h2><i class="bi bi-people-fill"></i> User Management</h2>
+            <p class="text-muted mb-0">Manage system users and permissions</p>
+        </div>
+        <div>
+            <a href="{{ url_for('user_mgmt.add_user') }}" class="btn btn-primary">
+                <i class="bi bi-person-plus-fill"></i> Add New User
+            </a>
+        </div>
+    </div>
+
+    {% if users %}
+    <div class="card">
+        <div class="card-header bg-primary text-white">
+            <h5 class="mb-0"><i class="bi bi-list"></i> All Users ({{ users|length }})</h5>
+        </div>
+        <div class="card-body">
+            <div class="table-responsive">
+                <table class="table table-hover user-table">
+                    <thead>
+                        <tr>
+                            <th width="50">#</th>
+                            <th>Username</th>
+                            <th>Employee Name</th>
+                            <th>Role</th>
+                            <th>Branch</th>
+                            <th>Status</th>
+                            <th>Created Date</th>
+                            <th width="150">Actions</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for user in users %}
+                        <tr>
+                            <td>{{ loop.index }}</td>
+                            <td>
+                                <strong>{{ user[1] }}</strong>
+                                {% if user[1] == session.get('username') %}
+                                <span class="badge bg-info">You</span>
+                                {% endif %}
+                            </td>
+                            <td>{{ user[8] or user[1] }}</td>
+                            <td>
+                                {% if user[2] == 'SuperAdmin' %}
+                                <span class="badge badge-superadmin">
+                                    <i class="bi bi-shield-check"></i> {{ user[2] }}
+                                </span>
+                                {% else %}
+                                <span class="badge bg-secondary">{{ user[2] or 'N/A' }}</span>
+                                {% endif %}
+                            </td>
+                            <td>
+                                {% if user[6] %}
+                                <i class="bi bi-building"></i> {{ user[3] }}
+                                {% else %}
+                                <span class="text-muted">All Branches</span>
+                                {% endif %}
+                            </td>
+                            <td>
+                                {% if user[4] %}
+                                <span class="badge bg-success">Active</span>
+                                {% else %}
+                                <span class="badge bg-danger">Inactive</span>
+                                {% endif %}
+                            </td>
+                            <td>{{ user[5].strftime('%d-%b-%Y') if user[5] else 'N/A' }}</td>
+                            <td>
+                                <a href="{{ url_for('user_mgmt.edit_user', user_id=user[0]) }}" 
+                                   class="btn btn-sm btn-warning">
+                                    <i class="bi bi-pencil"></i> Edit
+                                </a>
+                                {% if user[0] != session.get('user_id') %}
+                                <form method="POST" action="{{ url_for('user_mgmt.delete_user', user_id=user[0]) }}" 
+                                      style="display:inline;" onsubmit="return confirm('Delete user {{ user[1] }}?')">
+                                    <button type="submit" class="btn btn-sm btn-danger">
+                                        <i class="bi bi-trash"></i> Delete
+                                    </button>
+                                </form>
+                                {% endif %}
+                            </td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+    {% else %}
+    <div class="alert alert-info">
+        <i class="bi bi-info-circle"></i> No users found in the system.
+    </div>
+    {% endif %}
+</div>
+{% endblock %}

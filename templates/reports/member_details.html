@@ -1,0 +1,36 @@
+{% extends "base.html" %}
+{% block content %}
+
+<div class="container mt-4">
+<h3>Member Details Report</h3>
+
+<table class="table table-bordered">
+<thead class="table-dark">
+<tr>
+<th>Member Code</th>
+<th>Name</th>
+<th>Mobile</th>
+<th>Email</th>
+<th>Center</th>
+<th>Join Date</th>
+<th>Status</th>
+</tr>
+</thead>
+
+<tbody>
+{% for r in rows %}
+<tr>
+<td>{{r.member_code}}</td>
+<td>{{r.full_name}}</td>
+<td>{{r.phone1}}</td>
+<td>{{r.email}}</td>
+<td>{{r.center_name}}</td>
+<td>{{r.join_date}}</td>
+<td>{{r.status}}</td>
+</tr>
+{% endfor %}
+</tbody>
+</table>
+
+</div>
+{% endblock %}

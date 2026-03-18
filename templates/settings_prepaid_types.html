@@ -1,0 +1,324 @@
+{% extends "base.html" %}
+{% block title %}Prepaid Types Configuration{% endblock %}
+
+{% block extra_css %}
+<style>
+    .config-badge {
+        padding: 5px 12px;
+        border-radius: 15px;
+        font-size: 0.85rem;
+        font-weight: 500;
+        margin: 2px;
+    }
+    .badge-yes { background: #10b981; color: white; }
+    .badge-no { background: #6b7280; color: white; }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="container-fluid mt-4">
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <div>
+            <h2><i class="bi bi-lightning-charge-fill text-warning"></i> Prepaid Types Configuration</h2>
+            <small class="text-muted">Configure prepaid loan closure types and rules</small>
+        </div>
+        <div>
+            <button class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#addModal">
+                <i class="bi bi-plus-circle"></i> Add Type
+            </button>
+            <a href="{{ url_for('settings_bp.settings') }}" class="btn btn-secondary">
+                <i class="bi bi-arrow-left"></i> Back
+            </a>
+        </div>
+    </div>
+
+    <!-- Info Alert -->
+    <div class="alert alert-info">
+        <h6><i class="bi bi-info-circle"></i> Prepaid Type Configuration Guide:</h6>
+        <ul class="mb-0 small">
+            <li><strong>Has Preclosure Charges:</strong> Whether to apply penalty charges</li>
+            <li><strong>Charges %:</strong> Percentage of principal to charge as penalty</li>
+            <li><strong>Full Interest:</strong> Collect full outstanding interest? (No = waived)</li>
+            <li><strong>Full Savings:</strong> Collect full savings due? (No = waived)</li>
+        </ul>
+    </div>
+
+    <!-- Prepaid Types Table -->
+    <div class="card">
+        <div class="card-header bg-primary text-white">
+            <h5 class="mb-0">Prepaid Types ({{ prepaid_types|length }})</h5>
+        </div>
+        <div class="card-body p-0">
+            <table class="table table-hover mb-0">
+                <thead class="table-light">
+                    <tr>
+                        <th style="width: 5%;">#</th>
+                        <th style="width: 20%;">Type Name</th>
+                        <th style="width: 15%;" class="text-center">Has Charges</th>
+                        <th style="width: 12%;" class="text-center">Charges %</th>
+                        <th style="width: 15%;" class="text-center">Full Interest</th>
+                        <th style="width: 15%;" class="text-center">Full Savings</th>
+                        <th style="width: 10%;" class="text-center">Status</th>
+                        <th style="width: 8%;" class="text-center">Actions</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for p in prepaid_types %}
+                    <tr>
+                        <td>{{ loop.index }}</td>
+                        <td>
+                            <strong class="text-primary">{{ p[1] }}</strong>
+                            {% if p[1] == 'Death' %}
+                                <br><small class="text-muted">💀 Principal only</small>
+                            {% elif p[1] == 'Prepaid' %}
+                                <br><small class="text-muted">💰 Full amount + charges</small>
+                            {% elif p[1] == 'SpecialPrepaid' %}
+                                <br><small class="text-muted">⭐ Full amount, no charges</small>
+                            {% endif %}
+                        </td>
+                        <td class="text-center">
+                            {% if p[3] %}
+                                <span class="config-badge badge-yes">✓ Yes</span>
+                            {% else %}
+                                <span class="config-badge badge-no">✗ No</span>
+                            {% endif %}
+                        </td>
+                        <td class="text-center">
+                            {% if p[4] > 0 %}
+                                <span class="badge bg-warning text-dark">{{ p[4] }}%</span>
+                            {% else %}
+                                <span class="text-muted">0%</span>
+                            {% endif %}
+                        </td>
+                        <td class="text-center">
+                            {% if p[5] %}
+                                <span class="config-badge badge-yes">✓ Collect</span>
+                            {% else %}
+                                <span class="config-badge badge-no">✗ Waive</span>
+                            {% endif %}
+                        </td>
+                        <td class="text-center">
+                            {% if p[6] %}
+                                <span class="config-badge badge-yes">✓ Collect</span>
+                            {% else %}
+                                <span class="config-badge badge-no">✗ Waive</span>
+                            {% endif %}
+                        </td>
+                        <td class="text-center">
+                            <span class="badge bg-{{ 'success' if p[2] else 'secondary' }}">
+                                {{ 'Active' if p[2] else 'Inactive' }}
+                            </span>
+                        </td>
+                        <td class="text-center">
+                            <button class="btn btn-sm btn-outline-primary" 
+                                    data-bs-toggle="modal" 
+                                    data-bs-target="#editModal{{ p[0] }}"
+                                    title="Edit">
+                                <i class="bi bi-pencil"></i>
+                            </button>
+                        </td>
+                    </tr>
+
+                    <!-- Edit Modal for each type -->
+                    <div class="modal fade" id="editModal{{ p[0] }}">
+                        <div class="modal-dialog">
+                            <div class="modal-content">
+                                <form method="POST">
+                                    <div class="modal-header">
+                                        <h5>Edit Prepaid Type: {{ p[1] }}</h5>
+                                        <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                                    </div>
+                                    <div class="modal-body">
+                                        <input type="hidden" name="action" value="update">
+                                        <input type="hidden" name="prepaidtypeid" value="{{ p[0] }}">
+                                        
+                                        <div class="mb-3">
+                                            <label class="form-label">Type Name</label>
+                                            <input type="text" class="form-control" name="prepaidtypename" value="{{ p[1] }}" required>
+                                        </div>
+
+                                        <div class="form-check form-switch mb-3">
+                                            <input class="form-check-input" type="checkbox" name="active" 
+                                                   id="active{{ p[0] }}" {% if p[2] %}checked{% endif %}>
+                                            <label class="form-check-label" for="active{{ p[0] }}">
+                                                Active
+                                            </label>
+                                        </div>
+
+                                        <hr>
+
+                                        <div class="form-check form-switch mb-3">
+                                            <input class="form-check-input" type="checkbox" name="haspreclosurecharges" 
+                                                   id="charges{{ p[0] }}" {% if p[3] %}checked{% endif %}>
+                                            <label class="form-check-label" for="charges{{ p[0] }}">
+                                                <strong>Has Preclosure Charges</strong>
+                                            </label>
+                                        </div>
+
+                                        <div class="mb-3">
+                                            <label class="form-label">Charges Percent</label>
+                                            <div class="input-group">
+                                                <input type="number" class="form-control" name="preclosurechargespercent" 
+                                                       step="0.01" value="{{ p[4] }}">
+                                                <span class="input-group-text">%</span>
+                                            </div>
+                                            <small class="text-muted">Applied on principal outstanding</small>
+                                        </div>
+
+                                        <hr>
+
+                                        <div class="form-check form-switch mb-3">
+                                            <input class="form-check-input" type="checkbox" name="fullinterest" 
+                                                   id="interest{{ p[0] }}" {% if p[5] %}checked{% endif %}>
+                                            <label class="form-check-label" for="interest{{ p[0] }}">
+                                                <strong>Collect Full Interest</strong>
+                                                <br><small class="text-muted">Unchecked = Interest waived</small>
+                                            </label>
+                                        </div>
+
+                                        <div class="form-check form-switch mb-3">
+                                            <input class="form-check-input" type="checkbox" name="fullsavings" 
+                                                   id="savings{{ p[0] }}" {% if p[6] %}checked{% endif %}>
+                                            <label class="form-check-label" for="savings{{ p[0] }}">
+                                                <strong>Collect Full Savings</strong>
+                                                <br><small class="text-muted">Unchecked = Savings waived</small>
+                                            </label>
+                                        </div>
+                                    </div>
+                                    <div class="modal-footer">
+                                        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                                        <button type="submit" class="btn btn-primary">Update</button>
+                                    </div>
+                                </form>
+                            </div>
+                        </div>
+                    </div>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+
+    <!-- Example Calculations -->
+    <div class="card mt-4">
+        <div class="card-header bg-info text-white">
+            <h6 class="mb-0"><i class="bi bi-calculator"></i> Example Calculations</h6>
+        </div>
+        <div class="card-body">
+            <p class="mb-3">Assuming: Principal Outstanding = ₹50,000 | Interest Outstanding = ₹5,000 | Savings Due = ₹2,000</p>
+            <div class="row">
+                {% for p in prepaid_types %}
+                <div class="col-md-4 mb-3">
+                    <div class="card border-primary">
+                        <div class="card-header bg-primary text-white">
+                            <strong>{{ p[1] }}</strong>
+                        </div>
+                        <div class="card-body">
+                            <table class="table table-sm mb-0">
+                                <tr>
+                                    <td>Principal:</td>
+                                    <td class="text-end">₹50,000</td>
+                                </tr>
+                                <tr>
+                                    <td>Interest:</td>
+                                    <td class="text-end">
+                                        {% if p[5] %}₹5,000{% else %}<del>₹5,000</del> ₹0{% endif %}
+                                    </td>
+                                </tr>
+                                <tr>
+                                    <td>Savings:</td>
+                                    <td class="text-end">
+                                        {% if p[6] %}₹2,000{% else %}<del>₹2,000</del> ₹0{% endif %}
+                                    </td>
+                                </tr>
+                                {% if p[3] and p[4] > 0 %}
+                                <tr>
+                                    <td>Charges ({{ p[4] }}%):</td>
+                                    <td class="text-end text-danger">₹{{ (50000 * p[4] / 100)|round(2) }}</td>
+                                </tr>
+                                {% endif %}
+                                <tr class="fw-bold border-top">
+                                    <td>Total:</td>
+                                    <td class="text-end text-primary">
+                                        ₹{{ (50000 + (5000 if p[5] else 0) + (2000 if p[6] else 0) + (50000 * p[4] / 100 if p[3] else 0))|round(2) }}
+                                    </td>
+                                </tr>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+                {% endfor %}
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Add Modal -->
+<div class="modal fade" id="addModal">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <form method="POST">
+                <div class="modal-header bg-primary text-white">
+                    <h5>Add Prepaid Type</h5>
+                    <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body">
+                    <input type="hidden" name="action" value="add">
+                    
+                    <div class="mb-3">
+                        <label class="form-label">Type Name <span class="text-danger">*</span></label>
+                        <input type="text" class="form-control" name="prepaidtypename" required 
+                               placeholder="e.g., Emergency, Transfer">
+                    </div>
+
+                    <div class="form-check form-switch mb-3">
+                        <input class="form-check-input" type="checkbox" name="active" id="activeAdd" checked>
+                        <label class="form-check-label" for="activeAdd">Active</label>
+                    </div>
+
+                    <hr>
+
+                    <div class="form-check form-switch mb-3">
+                        <input class="form-check-input" type="checkbox" name="haspreclosurecharges" id="chargesAdd">
+                        <label class="form-check-label" for="chargesAdd">
+                            <strong>Has Preclosure Charges</strong>
+                        </label>
+                    </div>
+
+                    <div class="mb-3">
+                        <label class="form-label">Charges Percent</label>
+                        <div class="input-group">
+                            <input type="number" class="form-control" name="preclosurechargespercent" 
+                                   step="0.01" value="0" min="0" max="100">
+                            <span class="input-group-text">%</span>
+                        </div>
+                    </div>
+
+                    <hr>
+
+                    <div class="form-check form-switch mb-3">
+                        <input class="form-check-input" type="checkbox" name="fullinterest" id="interestAdd" checked>
+                        <label class="form-check-label" for="interestAdd">
+                            <strong>Collect Full Interest</strong>
+                            <br><small class="text-muted">Uncheck to waive interest</small>
+                        </label>
+                    </div>
+
+                    <div class="form-check form-switch mb-3">
+                        <input class="form-check-input" type="checkbox" name="fullsavings" id="savingsAdd" checked>
+                        <label class="form-check-label" for="savingsAdd">
+                            <strong>Collect Full Savings</strong>
+                            <br><small class="text-muted">Uncheck to waive savings</small>
+                        </label>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                    <button type="submit" class="btn btn-primary">Add Type</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+{% endblock %}

@@ -1,0 +1,512 @@
+{% extends "base.html" %}
+
+{% block title %}Dashboard - Ushodaya MACS Ltd{% endblock %}
+{% block page_title %}Dashboard{% endblock %}
+
+{% block extra_css %}
+<style>
+    .stat-card {
+        background: white;
+        border-radius: 16px;
+        padding: 25px;
+        box-shadow: 0 4px 20px rgba(0,0,0,0.08);
+        transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+        border-left: 4px solid;
+        position: relative;
+        overflow: hidden;
+        height: 100%;
+    }
+
+    .stat-card::before {
+        content: '';
+        position: absolute;
+        top: -50%;
+        right: -20%;
+        width: 250px;
+        height: 250px;
+        background: radial-gradient(circle, rgba(12,42,120,0.03) 0%, transparent 70%);
+        border-radius: 50%;
+    }
+
+    .stat-card:hover {
+        transform: translateY(-8px);
+        box-shadow: 0 12px 35px rgba(0,0,0,0.15);
+    }
+
+    .stat-card.members { border-left-color: #667eea; }
+    .stat-card.loans { border-left-color: #f093fb; }
+    .stat-card.outstanding { border-left-color: #4facfe; }
+    .stat-card.collection { border-left-color: #43e97b; }
+
+    .stat-icon {
+        width: 70px;
+        height: 70px;
+        border-radius: 16px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 2rem;
+        color: white;
+        margin-bottom: 20px;
+        position: relative;
+        z-index: 1;
+    }
+
+    .stat-icon.members-icon { background: linear-gradient(135deg, #667eea, #764ba2); }
+    .stat-icon.loans-icon { background: linear-gradient(135deg, #f093fb, #f5576c); }
+    .stat-icon.outstanding-icon { background: linear-gradient(135deg, #4facfe, #00f2fe); }
+    .stat-icon.collection-icon { background: linear-gradient(135deg, #43e97b, #38f9d7); }
+
+    .stat-value {
+        font-size: 2.5rem;
+        font-weight: 800;
+        color: #2c3e50;
+        margin: 15px 0;
+        position: relative;
+        z-index: 1;
+    }
+
+    .stat-label {
+        color: #6c757d;
+        font-size: 0.95rem;
+        font-weight: 600;
+        text-transform: uppercase;
+        letter-spacing: 0.5px;
+        position: relative;
+        z-index: 1;
+    }
+
+    .stat-trend {
+        display: inline-flex;
+        align-items: center;
+        padding: 6px 14px;
+        border-radius: 20px;
+        font-size: 0.85rem;
+        font-weight: 700;
+        margin-top: 12px;
+        position: relative;
+        z-index: 1;
+    }
+
+    .stat-trend.up {
+        background: rgba(40, 167, 69, 0.1);
+        color: #28a745;
+    }
+
+    .stat-trend.down {
+        background: rgba(220, 53, 69, 0.1);
+        color: #dc3545;
+    }
+
+    .stat-trend i {
+        margin-right: 5px;
+    }
+
+    .quick-actions {
+        background: white;
+        border-radius: 16px;
+        padding: 30px;
+        box-shadow: 0 4px 20px rgba(0,0,0,0.08);
+    }
+
+    .action-btn {
+        width: 100%;
+        padding: 20px;
+        border-radius: 12px;
+        border: 2px solid #e9ecef;
+        background: white;
+        transition: all 0.3s;
+        text-decoration: none;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        gap: 12px;
+        color: #2c3e50;
+        font-weight: 600;
+    }
+
+    .action-btn:hover {
+        border-color: #667eea;
+        background: linear-gradient(135deg, rgba(102,126,234,0.05), rgba(118,75,162,0.05));
+        transform: translateY(-5px);
+        box-shadow: 0 8px 20px rgba(102,126,234,0.2);
+        color: #667eea;
+    }
+
+    .action-icon {
+        width: 60px;
+        height: 60px;
+        border-radius: 12px;
+        background: linear-gradient(135deg, #667eea, #764ba2);
+        color: white;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 1.8rem;
+    }
+
+    .pending-card {
+        background: white;
+        border-radius: 16px;
+        padding: 25px;
+        box-shadow: 0 4px 20px rgba(0,0,0,0.08);
+        border-left: 4px solid #ffc107;
+    }
+
+    .pending-item {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        padding: 20px;
+        background: linear-gradient(135deg, #fff9e6, #fff);
+        border-radius: 12px;
+        margin-bottom: 15px;
+        transition: all 0.3s;
+    }
+
+    .pending-item:hover {
+        background: linear-gradient(135deg, #fff3cd, #fff);
+        transform: translateX(10px);
+    }
+
+    .pending-badge {
+        background: #ffc107;
+        color: #000;
+        font-weight: 700;
+        font-size: 1.3rem;
+        padding: 12px 20px;
+        border-radius: 12px;
+        min-width: 70px;
+        text-align: center;
+    }
+
+    .deposits-card {
+        background: white;
+        border-radius: 16px;
+        padding: 25px;
+        box-shadow: 0 4px 20px rgba(0,0,0,0.08);
+        border-left: 4px solid #17a2b8;
+    }
+
+    .deposit-stat {
+        background: linear-gradient(135deg, #f8f9fa, #e9ecef);
+        border-radius: 12px;
+        padding: 25px;
+        text-align: center;
+        transition: all 0.3s;
+    }
+
+    .deposit-stat:hover {
+        background: linear-gradient(135deg, #e9ecef, #dee2e6);
+        transform: scale(1.05);
+    }
+
+    .deposit-value {
+        font-size: 2.5rem;
+        font-weight: 800;
+        margin-bottom: 8px;
+    }
+
+    .deposit-value.primary { color: #0c2a78; }
+    .deposit-value.success { color: #28a745; }
+
+    .deposit-label {
+        color: #6c757d;
+        font-size: 0.85rem;
+        font-weight: 600;
+        text-transform: uppercase;
+    }
+
+    .system-info {
+        background: white;
+        border-radius: 16px;
+        padding: 25px;
+        box-shadow: 0 4px 20px rgba(0,0,0,0.08);
+        border-left: 4px solid #6c757d;
+    }
+
+    .info-item {
+        padding: 15px 0;
+        border-bottom: 1px solid #f0f0f0;
+    }
+
+    .info-item:last-child {
+        border-bottom: none;
+    }
+
+    .info-label {
+        font-weight: 700;
+        color: #2c3e50;
+        margin-bottom: 5px;
+        font-size: 0.85rem;
+        text-transform: uppercase;
+        letter-spacing: 0.5px;
+    }
+
+    .info-value {
+        color: #6c757d;
+        font-size: 1rem;
+    }
+
+    .section-title {
+        font-size: 1.3rem;
+        font-weight: 700;
+        color: #2c3e50;
+        margin-bottom: 20px;
+        display: flex;
+        align-items: center;
+    }
+
+    .section-title i {
+        margin-right: 12px;
+        color: #667eea;
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<!-- Welcome Banner -->
+<div class="row mb-4">
+    <div class="col-12">
+        <div class="card" style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white; border: none;">
+            <div class="card-body p-4">
+                <div class="row align-items-center">
+                    <div class="col-md-8">
+                        <h2 class="mb-2" style="font-weight: 800;">👋 Welcome back, {{ username }}!</h2>
+                        <p class="mb-0 opacity-75">Here's what's happening with your loan management system today.</p>
+                    </div>
+                    <div class="col-md-4 text-md-end">
+                        <h4 class="mb-0"><i class="bi bi-calendar3"></i> {{ "now"|default("Today") }}</h4>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Statistics Cards -->
+<div class="row g-4 mb-4">
+    <div class="col-xl-3 col-md-6">
+        <div class="stat-card members">
+            <div class="stat-icon members-icon">
+                <i class="bi bi-people"></i>
+            </div>
+            <div class="stat-value">{{ "{:,}".format(stats.total_members|default(0)) }}</div>
+            <div class="stat-label">Total Members</div>
+            <div class="stat-trend up">
+                <i class="bi bi-arrow-up"></i> 12% this month
+            </div>
+        </div>
+    </div>
+
+    <div class="col-xl-3 col-md-6">
+        <div class="stat-card loans">
+            <div class="stat-icon loans-icon">
+                <i class="bi bi-cash-stack"></i>
+            </div>
+            <div class="stat-value">{{ "{:,}".format(stats.active_loans|default(0)) }}</div>
+            <div class="stat-label">Active Loans</div>
+            <div class="stat-trend up">
+                <i class="bi bi-arrow-up"></i> 8% this month
+            </div>
+        </div>
+    </div>
+
+    <div class="col-xl-3 col-md-6">
+        <div class="stat-card outstanding">
+            <div class="stat-icon outstanding-icon">
+                <i class="bi bi-currency-rupee"></i>
+            </div>
+            <div class="stat-value">₹{{ "{:,.0f}".format(stats.total_outstanding|default(0)/100000) }}L</div>
+            <div class="stat-label">Total Outstanding</div>
+            <div class="stat-trend down">
+                <i class="bi bi-arrow-down"></i> 5% this month
+            </div>
+        </div>
+    </div>
+
+    <div class="col-xl-3 col-md-6">
+        <div class="stat-card collection">
+            <div class="stat-icon collection-icon">
+                <i class="bi bi-wallet2"></i>
+            </div>
+            <div class="stat-value">₹{{ "{:,.2f}".format(stats.today_collection|default(0)/1000) }}K</div>
+            <div class="stat-label">Today's Collection</div>
+            <div class="stat-trend up">
+                <i class="bi bi-arrow-up"></i> Good!
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Quick Actions -->
+<div class="row g-4 mb-4">
+    <div class="col-12">
+        <div class="quick-actions">
+            <h3 class="section-title">
+                <i class="bi bi-lightning-charge"></i>
+                Quick Actions
+            </h3>
+            <div class="row g-3">
+                <div class="col-xl-3 col-md-6">
+                    <a href="{{ url_for('members_bp.add_member') }}" class="action-btn">
+                        <div class="action-icon">
+                            <i class="bi bi-person-plus"></i>
+                        </div>
+                        <span>Add Member</span>
+                    </a>
+                </div>
+                <div class="col-xl-3 col-md-6">
+                    <a href="{{ url_for('loanapplication.add_application') }}" class="action-btn">
+                        <div class="action-icon">
+                            <i class="bi bi-file-earmark-plus"></i>
+                        </div>
+                        <span>New Loan Application</span>
+                    </a>
+                </div>
+                <div class="col-xl-3 col-md-6">
+                    <a href="{{ url_for('recposting.recposting') }}" class="action-btn">
+                        <div class="action-icon">
+                            <i class="bi bi-cash-coin"></i>
+                        </div>
+                        <span>Recovery Posting</span>
+                    </a>
+                </div>
+                <div class="col-xl-3 col-md-6">
+                    <a href="{{ url_for('reports.report_view') }}" class="action-btn">
+                        <div class="action-icon">
+                            <i class="bi bi-file-bar-graph"></i>
+                        </div>
+                        <span>View Reports</span>
+                    </a>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Pending Items & Deposits -->
+<div class="row g-4 mb-4">
+    <div class="col-md-6">
+        <div class="pending-card">
+            <h3 class="section-title">
+                <i class="bi bi-clock-history"></i>
+                Pending Approvals
+            </h3>
+            <div class="pending-item">
+                <div>
+                    <h5 class="mb-1 fw-bold">Loan Applications</h5>
+                    <small class="text-muted">Awaiting Review & Approval</small>
+                </div>
+                <div class="pending-badge">
+                    {{ stats.pending_applications|default(0) }}
+                </div>
+            </div>
+            <div class="d-grid">
+                <a href="{{ url_for('loanapplication.pending_applications') }}" class="btn btn-warning btn-lg">
+                    <i class="bi bi-eye me-2"></i>Review Applications
+                </a>
+            </div>
+        </div>
+    </div>
+
+    <div class="col-md-6">
+        <div class="deposits-card">
+            <h3 class="section-title">
+                <i class="bi bi-bank"></i>
+                Deposits Overview
+            </h3>
+            <div class="row g-3 mb-3">
+                <div class="col-6">
+                    <div class="deposit-stat">
+                        <div class="deposit-value primary">{{ stats.active_fds|default(0) }}</div>
+                        <div class="deposit-label">Active FDs</div>
+                    </div>
+                </div>
+                <div class="col-6">
+                    <div class="deposit-stat">
+                        <div class="deposit-value success">{{ stats.active_rds|default(0) }}</div>
+                        <div class="deposit-label">Active RDs</div>
+                    </div>
+                </div>
+            </div>
+            <div class="row g-2">
+                <div class="col-6">
+                    <a href="{{ url_for('fixeddeposit_bp.fixeddeposit') }}" class="btn btn-outline-primary w-100">
+                        <i class="bi bi-eye me-2"></i>View FDs
+                    </a>
+                </div>
+                <div class="col-6">
+                    <a href="{{ url_for('recurringdeposit_bp.rd_index') }}" class="btn btn-outline-success w-100">
+                        <i class="bi bi-eye me-2"></i>View RDs
+                    </a>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- System Information -->
+<div class="row">
+    <div class="col-12">
+        <div class="system-info">
+            <h3 class="section-title">
+                <i class="bi bi-info-circle"></i>
+                System Information
+            </h3>
+            <div class="row">
+                <div class="col-md-3">
+                    <div class="info-item">
+                        <div class="info-label">
+                            <i class="bi bi-person-check me-2"></i>Logged In As
+                        </div>
+                        <div class="info-value">{{ username }}</div>
+                    </div>
+                </div>
+                <div class="col-md-3">
+                    <div class="info-item">
+                        <div class="info-label">
+                            <i class="bi bi-shield-check me-2"></i>Role
+                        </div>
+                        <div class="info-value">
+                            <span class="badge" style="background: linear-gradient(135deg, #667eea, #764ba2); font-size: 0.9rem;">
+                                {{ role|upper }}
+                            </span>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-md-3">
+                    <div class="info-item">
+                        <div class="info-label">
+                            <i class="bi bi-calendar-check me-2"></i>Last Day End
+                        </div>
+                        <div class="info-value">{{ last_dayend_date or 'Not Completed' }}</div>
+                    </div>
+                </div>
+                <div class="col-md-3">
+                    <div class="info-item">
+                        <div class="info-label">
+                            <i class="bi bi-clock me-2"></i>Session Time
+                        </div>
+                        <div class="info-value">{{ idle_time or 'N/A' }}</div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+    // Add animation on load
+    $(document).ready(function() {
+        $('.stat-card, .quick-actions, .pending-card, .deposits-card, .system-info').hide().fadeIn(800);
+
+        // Counter animation for stat values
+        $('.stat-value').each(function() {
+            $(this).css('opacity', 0).animate({opacity: 1}, 1000);
+        });
+    });
+</script>
+{% endblock %}

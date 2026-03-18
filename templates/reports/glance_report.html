@@ -1,0 +1,46 @@
+{% extends "base.html" %}
+{% block content %}
+
+<div class="container mt-4">
+<h3>At a Glance Report</h3>
+
+<table class="table table-bordered">
+<thead class="table-dark">
+<tr>
+<th>Metric</th>
+<th>Value</th>
+</tr>
+</thead>
+
+<tbody>
+{% for r in rows %}
+<tr>
+    <td>Total Members</td>
+    <td>{{r.total_members}}</td>
+</tr>
+<tr>
+    <td>Total Centers</td>
+    <td>{{r.total_centers}}</td>
+</tr>
+<tr>
+    <td>Active Loans</td>
+    <td>{{r.active_loans}}</td>
+</tr>
+<tr>
+    <td>Total Loan Amount</td>
+    <td>₹ {{r.total_loan_amount}}</td>
+</tr>
+<tr>
+    <td>Principal Outstanding</td>
+    <td>₹ {{r.principal_outstanding}}</td>
+</tr>
+<tr>
+    <td>Interest Outstanding</td>
+    <td>₹ {{r.interest_outstanding}}</td>
+</tr>
+{% endfor %}
+</tbody>
+</table>
+
+</div>
+{% endblock %}

@@ -1,0 +1,522 @@
+{% extends "base.html" %}
+
+{% block title %}Edit Member - Ushodaya MACS Ltd{% endblock %}
+{% block page_title %}Edit Member{% endblock %}
+
+{% block extra_css %}
+<style>
+    .form-header {
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        color: white;
+        border-radius: 12px;
+        padding: 25px;
+        margin-bottom: 30px;
+    }
+
+    .form-card {
+        background: white;
+        border-radius: 12px;
+        padding: 30px;
+        margin-bottom: 25px;
+        box-shadow: 0 2px 10px rgba(0,0,0,0.05);
+    }
+
+    .section-title {
+        font-size: 1.2rem;
+        font-weight: 700;
+        color: #2c3e50;
+        margin-bottom: 20px;
+        padding-bottom: 10px;
+        border-bottom: 3px solid #667eea;
+        display: flex;
+        align-items: center;
+        gap: 10px;
+    }
+
+    .readonly-field {
+        background: linear-gradient(135deg, #f8f9fa, #e9ecef);
+        border: 2px solid #667eea;
+        font-weight: 700;
+        color: #667eea;
+    }
+
+    .form-label {
+        font-weight: 700;
+        color: #2c3e50;
+        margin-bottom: 8px;
+    }
+
+    .form-control, .form-select {
+        border: 2px solid #e9ecef;
+        border-radius: 8px;
+        padding: 10px 15px;
+    }
+
+    .form-control:focus, .form-select:focus {
+        border-color: #667eea;
+        box-shadow: 0 0 0 0.2rem rgba(102, 126, 234, 0.1);
+    }
+
+    .btn-submit {
+        background: linear-gradient(135deg, #667eea, #764ba2);
+        color: white;
+        padding: 12px 30px;
+        border-radius: 8px;
+        font-weight: 700;
+        border: none;
+    }
+
+    .btn-cancel {
+        background: #6c757d;
+        color: white;
+        padding: 12px 30px;
+        border-radius: 8px;
+        font-weight: 700;
+        text-decoration: none;
+    }
+
+    .required::after {
+        content: " *";
+        color: #dc3545;
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="container-fluid">
+    <div class="row justify-content-center">
+        <div class="col-lg-10">
+            <div class="form-header">
+                <h3><i class="bi bi-pencil-square"></i> Edit Member</h3>
+                <p class="mb-0" style="opacity: 0.9;">Update member information</p>
+            </div>
+
+            <form method="POST">
+                <!-- Member Code (Read-Only) -->
+                <div class="form-card">
+                    <div class="section-title">
+                        <i class="bi bi-hash"></i> Member Code
+                    </div>
+                    <div class="readonly-field form-control">
+                        <i class="bi bi-lock-fill"></i> {{ member.member_code }}
+                        <small style="float: right; opacity: 0.7;">(Cannot be changed)</small>
+                    </div>
+                </div>
+
+                <!-- Basic Information -->
+                <div class="form-card">
+                    <div class="section-title">
+                        <i class="bi bi-person"></i> Basic Information
+                    </div>
+                    
+                    <div class="row">
+                        <div class="col-md-6 mb-3">
+                            <label class="form-label required">Full Name</label>
+                            <input type="text" class="form-control" name="full_name" 
+                                   value="{{ member.full_name }}" required>
+                        </div>
+
+                        <div class="col-md-6 mb-3">
+                            <label class="form-label required">Center</label>
+                            <select class="form-select" name="center_id" required>
+                                <option value="">Select Center...</option>
+                                {% for center in centers %}
+                                <option value="{{ center.id }}" 
+                                    {% if member.center_id == center.id %}selected{% endif %}>
+                                    {{ center.center_no }} - {{ center.center_name }}
+                                </option>
+                                {% endfor %}
+                            </select>
+                        </div>
+                    </div>
+                   <div class="col-md-6 mb-3">
+
+<label class="form-label">Group No</label>
+
+<select class="form-select" name="group_id">
+
+<option value="">Select Group</option>
+
+<option value="1" {% if member.group_id == 1 %}selected{% endif %}>Group 1</option>
+<option value="2" {% if member.group_id == 2 %}selected{% endif %}>Group 2</option>
+<option value="3" {% if member.group_id == 3 %}selected{% endif %}>Group 3</option>
+<option value="4" {% if member.group_id == 4 %}selected{% endif %}>Group 4</option>
+<option value="5" {% if member.group_id == 5 %}selected{% endif %}>Group 5</option>
+
+</select>
+
+</div>
+                    <div class="row">
+                        <div class="col-md-4 mb-3">
+                            <label class="form-label">Join Date</label>
+                            <input type="date" class="form-control" name="join_date" 
+                                   value="{{ member.join_date.strftime('%Y-%m-%d') if member.join_date else '' }}">
+                        </div>
+
+                        <div class="col-md-4 mb-3">
+                            <label class="form-label">Date of Birth</label>
+                            <input type="date" class="form-control" name="dob" 
+                                   value="{{ member.dob.strftime('%Y-%m-%d') if member.dob else '' }}">
+                        </div>
+
+                        <div class="col-md-4 mb-3">
+                            <label class="form-label">Age</label>
+                            <input type="number" class="form-control" name="age" 
+                                   value="{{ member.age or '' }}" min="18" max="100" readonly style="background: #f8f9fa;">
+                            <small class="text-muted">Auto-calculated from DOB</small>
+                        </div>
+                    </div>
+
+                    <div class="row">
+                        <div class="col-md-6 mb-3">
+                            <label class="form-label">Gender</label>
+                            <select class="form-select" name="gender">
+                                <option value="">Select...</option>
+                                <option value="Female" {% if member.gender == 'Female' %}selected{% endif %}>Female</option>
+                                <option value="Male" {% if member.gender == 'Male' %}selected{% endif %}>Male</option>
+                                <option value="Other" {% if member.gender == 'Other' %}selected{% endif %}>Other</option>
+                            </select>
+                        </div>
+
+                        <div class="col-md-6 mb-3">
+                            <label class="form-label">Marital Status</label>
+                            <select class="form-select" name="marital_status">
+                                <option value="">Select...</option>
+                                <option value="Married" {% if member.marital_status == 'Married' %}selected{% endif %}>Married</option>
+                                <option value="Unmarried" {% if member.marital_status == 'Unmarried' %}selected{% endif %}>Unmarried</option>
+                                <option value="Widow" {% if member.marital_status == 'Widow' %}selected{% endif %}>Widow</option>
+                                <option value="Divorced" {% if member.marital_status == 'Divorced' %}selected{% endif %}>Divorced</option>
+                            </select>
+                        </div>
+                    </div>
+
+                    <div class="row">
+                        <div class="col-md-6 mb-3">
+                            <label class="form-label">Guardian Name</label>
+                            <input type="text" class="form-control" name="guardian_name" 
+                                   value="{{ member.guardian_name or '' }}">
+                        </div>
+
+                        <div class="col-md-6 mb-3">
+                            <label class="form-label">Spouse Name</label>
+                            <input type="text" class="form-control" name="spouse_name" 
+                                   value="{{ member.spouse_name or '' }}">
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Contact Information -->
+                <div class="form-card">
+                    <div class="section-title">
+                        <i class="bi bi-telephone"></i> Contact Information
+                    </div>
+                    
+                    <div class="row">
+                        <div class="col-md-6 mb-3">
+                            <label class="form-label">Phone 1</label>
+                            <input type="tel" class="form-control" name="phone1" 
+                                   value="{{ member.phone1 or '' }}"
+                                   pattern="[0-9]{10}" maxlength="10">
+                            <small class="text-muted">10 digit mobile number</small>
+                        </div>
+
+                        <div class="col-md-6 mb-3">
+                            <label class="form-label">Phone 2</label>
+                            <input type="tel" class="form-control" name="phone2" 
+                                   value="{{ member.phone2 or '' }}"
+                                   pattern="[0-9]{10}" maxlength="10">
+                        </div>
+                    </div>
+
+                    <div class="row">
+                        <div class="col-md-6 mb-3">
+                            <label class="form-label">Email</label>
+                            <input type="email" class="form-control" name="email" 
+                                   value="{{ member.email or '' }}">
+                        </div>
+
+                        <div class="col-md-6 mb-3">
+                            <label class="form-label">Aadhaar Number</label>
+                            <input type="text" class="form-control" name="aadhaar" 
+                                   value="{{ member.aadhaar or '' }}"
+                                   pattern="[0-9]{12}" maxlength="12">
+                            <small class="text-muted">12 digit Aadhaar number</small>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Address Information -->
+                <div class="form-card">
+                    <div class="section-title">
+                        <i class="bi bi-geo-alt"></i> Address Information
+                    </div>
+                    
+                    <div class="row">
+                        <div class="col-md-6 mb-3">
+                            <label class="form-label">Address Line 1</label>
+                            <input type="text" class="form-control" name="address1" 
+                                   value="{{ member.address1 or '' }}">
+                        </div>
+
+                        <div class="col-md-6 mb-3">
+                            <label class="form-label">Address Line 2</label>
+                            <input type="text" class="form-control" name="address2" 
+                                   value="{{ member.address2 or '' }}">
+                        </div>
+                    </div>
+
+                    <div class="row">
+                        <div class="col-md-3 mb-3">
+                            <label class="form-label">City</label>
+                            <input type="text" class="form-control" name="city" 
+                                   value="{{ member.city or '' }}">
+                        </div>
+
+                        <div class="col-md-3 mb-3">
+                            <label class="form-label">Mandal</label>
+                            <input type="text" class="form-control" name="mandal" 
+                                   value="{{ member.mandal or '' }}">
+                        </div>
+
+                        <div class="col-md-3 mb-3">
+                            <label class="form-label">District</label>
+                            <input type="text" class="form-control" name="district" 
+                                   value="{{ member.district or '' }}">
+                        </div>
+
+                        <div class="col-md-3 mb-3">
+                            <label class="form-label">State</label>
+                            <input type="text" class="form-control" name="state" 
+                                   value="{{ member.state or '' }}">
+                        </div>
+                    </div>
+
+                    <div class="row">
+                        <div class="col-md-6 mb-3">
+                            <label class="form-label">Pincode</label>
+                            <input type="text" class="form-control" name="pincode" 
+                                   value="{{ member.pincode or '' }}"
+                                   pattern="[0-9]{6}" maxlength="6">
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Financial Information -->
+                <div class="form-card">
+                    <div class="section-title">
+                        <i class="bi bi-currency-rupee"></i> Financial Information
+                    </div>
+                    
+                    <div class="row">
+                        <div class="col-md-4 mb-3">
+                            <label class="form-label">Monthly Income</label>
+                            <input type="number" class="form-control" name="monthly_income" 
+                                   value="{{ member.monthly_income or 0 }}"
+                                   step="0.01" min="0">
+                        </div>
+
+                        <div class="col-md-4 mb-3">
+                            <label class="form-label">Monthly Expenditure</label>
+                            <input type="number" class="form-control" name="expenditure" 
+                                   value="{{ member.expenditure or 0 }}"
+                                   step="0.01" min="0">
+                        </div>
+
+                        <div class="col-md-4 mb-3">
+                            <label class="form-label">Status</label>
+                            <select class="form-select" name="status">
+                                <option value="ACTIVE" {% if member.status == 'ACTIVE' %}selected{% endif %}>ACTIVE</option>
+                                <option value="INACTIVE" {% if member.status == 'INACTIVE' %}selected{% endif %}>INACTIVE</option>
+                            </select>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Nominee Information -->
+                <div class="form-card">
+                    <div class="section-title">
+                        <i class="bi bi-person-badge"></i> Nominee Information
+                    </div>
+                    
+                    <div class="row">
+                        <div class="col-md-6 mb-3">
+                            <label class="form-label">Nominee Name</label>
+                            <input type="text" class="form-control" name="nominee_name" 
+                                   value="{{ member.nominee_name or '' }}">
+                        </div>
+
+                        <div class="col-md-6 mb-3">
+                            <label class="form-label">Relation</label>
+                            <input type="text" class="form-control" name="nominee_relation" 
+                                   value="{{ member.nominee_relation or '' }}">
+                        </div>
+                    </div>
+
+                    <div class="row">
+                        <div class="col-md-4 mb-3">
+                            <label class="form-label">Date of Birth</label>
+                            <input type="date" class="form-control" name="nominee_dob" 
+                                   value="{{ member.nominee_dob.strftime('%Y-%m-%d') if member.nominee_dob else '' }}">
+                        </div>
+
+                        <div class="col-md-4 mb-3">
+                            <label class="form-label">Age</label>
+                            <input type="number" class="form-control" name="nominee_age" 
+                                   value="{{ member.nominee_age or '' }}" min="0" max="120" readonly style="background: #f8f9fa;">
+                            <small class="text-muted">Auto-calculated from DOB</small>
+                        </div>
+
+                        <div class="col-md-4 mb-3">
+                            <label class="form-label">Phone</label>
+                            <input type="tel" class="form-control" name="nominee_phone" 
+                                   value="{{ member.nominee_phone or '' }}"
+                                   pattern="[0-9]{10}" maxlength="10">
+                        </div>
+                    </div>
+
+                    <div class="row">
+                        <div class="col-md-12 mb-3">
+                            <label class="form-label">Aadhaar Number</label>
+                            <input type="text" class="form-control" name="nominee_aadhaar" 
+                                   value="{{ member.nominee_aadhaar or '' }}"
+                                   pattern="[0-9]{12}" maxlength="12">
+                        </div>
+                    </div>
+
+                    <!-- Copy Address Checkbox -->
+                    <div class="row mb-3">
+                        <div class="col-md-12">
+                            <div class="form-check" style="background: #e3f2fd; padding: 15px; border-radius: 8px; border-left: 4px solid #2196f3;">
+                                <input class="form-check-input" type="checkbox" id="copyAddress" onclick="copyMemberAddress()">
+                                <label class="form-check-label" for="copyAddress" style="font-weight: 700; color: #1976d2;">
+                                    <i class="bi bi-clipboard-check"></i> Copy member address to nominee address
+                                </label>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="row">
+                        <div class="col-md-6 mb-3">
+                            <label class="form-label">Address Line 1</label>
+                            <input type="text" class="form-control" name="nominee_address1" 
+                                   value="{{ member.nominee_address1 or '' }}">
+                        </div>
+
+                        <div class="col-md-6 mb-3">
+                            <label class="form-label">Address Line 2</label>
+                            <input type="text" class="form-control" name="nominee_address2" 
+                                   value="{{ member.nominee_address2 or '' }}">
+                        </div>
+                    </div>
+
+                    <div class="row">
+                        <div class="col-md-3 mb-3">
+                            <label class="form-label">City</label>
+                            <input type="text" class="form-control" name="nominee_city" 
+                                   value="{{ member.nominee_city or '' }}">
+                        </div>
+
+                        <div class="col-md-3 mb-3">
+                            <label class="form-label">Mandal</label>
+                            <input type="text" class="form-control" name="nominee_mandal" 
+                                   value="{{ member.nominee_mandal or '' }}">
+                        </div>
+
+                        <div class="col-md-3 mb-3">
+                            <label class="form-label">District</label>
+                            <input type="text" class="form-control" name="nominee_district" 
+                                   value="{{ member.nominee_district or '' }}">
+                        </div>
+
+                        <div class="col-md-3 mb-3">
+                            <label class="form-label">State</label>
+                            <input type="text" class="form-control" name="nominee_state" 
+                                   value="{{ member.nominee_state or '' }}">
+                        </div>
+                    </div>
+
+                    <div class="row">
+                        <div class="col-md-6 mb-3">
+                            <label class="form-label">Pincode</label>
+                            <input type="text" class="form-control" name="nominee_pincode" 
+                                   value="{{ member.nominee_pincode or '' }}"
+                                   pattern="[0-9]{6}" maxlength="6">
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Action Buttons -->
+                <div class="form-card">
+                    <div class="d-flex gap-3">
+                        <button type="submit" class="btn-submit">
+                            <i class="bi bi-check-circle"></i> Update Member
+                        </button>
+                        <a href="{{ url_for('members_bp.index') }}" class="btn-cancel">
+                            <i class="bi bi-x-circle"></i> Cancel
+                        </a>
+                    </div>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+    // Calculate age from date of birth
+    function calculateAge(dob) {
+        if (!dob) return '';
+        const today = new Date();
+        const birthDate = new Date(dob);
+        let age = today.getFullYear() - birthDate.getFullYear();
+        const monthDiff = today.getMonth() - birthDate.getMonth();
+        if (monthDiff < 0 || (monthDiff === 0 && today.getDate() < birthDate.getDate())) {
+            age--;
+        }
+        return age > 0 ? age : '';
+    }
+
+    // Auto-calculate member age when DOB changes
+    document.querySelector('input[name="dob"]').addEventListener('change', function() {
+        const age = calculateAge(this.value);
+        document.querySelector('input[name="age"]').value = age;
+    });
+
+    // Auto-calculate nominee age when DOB changes
+    document.querySelector('input[name="nominee_dob"]').addEventListener('change', function() {
+        const age = calculateAge(this.value);
+        document.querySelector('input[name="nominee_age"]').value = age;
+    });
+
+    // Copy member address to nominee address
+    function copyMemberAddress() {
+        const fields = ['address1', 'address2', 'city', 'mandal', 'district', 'state', 'pincode'];
+        fields.forEach(field => {
+            const memberValue = document.querySelector(`input[name="${field}"]`).value;
+            document.querySelector(`input[name="nominee_${field}"]`).value = memberValue;
+        });
+    }
+
+    // Validate phone numbers - only digits
+    document.querySelectorAll('input[type="tel"]').forEach(input => {
+        input.addEventListener('input', function(e) {
+            this.value = this.value.replace(/[^0-9]/g, '');
+        });
+    });
+
+    // Validate aadhaar - only digits
+    document.querySelectorAll('input[name="aadhaar"], input[name="nominee_aadhaar"]').forEach(input => {
+        input.addEventListener('input', function(e) {
+            this.value = this.value.replace(/[^0-9]/g, '');
+        });
+    });
+
+    // Validate pincode - only digits
+    document.querySelectorAll('input[name="pincode"], input[name="nominee_pincode"]').forEach(input => {
+        input.addEventListener('input', function(e) {
+            this.value = this.value.replace(/[^0-9]/g, '');
+        });
+    });
+</script>
+{% endblock %}

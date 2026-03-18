@@ -1,0 +1,99 @@
+{% extends "base.html" %}
+{% block title %}Member Joining Report{% endblock %}
+
+{% block extra_css %}
+<style>
+  .page-header{background:linear-gradient(135deg,#0c2a78,#1857c9);color:#fff;border-radius:14px;padding:22px 28px;margin-bottom:20px}
+  .form-card{background:#fff;border-radius:12px;padding:24px;box-shadow:0 2px 10px rgba(0,0,0,.06);margin-bottom:20px}
+  .report-table{width:100%;border-collapse:collapse;margin-top:20px}
+  .report-table thead th{background:#0c2a78;color:#fff;padding:12px;font-size:.85rem;font-weight:600}
+  .report-table tbody td{padding:10px;border:1px solid #e5e7eb;font-size:.88rem}
+  .report-table tbody tr:hover{background:#f0f7ff}
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="container-fluid">
+  <div class="page-header">
+    <h4 class="fw-bold mb-1"><i class="bi bi-person-plus me-2"></i>Member Joining Report</h4>
+    <small style="opacity:.85">New members joined in date range</small>
+  </div>
+
+  <!-- Filter Form -->
+  <div class="form-card">
+    <form method="GET" action="{{ url_for('reports.member_joining') }}">
+      <div class="row g-3">
+        <div class="col-md-3">
+          <label class="form-label fw-bold">From Date</label>
+          <input type="date" class="form-control" name="from_date" value="{{ from_date or '' }}" required>
+        </div>
+        <div class="col-md-3">
+          <label class="form-label fw-bold">To Date</label>
+          <input type="date" class="form-control" name="to_date" value="{{ to_date or '' }}" required>
+        </div>
+        <div class="col-md-3">
+          <label class="form-label">&nbsp;</label><br>
+          <button type="submit" class="btn btn-primary">
+            <i class="bi bi-search me-1"></i> Generate Report
+          </button>
+        </div>
+      </div>
+    </form>
+  </div>
+
+  <!-- Data Display -->
+  {% if data %}
+  <div class="form-card">
+    <h5 class="mb-3">
+      <i class="bi bi-table"></i> Members Joined: {{ from_date }} to {{ to_date }}
+    </h5>
+    
+    <div class="alert alert-info">
+      <i class="bi bi-info-circle"></i> 
+      <strong>{{ data|length }}</strong> new members found
+    </div>
+    
+    <div class="table-responsive">
+      <table class="report-table">
+        <thead>
+          <tr>
+            <th>S.No</th>
+            <th>Member Code</th>
+            <th>Member Name</th>
+            <th>Mobile</th>
+            <th>Email</th>
+            <th>Center</th>
+            <th>Join Date</th>
+            <th>Aadhaar No</th>
+            <th>Status</th>
+          </tr>
+        </thead>
+        <tbody>
+          {% for row in data %}
+          <tr>
+            <td>{{ loop.index }}</td>
+            <td>{{ row.MemberCode }}</td>
+            <td>{{ row.MemberName }}</td>
+            <td>{{ row.Mobile or '-' }}</td>
+            <td>{{ row.Email or '-' }}</td>
+            <td>{{ row.Center or '-' }}</td>
+            <td>{{ row.JoinDate.strftime('%d-%m-%Y') if row.JoinDate else '-' }}</td>
+            <td>{{ row.AadhaarNo or '-' }}</td>
+            <td>
+              <span class="badge bg-success">{{ row.Status }}</span>
+            </td>
+          </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+  </div>
+  {% elif from_date %}
+  <div class="form-card text-center py-5">
+    <i class="bi bi-inbox" style="font-size:3rem;color:#9ca3af"></i>
+    <h5 class="mt-3">No New Members</h5>
+    <p class="text-muted">No members joined between {{ from_date }} and {{ to_date }}</p>
+  </div>
+  {% endif %}
+</div>
+{% endblock %}
