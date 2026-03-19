@@ -1,4 +1,4 @@
-﻿#!/usr/bin/env bash
+#!/usr/bin/env bash
 set -e
 
 curl https://packages.microsoft.com/keys/microsoft.asc | apt-key add -
